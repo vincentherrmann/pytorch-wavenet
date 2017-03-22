@@ -1,22 +1,19 @@
 import torch
 import torch.nn as nn
-import torch.nn.init as ninit
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import matplotlib.pyplot as plt
-from torch.autograd import Variable
+from torch.autograd import Variable, Function
 from scipy.io import wavfile
-from collections import deque
-from utils import one_hot
 
-class Conv_dilated(nn.Module):
+
+class ConvDilated(nn.Module):
 	def __init__(self,
 				 num_channels_in=1,
 				 num_channels_out=1,
 				 kernel_size=2,
 				 dilation=1):
-		super(Conv_dilated, self).__init__()
+		super(ConvDilated, self).__init__()
 
 		self.num_channels_in = num_channels_in
 		self.num_channels_out = num_channels_out
@@ -26,12 +23,11 @@ class Conv_dilated(nn.Module):
 							  out_channels=num_channels_out,
 							  kernel_size=kernel_size,
 							  bias=False)
-		self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out)
+		self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out, affine=False)
 
 		self.dilation = dilation
-		self.queue = Dilated_queue(max_length=kernel_size*dilation,
-								   num_channels=num_channels_in)
-		#self.conv.weight = nn.Parameter(torch.FloatTensor([[[0.5, 0.5]]]))
+		self.queue = DilatedQueue(max_length=kernel_size * dilation,
+								  num_channels=num_channels_in)
 
 	def forward(self, x):
 		[n, c, l] = x.size()
@@ -40,20 +36,21 @@ class Conv_dilated(nn.Module):
 		# zero padding
 		num_pad = self.kernel_size + 1 - l
 		if num_pad > 0: # if l is to small
-			o = Variable(x.data.new(n, c, num_pad).zero_())
-			x = torch.cat((o, x), 2)
+			x = ConstantPad1d(self.kernel_size + 1, dimension=2, pad_start=True)(x)
+			#x = zero_pad(x, num_pad, dimension=2, pad_start=True)
+			#o = Variable(x.data.new(n, c, num_pad).zero_())
+			#x = torch.cat((o, x), 2)
 		if self.dilation != 1 & (l - self.kernel_size + 1) % 2 != 0: # if the result is odd
-			o = Variable(x.data.new(n, c, 1).zero_())
-			x = torch.cat((o, x), 2)
+			x = ConstantPad1d(l+1, dimension=2, pad_start=True)(x)
+			#x = zero_pad(x, 1, dimension=2, pad_start=True)
+			#o = Variable(x.data.new(n, c, 1).zero_())
+			#x = torch.cat((o, x), 2)
 
 		x = self.batchnorm(self.conv(x))
 		#print('size after conv: ', x.size())
 
 		# reshape x for dilation
 		x = x.transpose(0,2).contiguous()
-
-		#n = x.size(0) * 2
-		#l = x.size(2) // 2
 
 		if self.dilation != 1:
 			l = l // (self.dilation // n)
@@ -84,24 +81,26 @@ class Final(nn.Module):
 		self.num_classes = num_classes
 		self.in_channels = in_channels
 		self.conv = nn.Conv1d(in_channels, num_classes, kernel_size=1, bias=False)
-		self.batchnorm = nn.BatchNorm1d(num_classes)
+		self.batchnorm = nn.BatchNorm1d(num_classes, affine=False)
 		#nn.init.normal(self.conv.weight)
 		#self.conv.weight = nn.Parameter(torch.FloatTensor([1]))
 
 	def forward(self, x):
-		x = self.batchnorm(self.conv(x))
+		#x = self.batchnorm(self.conv(x))
+		x = self.conv(x)
 		[n, c, l] = x.size()
 		x = x.transpose(1, 2).contiguous().view(n*l, c)
 		return x #F.softmax(x)
 
 	def generate(self, x):
-		x = self.batchnorm(self.conv(Variable(x.unsqueeze(0), volatile=True)))
+		#x = self.batchnorm(self.conv(Variable(x.unsqueeze(0), volatile=True)))
+		x = self.conv(Variable(x.unsqueeze(0), volatile=True))
 		max_index = torch.max(x.squeeze(), 0)[1]
 		s = (max_index.data[0] / self.num_classes) * 2. - 1
 		return s
 
 
-class Dilated_queue:
+class DilatedQueue:
 	def __init__(self, max_length, data=None, dilation=1, num_deq=1, num_channels=1):
 		self.in_pos = 0
 		self.out_pos = 0
@@ -136,10 +135,73 @@ class Dilated_queue:
 		self.in_pos = 0
 		self.out_pos = 0
 
+def zero_pad(x, num_pad, dimension=0, pad_start=False):
+	size = list(x.size())
+	size[dimension] = num_pad
+	o = x.new(tuple(size)).zero_()
+	if pad_start:
+		return torch.cat([o, x], dimension)
+	else:
+		return torch.cat([x, o], dimension)
+
+	pad_dim = x.dim - dimension
+
+	assert dimension > x.dim - 3, 'zero padding is only possible for the last two dimensions'
+
+	# reshape x for using nn.pad()
+	if x.dim > 4:
+		sizes = list(x.sizes)[-3:]
+		x = x.view(tuple([-1] + sizes))
+	elif x.dim < 4:
+		for _ in range(4-x.dim):
+			x = torch.unsqueeze(x, dim=0)
+
+	#if dimension == x.dim - 1
+
+class ConstantPad1d(Function):
+	def __init__(self, target_size, dimension=0, value=0, pad_start=False):
+		super(ConstantPad1d, self).__init__()
+		self.target_size = target_size
+		self.dimension = dimension
+		self.value = value
+		self.pad_start = pad_start
+
+	def forward(self, input):
+		self.num_pad = self.target_size - input.size(self.dimension)
+		assert self.num_pad >= 0, 'target size has to be greater than input size'
+
+		self.input_size = input.size()
+
+		size = list(input.size())
+		size[self.dimension] = self.target_size
+		output = Variable(input.data.new(*tuple(size)).fill_(self.value))
+		c_output = output
+
+		# crop output
+		if self.pad_start:
+			c_output = c_output.narrow(self.dimension, self.num_pad, c_output.size(self.dimension) - self.num_pad)
+		else:
+			c_output = c_output.narrow(self.dimension, 0, c_output.size(self.dimension) - self.num_pad)
+
+		c_output.data.copy_(input.data)
+		return output
+
+	def backward(self, grad_output):
+		grad_input = Variable(grad_output.data.new(*self.input_size).zero_())
+		cg_output = grad_output
+
+		# crop grad_output
+		if self.pad_start:
+			cg_output = cg_output.narrow(self.dimension, self.num_pad, cg_output.size(self.dimension) - self.num_pad)
+		else:
+			cg_output = cg_output.narrow(self.dimension, 0, cg_output.size(self.dimension) - self.num_pad)
+
+		grad_input.data.copy_(cg_output.data)
+		return grad_input
 
 class Model(nn.Module):
 	def __init__(self,
-				 num_time_samples,
+				 num_time_samples=0,
 				 num_channels=1,
 				 num_classes=256,
 				 num_kernel=2,
@@ -171,10 +233,10 @@ class Model(nn.Module):
 			dilation = 2
 			for i in range(num_layers-1):
 				name = 'b{}-l{}.dilated_conv'.format(b, i)
-				main.add_module(name, Conv_dilated(in_channels,
-												   out_channels,
-												   kernel_size=num_kernel,
-												   dilation=dilation))
+				main.add_module(name, ConvDilated(in_channels,
+												  out_channels,
+												  kernel_size=num_kernel,
+												  dilation=dilation))
 
 				scope += num_additional
 				num_additional *= 2
@@ -186,10 +248,10 @@ class Model(nn.Module):
 				#block_scope = block_scope * 2 + num_kernel - 1
 				#print('block_scope: ', block_scope)
 				in_channels = out_channels
-			main.add_module('b{}-last'.format(b), Conv_dilated(in_channels,
-															   out_channels,
-															   kernel_size=num_kernel,
-															   dilation=1))
+			main.add_module('b{}-last'.format(b), ConvDilated(in_channels,
+															  out_channels,
+															  kernel_size=num_kernel,
+															  dilation=1))
 			#scope += block_scope
 
 		self.last_block_scope = 2**num_layers  # number of samples the last block generates
@@ -210,10 +272,20 @@ class Model(nn.Module):
 			gpu_ids = range(self.ngpu)
 		return nn.parallel.data_parallel(self.main, input, gpu_ids)
 
-	def generate(self, start_data, num_generate):
+	def generate(self, num_generate, start_data=torch.FloatTensor([0])):
+		"""
+		:param start_data: torch tensor with length of at least one, used to start the generation process
+		:param num_generate: number of samples that will be generated
+		:return: torch tensor of size num_generated, containing the generated samples
+		"""
+
 		self.eval()
 		#l = start_data.size(0)
-		generated = start_data
+		generated = Variable(start_data, volatile=True)
+
+		num_pad = generated.size(0) - self.scope
+		if num_pad > 0:
+			generated = ConstantPad1d(self.scope, pad_start=True)(generated)
 
 		#if l > self.scope:
 		#	start_data = start_data[l-start_data:l]
@@ -223,7 +295,7 @@ class Model(nn.Module):
 			o = self.forward(Variable(input))[-1, :].squeeze()
 			max = torch.max(o, 0)[1].float()
 			s = (max.data / self.num_classes) * 2. - 1 # new sample
-			#print(s[0])
+			print(s[0])
 			generated = torch.cat((generated, s), 0)
 
 		return generated
@@ -310,7 +382,7 @@ class Optimizer:
 		# 		plt.show()
 
 
-class Wavenet_data:
+class WavenetData:
 	def __init__(self, path, input_length, target_length, num_classes):
 		data = wavfile.read(path)[1][:, 0]
 

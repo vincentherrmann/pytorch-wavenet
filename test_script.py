@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.autograd import Variable
 from utils import make_batch, one_hot
-from model import Model, Optimizer, Wavenet_data
+from model import Model, Optimizer, WavenetData
 from scipy.io import wavfile
 import visdom
 
@@ -20,7 +20,7 @@ inputs, targets = make_batch('sine.wav')
 num_time_samples = inputs.shape[2]
 
 print('create model...')
-model = Model(num_time_samples=num_time_samples, num_blocks=2, num_layers=12, num_hidden=32, num_classes=64)
+model = Model(num_time_samples=num_time_samples, num_blocks=2, num_layers=10, num_hidden=32, num_classes=64)
 torch.save(model, 'untrained_model')
 
 print('model: ', model)
@@ -32,7 +32,7 @@ print('last_block_scope: ', model.last_block_scope)
 #print(generated)
 
 
-data = Wavenet_data('voice.wav', input_length=model.scope, target_length=model.last_block_scope, num_classes=model.num_classes)
+data = WavenetData('voice.wav', input_length=model.scope, target_length=model.last_block_scope, num_classes=model.num_classes)
 start_tensor = data.get_minibatch([12345])[0].squeeze()
 
 # print('generate...')
