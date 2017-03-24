@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.legacy.nn as legacy
 import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable, Function
@@ -31,42 +32,54 @@ class ConvDilated(nn.Module):
 								  num_channels=num_channels_in)
 
 	def forward(self, x):
-		[n, c, l] = x.size()
 		#print('x size in: ', x.size())
 
-		# zero padding
-		num_pad = self.kernel_size + 1 - l
-		if num_pad > 0: # if l is to small
-			x = constant_pad_1d(x, self.kernel_size+1, dimension=2, pad_start=True)
-		if self.dilation != 1 & (l - self.kernel_size + 1) % 2 != 0: # if the result is odd
-			x = constant_pad_1d(x, l+1, dimension=2, pad_start=True)
+		x = self.dilate(x)
+		l = x.size(2)
+
+		# zero padding for convolution
+		if l < self.kernel_size:
+			x = constant_pad_1d(x, self.kernel_size-l, dimension=2, pad_start=True)
 
 		x = self.conv(x)
 		#x = self.batchnorm()
 		#print('size after conv: ', x.size())
 
-		# reshape x for dilation
-		x = x.transpose(0,2).contiguous()
-
-		if self.dilation != 1:
-			l = l // (self.dilation // n)
-			n = self.dilation
-			x = x.view(l, self.num_channels_out, n).transpose(0, 2).contiguous()
-		else:
-			#print('last block layer:')
-			x = x.view(self.dilation, self.num_channels_out, -1)
-
 		#print('x size out: ', x.size())
 		return F.relu(x)
 
+	def dilate(self, x):
+		[n, c, l] = x.size()
+
+		dilation_factor = self.dilation / n
+		if self.dilation == n:
+			return x
+
+		# zero padding for reshaping
+		new_l = int(np.ceil(l / dilation_factor) * dilation_factor)
+		if new_l != l:
+			l = new_l
+			x = constant_pad_1d(x, new_l, dimension=2, pad_start=True)
+
+		# remainder = l % dilation_factor
+		# if remainder != 0:
+		# 	num_pad = dilation_factor - remainder
+		# 	l = num_pad+l
+		# 	x = constant_pad_1d(x, l, dimension=2, pad_start=True)
+
+		# reshape according to dilation
+		x = x.transpose(0, 2).contiguous()
+		l = (l * n) // self.dilation
+		n = self.dilation
+		x = x.view(l, c, n).transpose(0, 2).contiguous()
+
+		return x
+
 	def generate(self, new_sample):
 		self.queue.enqueue(new_sample)
-		if self.dilation > 1:
-			d = self.dilation // 2
-		else:
-			d = 1
 		x = self.queue.dequeue(num_deq=self.kernel_size,
-							   dilation=d)
+							   dilation=self.dilation)
+
 		#x = self.conv(Variable(x.unsqueeze(0), volatile=True))
 		x = F.conv1d(Variable(x.unsqueeze(0), volatile=True),
 				 weight=self.conv.weight)
@@ -225,8 +238,8 @@ class Model(nn.Module):
 		# build model
 		for b in range(num_blocks):
 			num_additional = num_kernel - 1
-			dilation = 2
-			for i in range(num_layers-1):
+			dilation = 1
+			for i in range(num_layers):
 				name = 'b{}-l{}.dilated_conv'.format(b, i)
 				main.add_module(name, ConvDilated(in_channels,
 												  out_channels,
@@ -243,17 +256,16 @@ class Model(nn.Module):
 				#block_scope = block_scope * 2 + num_kernel - 1
 				#print('block_scope: ', block_scope)
 				in_channels = out_channels
-			main.add_module('b{}-last'.format(b), ConvDilated(in_channels,
-															  out_channels,
-															  kernel_size=num_kernel,
-															  dilation=1))
 			#scope += block_scope
 
 		self.last_block_scope = 2**num_layers  # number of samples the last block generates
 		scope = scope + self.last_block_scope
 		print('scope: ', scope)
 
-		main.add_module('final', Final(in_channels=in_channels, num_classes=num_classes))
+		main.add_module('final', ConvDilated(in_channels,
+											 num_classes,
+											 kernel_size=1,
+											 dilation=1))
 
 		self.scope = scope # number of samples needed as input
 		self.main = main
@@ -265,7 +277,9 @@ class Model(nn.Module):
 		gpu_ids = None
 		if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
 			gpu_ids = range(self.ngpu)
-		return nn.parallel.data_parallel(self.main, input, gpu_ids)
+		x = nn.parallel.data_parallel(self.main, input, gpu_ids)
+		x = x.transpose(0,2)
+		return x
 
 	def generate(self, num_generate, start_data=torch.FloatTensor([0])):
 		"""
