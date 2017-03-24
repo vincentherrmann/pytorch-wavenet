@@ -1,9 +1,10 @@
 from unittest import TestCase
 from scipy.io import wavfile
 import torch
+import torch.autograd
 from torch.nn._functions.padding import ConstantPad2d
 import torch.nn.functional as F
-from torch.autograd import Variable
+from torch.autograd import Variable, gradcheck
 
 from model import DilatedQueue, zero_pad, ConstantPad1d
 
@@ -103,27 +104,32 @@ class Test_wav_files(TestCase):
 
 class Test_padding(TestCase):
 	def test_1d(self):
-		x = Variable(torch.ones((2, 3, 4)))
+		x = Variable(torch.ones((2, 3, 4)), requires_grad=True)
 
 		pad = ConstantPad1d(5, dimension=0, pad_start=False)
 
-		res = pad.forward(x)
+		res = pad(x)
 		assert res.size() == (5, 3, 4)
 		assert res[-1, 0, 0] == 0
 
+		test = gradcheck(ConstantPad1d, x, eps=1e-6, atol=1e-4)
+		print('gradcheck', test)
+
+		#torch.autograd.backward(res, )
+		res.backward()
 		back = pad.backward(res)
 		assert back.size() == (2, 3, 4)
 		assert back[-1, 0, 0] == 1
-
-		pad = ConstantPad1d(5, dimension=1, pad_start=True)
-
-		res = pad.forward(x)
-		assert res.size() == (2, 5, 4)
-		assert res[0, 4, 0] == 0
-
-		back = pad.backward(res)
-		assert back.size() == (2, 3, 4)
-		assert back[0, 2, 0] == 1
+		#
+		# pad = ConstantPad1d(5, dimension=1, pad_start=True)
+		#
+		# res = pad(x)
+		# assert res.size() == (2, 5, 4)
+		# assert res[0, 4, 0] == 0
+		#
+		# back = pad.backward(res)
+		# assert back.size() == (2, 3, 4)
+		# assert back[0, 2, 0] == 1
 
 
 	def test_2d(self):

@@ -12,7 +12,7 @@ class ConvDilated(nn.Module):
 				 num_channels_in=1,
 				 num_channels_out=1,
 				 kernel_size=2,
-				 dilation=1):
+				 dilation=2):
 		super(ConvDilated, self).__init__()
 
 		self.num_channels_in = num_channels_in
@@ -23,10 +23,11 @@ class ConvDilated(nn.Module):
 							  out_channels=num_channels_out,
 							  kernel_size=kernel_size,
 							  bias=False)
-		self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out, affine=False)
+		#self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out, affine=False)
 
 		self.dilation = dilation
-		self.queue = DilatedQueue(max_length=kernel_size * dilation,
+
+		self.queue = DilatedQueue(max_length=(kernel_size-1) * dilation + 1,
 								  num_channels=num_channels_in)
 
 	def forward(self, x):
@@ -36,17 +37,12 @@ class ConvDilated(nn.Module):
 		# zero padding
 		num_pad = self.kernel_size + 1 - l
 		if num_pad > 0: # if l is to small
-			x = ConstantPad1d(self.kernel_size + 1, dimension=2, pad_start=True)(x)
-			#x = zero_pad(x, num_pad, dimension=2, pad_start=True)
-			#o = Variable(x.data.new(n, c, num_pad).zero_())
-			#x = torch.cat((o, x), 2)
+			x = constant_pad_1d(x, self.kernel_size+1, dimension=2, pad_start=True)
 		if self.dilation != 1 & (l - self.kernel_size + 1) % 2 != 0: # if the result is odd
-			x = ConstantPad1d(l+1, dimension=2, pad_start=True)(x)
-			#x = zero_pad(x, 1, dimension=2, pad_start=True)
-			#o = Variable(x.data.new(n, c, 1).zero_())
-			#x = torch.cat((o, x), 2)
+			x = constant_pad_1d(x, l+1, dimension=2, pad_start=True)
 
-		x = self.batchnorm(self.conv(x))
+		x = self.conv(x)
+		#x = self.batchnorm()
 		#print('size after conv: ', x.size())
 
 		# reshape x for dilation
@@ -65,10 +61,18 @@ class ConvDilated(nn.Module):
 
 	def generate(self, new_sample):
 		self.queue.enqueue(new_sample)
+		if self.dilation > 1:
+			d = self.dilation // 2
+		else:
+			d = 1
 		x = self.queue.dequeue(num_deq=self.kernel_size,
-							   dilation=self.dilation)
-		x = self.conv(Variable(x.unsqueeze(0), volatile=True))
-		x = F.relu(self.batchnorm(x))
+							   dilation=d)
+		#x = self.conv(Variable(x.unsqueeze(0), volatile=True))
+		x = F.conv1d(Variable(x.unsqueeze(0), volatile=True),
+				 weight=self.conv.weight)
+		#x = self.conv.forward(x.unsqueeze(0))
+		#x = self.batchnorm(x)
+		x = F.relu(x)
 		return x.data.squeeze(0)
 
 
@@ -80,8 +84,8 @@ class Final(nn.Module):
 		super(Final, self).__init__()
 		self.num_classes = num_classes
 		self.in_channels = in_channels
-		self.conv = nn.Conv1d(in_channels, num_classes, kernel_size=1, bias=False)
-		self.batchnorm = nn.BatchNorm1d(num_classes, affine=False)
+		self.conv = nn.Conv1d(in_channels, num_classes, kernel_size=1, bias=True)
+		#self.batchnorm = nn.BatchNorm1d(num_classes, affine=False)
 		#nn.init.normal(self.conv.weight)
 		#self.conv.weight = nn.Parameter(torch.FloatTensor([1]))
 
@@ -94,7 +98,11 @@ class Final(nn.Module):
 
 	def generate(self, x):
 		#x = self.batchnorm(self.conv(Variable(x.unsqueeze(0), volatile=True)))
-		x = self.conv(Variable(x.unsqueeze(0), volatile=True))
+		#x = self.conv(Variable(x.unsqueeze(0), volatile=True))
+		x = F.conv1d(Variable(x.unsqueeze(0), volatile=True),
+					 weight=self.conv.weight,
+					 bias=self.conv.bias)
+		#x = self.conv.forward(x.unsqueeze(0))
 		max_index = torch.max(x.squeeze(), 0)[1]
 		s = (max_index.data[0] / self.num_classes) * 2. - 1
 		return s
@@ -105,6 +113,7 @@ class DilatedQueue:
 		self.in_pos = 0
 		self.out_pos = 0
 		self.num_deq = num_deq
+		self.num_channels = num_channels
 		self.dilation = dilation
 		self.max_length = max_length
 		self.data = data
@@ -135,29 +144,6 @@ class DilatedQueue:
 		self.in_pos = 0
 		self.out_pos = 0
 
-def zero_pad(x, num_pad, dimension=0, pad_start=False):
-	size = list(x.size())
-	size[dimension] = num_pad
-	o = x.new(tuple(size)).zero_()
-	if pad_start:
-		return torch.cat([o, x], dimension)
-	else:
-		return torch.cat([x, o], dimension)
-
-	pad_dim = x.dim - dimension
-
-	assert dimension > x.dim - 3, 'zero padding is only possible for the last two dimensions'
-
-	# reshape x for using nn.pad()
-	if x.dim > 4:
-		sizes = list(x.sizes)[-3:]
-		x = x.view(tuple([-1] + sizes))
-	elif x.dim < 4:
-		for _ in range(4-x.dim):
-			x = torch.unsqueeze(x, dim=0)
-
-	#if dimension == x.dim - 1
-
 class ConstantPad1d(Function):
 	def __init__(self, target_size, dimension=0, value=0, pad_start=False):
 		super(ConstantPad1d, self).__init__()
@@ -174,7 +160,7 @@ class ConstantPad1d(Function):
 
 		size = list(input.size())
 		size[self.dimension] = self.target_size
-		output = Variable(input.data.new(*tuple(size)).fill_(self.value))
+		output = input.new(*tuple(size)).fill_(self.value)
 		c_output = output
 
 		# crop output
@@ -183,11 +169,11 @@ class ConstantPad1d(Function):
 		else:
 			c_output = c_output.narrow(self.dimension, 0, c_output.size(self.dimension) - self.num_pad)
 
-		c_output.data.copy_(input.data)
+		c_output.copy_(input)
 		return output
 
 	def backward(self, grad_output):
-		grad_input = Variable(grad_output.data.new(*self.input_size).zero_())
+		grad_input = grad_output.new(*self.input_size).zero_()
 		cg_output = grad_output
 
 		# crop grad_output
@@ -196,8 +182,17 @@ class ConstantPad1d(Function):
 		else:
 			cg_output = cg_output.narrow(self.dimension, 0, cg_output.size(self.dimension) - self.num_pad)
 
-		grad_input.data.copy_(cg_output.data)
+		grad_input.copy_(cg_output)
 		return grad_input
+
+
+def constant_pad_1d(input,
+					target_size,
+					dimension=0,
+					value=0,
+					pad_start=False):
+	return ConstantPad1d(target_size, dimension, value, pad_start)(input)
+
 
 class Model(nn.Module):
 	def __init__(self,
@@ -283,25 +278,30 @@ class Model(nn.Module):
 		#l = start_data.size(0)
 		generated = Variable(start_data, volatile=True)
 
-		num_pad = generated.size(0) - self.scope
+		num_pad = self.scope - generated.size(0)
 		if num_pad > 0:
-			generated = ConstantPad1d(self.scope, pad_start=True)(generated)
+			generated = constant_pad_1d(generated, self.scope, pad_start=True)
+			#ConstantPad1d(self.scope, pad_start=True).forward(generated)
 
 		#if l > self.scope:
 		#	start_data = start_data[l-start_data:l]
 
 		for i in range(num_generate):
 			input = generated[-self.scope:].view(1, 1, -1)
-			o = self.forward(Variable(input))[-1, :].squeeze()
+			o = self.forward(input)[-1, :].squeeze()
 			max = torch.max(o, 0)[1].float()
-			s = (max.data / self.num_classes) * 2. - 1 # new sample
-			print(s[0])
+			s = (max / self.num_classes) * 2. - 1 # new sample
+			print(s.data[0])
 			generated = torch.cat((generated, s), 0)
 
 		return generated
 
 	def fast_generate(self, num_generate, first_sample=0):
 		self.eval()
+
+		for module in self.modules():
+			if hasattr(module, 'queue'):
+				module.queue.reset()
 
 		generated = [first_sample]
 		s = torch.FloatTensor([generated])
@@ -316,17 +316,23 @@ class Model(nn.Module):
 
 
 class Optimizer:
-	def __init__(self, model, learning_rate=0.001):
+	def __init__(self, model, learning_rate=0.001, train_hook=None, avg_length=20, stop_threshold=0.2):
 		self.model = model
 		self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+		self.hook = train_hook
+		self.avg_length = avg_length
+		self.stop_threshold = stop_threshold
+
 		#self.optimizer = optim.SGD(model.parameters(), lr=1000000., momentum=0.9)
 
 	def train(self, data):
 		self.model.train()  # set to train mode
 		i = 0
 		avg_loss = 0
+		losses = []
 
-		indices = torch.randperm(data.data_length-self.model.scope) + self.model.scope
+		#indices = torch.randperm(data.data_length-self.model.scope) + self.model.scope
+		indices = torch.randperm(data.data_length)
 		#indices = [20000, 30000, 25000]
 		while True:
 			i += 1
@@ -351,14 +357,17 @@ class Optimizer:
 
 			avg_loss += loss.data[0]
 
-			if i % 20 == 0:
+			if i % self.avg_length == 0:
 				#print('output:', output[0].view(1, -1))
 				#print('output max:', output.max(1)[1].view(1, -1))
 				#print('targets:', targets.view(1, -1))
 				avg_loss = avg_loss/20
-				print('loss: ', avg_loss)
 
-				if avg_loss < 0.2:
+				losses.append(avg_loss)
+				if self.hook != None:
+					self.hook(losses)
+
+				if avg_loss < self.stop_threshold:
 					print('save model')
 					torch.save(self.model.state_dict(), 'last_trained_model')
 					break
@@ -407,6 +416,7 @@ class WavenetData:
 		self.data_length = data.size
 		self.input_length = input_length
 		self.target_length = target_length
+		self.num_classes = num_classes
 
 	def get_minibatch(self, indices):
 		# TODO: allow real minibatches
@@ -415,13 +425,17 @@ class WavenetData:
 		this_target = []
 		for i in indices:
 			if i < self.input_length:
-				this_input = self.inputs[0:i][None, None, :]
+				this_input = np.lib.pad(self.inputs[0:i],
+										pad_width=(self.input_length-i, 0),
+										mode='constant')
+				this_input = this_input[None, None, :]
+				#this_input = self.inputs[0:i][None, None, :]
 			else:
 				this_input = self.inputs[i-self.input_length:i][None, None, :]
 
 			num_pad = self.target_length - i
 			if num_pad > 0:
-				pad = np.zeros(num_pad) + 127
+				pad = np.zeros(num_pad) + self.num_classes - 1
 				this_target = np.concatenate((pad, self.targets[0:i]))
 			else:
 				this_target = self.targets[i-self.target_length:i]
