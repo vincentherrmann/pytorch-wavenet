@@ -34,7 +34,7 @@ class ConvDilated(nn.Module):
 	def forward(self, x):
 		#print('x size in: ', x.size())
 
-		x = self.dilate(x)
+		x = dilate(x, self.dilation)
 		l = x.size(2)
 
 		# zero padding for convolution
@@ -48,33 +48,6 @@ class ConvDilated(nn.Module):
 		#print('x size out: ', x.size())
 		return F.relu(x)
 
-	def dilate(self, x):
-		[n, c, l] = x.size()
-
-		dilation_factor = self.dilation / n
-		if self.dilation == n:
-			return x
-
-		# zero padding for reshaping
-		new_l = int(np.ceil(l / dilation_factor) * dilation_factor)
-		if new_l != l:
-			l = new_l
-			x = constant_pad_1d(x, new_l, dimension=2, pad_start=True)
-
-		# remainder = l % dilation_factor
-		# if remainder != 0:
-		# 	num_pad = dilation_factor - remainder
-		# 	l = num_pad+l
-		# 	x = constant_pad_1d(x, l, dimension=2, pad_start=True)
-
-		# reshape according to dilation
-		x = x.transpose(0, 2).contiguous()
-		l = (l * n) // self.dilation
-		n = self.dilation
-		x = x.view(l, c, n).transpose(0, 2).contiguous()
-
-		return x
-
 	def generate(self, new_sample):
 		self.queue.enqueue(new_sample)
 		x = self.queue.dequeue(num_deq=self.kernel_size,
@@ -85,8 +58,29 @@ class ConvDilated(nn.Module):
 				 weight=self.conv.weight)
 		#x = self.conv.forward(x.unsqueeze(0))
 		#x = self.batchnorm(x)
+
 		x = F.relu(x)
 		return x.data.squeeze(0)
+
+def dilate(x, dilation):
+	[n, c, l] = x.size()
+	dilation_factor = dilation / n
+	if dilation == n:
+		return x
+
+	# zero padding for reshaping
+	new_l = int(np.ceil(l / dilation_factor) * dilation_factor)
+	if new_l != l:
+		l = new_l
+		x = constant_pad_1d(x, new_l, dimension=2, pad_start=True)
+
+	# reshape according to dilation
+	x = x.transpose(0, 2).contiguous()
+	l = (l * n) // dilation
+	n = dilation
+	x = x.view(l, c, n).transpose(0, 2).contiguous()
+
+	return x
 
 
 
@@ -104,6 +98,7 @@ class Final(nn.Module):
 
 	def forward(self, x):
 		#x = self.batchnorm(self.conv(x))
+		x = dilate(x, 1)
 		x = self.conv(x)
 		[n, c, l] = x.size()
 		x = x.transpose(1, 2).contiguous().view(n*l, c)
@@ -240,7 +235,7 @@ class Model(nn.Module):
 			num_additional = num_kernel - 1
 			dilation = 1
 			for i in range(num_layers):
-				name = 'b{}-l{}.dilated_conv'.format(b, i)
+				name = 'b{}-l{}.conv_dilation{}'.format(b, i, dilation)
 				main.add_module(name, ConvDilated(in_channels,
 												  out_channels,
 												  kernel_size=num_kernel,
@@ -250,7 +245,7 @@ class Model(nn.Module):
 				num_additional *= 2
 				dilation *= 2
 
-				print('b{}-l{}'.format(b, i))
+				#print('b{}-l{}'.format(b, i))
 				print('current scope: ', scope)
 
 				#block_scope = block_scope * 2 + num_kernel - 1
@@ -262,10 +257,7 @@ class Model(nn.Module):
 		scope = scope + self.last_block_scope
 		print('scope: ', scope)
 
-		main.add_module('final', ConvDilated(in_channels,
-											 num_classes,
-											 kernel_size=1,
-											 dilation=1))
+		main.add_module('final', Final(in_channels, num_classes))
 
 		self.scope = scope # number of samples needed as input
 		self.main = main
@@ -274,11 +266,11 @@ class Model(nn.Module):
 		#	ninit.constant(parameter, 1)
 
 	def forward(self, input):
-		gpu_ids = None
-		if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
-			gpu_ids = range(self.ngpu)
-		x = nn.parallel.data_parallel(self.main, input, gpu_ids)
-		x = x.transpose(0,2)
+		# gpu_ids = None
+		# if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
+		# 	gpu_ids = range(self.ngpu)
+		# x = nn.parallel.data_parallel(self.main, input, gpu_ids)
+		x = self.main(input)
 		return x
 
 	def generate(self, num_generate, start_data=torch.FloatTensor([0])):
@@ -310,15 +302,23 @@ class Model(nn.Module):
 
 		return generated
 
-	def fast_generate(self, num_generate, first_sample=0):
+	def fast_generate(self, num_generate, first_samples=torch.zeros((1))):
 		self.eval()
+
+		num_given_samples = first_samples.size()
 
 		for module in self.modules():
 			if hasattr(module, 'queue'):
 				module.queue.reset()
 
-		generated = [first_sample]
-		s = torch.FloatTensor([generated])
+		s = 0
+
+		for i in range(num_given_samples):
+			s = first_samples[i]
+			for module in self.main.children():
+				r = module.generate(s)
+
+		generated = []
 
 		for i in range(num_generate):
 			for module in self.main.children():
@@ -358,7 +358,7 @@ class Optimizer:
 
 			#print('step...')
 			#labels = one_hot(targets, 256)
-			loss = F.cross_entropy(output, Variable(targets))
+			loss = F.cross_entropy(output.squeeze(), Variable(targets))
 
 			loss.backward()
 

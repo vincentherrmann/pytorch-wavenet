@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.autograd import Variable
 from utils import make_batch, one_hot
-from model import Model, Optimizer, WavenetData
+from model import Model, Optimizer, WavenetData, ConvDilated
 from scipy.io import wavfile
 import visdom
 
@@ -15,6 +15,20 @@ import visdom
 #data = Wavenet_data('voice.wav', input_length=32, target_length=20)
 #i1, t1 = data.get_minibatch([11400])
 #i2, t2 = data.get_minibatch([6])
+
+####test
+module = ConvDilated(num_channels_in=1,
+							 num_channels_out=1,
+							 kernel_size=2,
+							 dilation=2)
+
+module.conv.weight = torch.nn.Parameter(torch.FloatTensor([[[0, 1]]]))
+module.train()
+w = module.conv.weight
+
+input = torch.linspace(0, 12, steps=13).view(1, 1, 13)
+dilated = module(Variable(input))
+######
 
 inputs, targets = make_batch('sine.wav')
 num_time_samples = inputs.shape[2]

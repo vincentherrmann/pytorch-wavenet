@@ -6,7 +6,7 @@ from torch.nn._functions.padding import ConstantPad2d
 import torch.nn.functional as F
 from torch.autograd import Variable, gradcheck
 
-from model import DilatedQueue, zero_pad, ConstantPad1d
+from model import DilatedQueue, ConstantPad1d
 
 
 class Test_dilated_queue(TestCase):
