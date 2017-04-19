@@ -37,11 +37,13 @@ class Model(nn.Module):
 			num_additional = num_kernel - 1
 			dilation = 1
 			for i in range(num_layers):
+				residual = in_channels == out_channels
 				name = 'b{}-l{}.conv_dilation{}'.format(b, i, dilation)
 				main.add_module(name, ConvDilated(in_channels,
 												  out_channels,
 												  kernel_size=num_kernel,
-												  dilation=dilation))
+												  dilation=dilation,
+												  residual_connection=residual))
 
 				scope += num_additional
 				num_additional *= 2

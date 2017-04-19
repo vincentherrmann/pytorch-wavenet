@@ -10,7 +10,8 @@ class ConvDilated(nn.Module):
 				 num_channels_in=1,
 				 num_channels_out=1,
 				 kernel_size=2,
-				 dilation=2):
+				 dilation=2,
+				 residual_connection=True):
 		super(ConvDilated, self).__init__()
 
 		self.num_channels_in = num_channels_in
@@ -24,6 +25,7 @@ class ConvDilated(nn.Module):
 		#self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out, affine=False)
 
 		self.dilation = dilation
+		self.residual = residual_connection
 
 		self.queue = DilatedQueue(max_length=(kernel_size-1) * dilation + 1,
 								  num_channels=num_channels_in,
@@ -37,10 +39,13 @@ class ConvDilated(nn.Module):
 		if l < self.kernel_size:
 			x = constant_pad_1d(x, self.kernel_size-l, dimension=2, pad_start=True)
 
-		x = self.conv(x)
+		r = self.conv(x)
+
+		if self.residual:
+			r = r + x[:,:,1:]
 		# x = self.batchnorm()
-		x = F.relu(x)
-		return x
+		r = F.relu(r)
+		return r
 
 	def generate(self, new_sample):
 		self.queue.enqueue(new_sample)
@@ -49,11 +54,14 @@ class ConvDilated(nn.Module):
 
 		x = x.unsqueeze(0)
 
-		x = self.conv(Variable(x, volatile=True))
+		r = self.conv(Variable(x, volatile=True))
+
+		if self.residual:
+			r = r + x
 		#x = self.batchnorm(x)
-		x = F.relu(x)
-		x = x.data.squeeze(0)
-		return x
+		r = F.relu(r)
+		r = r.data.squeeze(0)
+		return r
 
 class Final(nn.Module):
 	def __init__(self,
