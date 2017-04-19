@@ -28,57 +28,42 @@ class ConvDilated(nn.Module):
 		self.queue = DilatedQueue(max_length=(kernel_size-1) * dilation + 1,
 								  num_channels=num_channels_in,
 								  dilation=dilation)
-		#print("dilation: ", dilation)
 
 	def forward(self, x):
-		#print('x size in: ', x.size())
-
 		x = dilate(x, self.dilation)
+
 		l = x.size(2)
-
-		if self.dilation <= 2:
-			x_test = x[:, :, -2:]
-			#print("dilation: ", self.dilation, "x: ", x_test)
-
 		# zero padding for convolution
 		if l < self.kernel_size:
 			x = constant_pad_1d(x, self.kernel_size-l, dimension=2, pad_start=True)
 
 		x = self.conv(x)
-
-
-		#x = self.batchnorm()
-
-		return F.relu(x)
+		# x = self.batchnorm()
+		x = F.relu(x)
+		return x
 
 	def generate(self, new_sample):
-		# TODO different dilation results for forward and generate
-
 		self.queue.enqueue(new_sample)
 		x = self.queue.dequeue(num_deq=self.kernel_size,
 							   dilation=self.dilation)
 
 		x = x.unsqueeze(0)
 
-		# if self.dilation <= 2:
-		# 	print("dilation: ", self.dilation, "x: ", x)
-
-		x = self.conv(Variable(x)) # TODO make volatile
-		# x = F.conv1d(Variable(x.unsqueeze(0), volatile=True),
-		# 		 weight=self.conv.weight)
-		#x = self.conv(x.unsqueeze(0))
+		x = self.conv(Variable(x, volatile=True))
 		#x = self.batchnorm(x)
-
 		x = F.relu(x)
-		return x.data.squeeze(0)
+		x = x.data.squeeze(0)
+		return x
 
 class Final(nn.Module):
 	def __init__(self,
 				 in_channels=1,
-				 num_classes=256):
+				 num_classes=256,
+				 out_length=1024):
 		super(Final, self).__init__()
 		self.num_classes = num_classes
 		self.in_channels = in_channels
+		self.out_length = out_length
 		self.conv = nn.Conv1d(in_channels,
 							  num_classes,
 							  kernel_size=1,
@@ -91,26 +76,17 @@ class Final(nn.Module):
 		#x = self.batchnorm(self.conv(x))
 		x = dilate(x, 1)
 		x = self.conv(x)
+
 		[n, c, l] = x.size()
 		x = x.transpose(1, 2).contiguous().view(n*l, c)
-		return x #F.softmax(x)
+		x = x[-self.out_length:, :]
+		return x
 
 	def generate(self, x):
 		#x = self.batchnorm(self.conv(Variable(x.unsqueeze(0), volatile=True)))
 		x = x.unsqueeze(0)
-		par = list(self.conv.parameters())
-		weights = par[0]
-		bias = par[1]
-		x = self.conv(Variable(x)) # TODO make volatile
-		# x = F.conv1d(Variable(x.unsqueeze(0), volatile=True),
-		# 			 weight=self.conv.weight,
-		# 			 bias=self.conv.bias)
-		#x = self.conv(x.unsqueeze(0))
-
+		x = self.conv(Variable(x, volatile=True))
 		x = x.squeeze()
-		#x[-1] = -1
-		#max_index = torch.max(x, 0)[1].data[0]
-		#s = (max_index / self.num_classes) * 2. - 1
 		return x
 
 def dilate(x, dilation):

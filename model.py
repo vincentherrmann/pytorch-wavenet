@@ -1,10 +1,5 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.legacy.nn as legacy
 import torch.optim as optim
-import numpy as np
-from torch.autograd import Variable, Function
 from scipy.io import wavfile
 from wavenet_modules import *
 
@@ -64,13 +59,10 @@ class Model(nn.Module):
 		scope = scope + self.last_block_scope
 		print('scope: ', scope)
 
-		main.add_module('final', Final(in_channels, num_classes))
+		main.add_module('final', Final(in_channels, num_classes, self.last_block_scope))
 
 		self.scope = scope # number of samples needed as input
 		self.main = main
-
-		#for parameter in self.parameters():
-		#	ninit.constant(parameter, 1)
 
 	def forward(self, input):
 		# gpu_ids = None
@@ -237,7 +229,7 @@ class Optimizer:
 				#print('output:', output[0].view(1, -1))
 				#print('output max:', output.max(1)[1].view(1, -1))
 				#print('targets:', targets.view(1, -1))
-				avg_loss = avg_loss/20
+				avg_loss = avg_loss / self.avg_length
 
 				losses.append(avg_loss)
 				if self.hook != None:
