@@ -6,6 +6,12 @@ from model import ConvDilated, dilate
 class Test_Dilation(TestCase):
 	def test_dilate(self):
 		input = Variable(torch.linspace(0, 12, steps=13).view(1, 1, 13))
+
+		dilated = dilate(input, 1)
+		assert dilated.size() == (1, 1, 13)
+		assert dilated[0, 0, 4] == 4
+		print(dilated)
+
 		dilated = dilate(input, 2)
 		assert dilated.size() == (2, 1, 7)
 		assert dilated[1, 0, 2] == 4
@@ -20,6 +26,14 @@ class Test_Dilation(TestCase):
 		assert dilated.size() == (1, 1, 16)
 		assert dilated[0, 0, 7] == 4
 		print(dilated)
+
+	def test_dilate_multichannel(self):
+		input = Variable(torch.linspace(0, 35, steps=36).view(2, 3, 6))
+
+		dilated = dilate(input, 1)
+		dilated = dilate(input, 2)
+		dilated = dilate(input, 4)
+
 
 
 class Test_ConvDilated(TestCase):

@@ -49,7 +49,7 @@ class Test_dilated_queue(TestCase):
 			e = e + 1
 			queue.enqueue(e)
 			d = queue.dequeue(num_deq=3, dilation=4)
-			assert d[0]
+			assert d[0][0] == max(i - 7, 0)
 
 class Test_zero_padding(TestCase):
 	def test_end_padding(self):
