@@ -6,6 +6,18 @@ from torch.autograd import Variable, Function
 import numpy as np
 
 class ConvDilated(nn.Module):
+	"""Applies dilation and a 1D convolution over a multi-channel input signal.
+	Allows optional residual connection if the number of input channels equals the number of output channels.
+
+	:param num_channels_in: Number of input channels. Should be the size of the second dimension of the input tensor
+	:param num_channels_out: Number of output channels. Will be the size of the second dimension of the output tensor
+	:param kernel_size: Length of the convolution filter
+	:param dilation: Target dilation. Will be the first dimension of the output tensor
+	:param residual_connection: If true, the dilated input will be added to the output of the convolution
+
+
+
+	"""
 	def __init__(self,
 				 num_channels_in=1,
 				 num_channels_out=1,
@@ -53,11 +65,12 @@ class ConvDilated(nn.Module):
 							   dilation=self.dilation)
 
 		x = x.unsqueeze(0)
+		x = Variable(x, volatile=True)
 
-		r = self.conv(Variable(x, volatile=True))
+		r = self.conv(x)
 
 		if self.residual:
-			r = r + x
+			r = r + x[:,:,1]
 		#x = self.batchnorm(x)
 		r = F.relu(r)
 		r = r.data.squeeze(0)
@@ -97,7 +110,14 @@ class Final(nn.Module):
 		x = x.squeeze()
 		return x
 
-def dilate(x, dilation):
+def dilate(x, dilation, pad_start=True):
+	"""
+	:param x: Tensor of size (N, C, L), where N is the input dilation, C is the number of channels, and L is the input length
+	:param dilation: Target dilation. Will be the size of the first dimension of the output tensor.
+	:param pad_start: If the input length is not compatible with the specified dilation, zero padding is used. This parameter determines wether the zeros are added at the start or at the end.
+	:return: The dilated tensor of size (dilation, C, L*N / dilation). The output might be zero padded at the start
+	"""
+
 	[n, c, l] = x.size()
 	dilation_factor = dilation / n
 	if dilation == n:
@@ -107,7 +127,7 @@ def dilate(x, dilation):
 	new_l = int(np.ceil(l / dilation_factor) * dilation_factor)
 	if new_l != l:
 		l = new_l
-		x = constant_pad_1d(x, new_l, dimension=2, pad_start=True)
+		x = constant_pad_1d(x, new_l, dimension=2, pad_start=pad_start)
 
 	l = (l * n) // dilation
 	n = dilation
@@ -115,7 +135,7 @@ def dilate(x, dilation):
 	# reshape according to dilation
 	x = x.permute(1, 2, 0).contiguous()
 	x = x.view(c, l, n)
-	x = x.permute(2, 0, 1)
+	x = x.permute(2, 0, 1).contiguous()
 
 	return x
 

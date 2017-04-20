@@ -1,5 +1,7 @@
 import torch
 import torch.optim as optim
+import torch.nn.functional as F
+from torch.autograd import Variable
 from scipy.io import wavfile
 from wavenet_modules import *
 
@@ -13,7 +15,8 @@ class Model(nn.Module):
 				 num_blocks=2,
 				 num_layers=12,
 				 num_hidden=128,
-				 gpu_fraction=1.0):
+				 gpu_fraction=1.0,
+				 sampled_generation=False):
 
 		super(Model, self).__init__()
 
@@ -25,6 +28,7 @@ class Model(nn.Module):
 		self.num_layers = num_layers
 		self.num_hidden = num_hidden
 		self.gpu_fraction = gpu_fraction
+		self.sampled_generation = sampled_generation
 
 		main = nn.Sequential()
 
@@ -82,7 +86,6 @@ class Model(nn.Module):
 		"""
 
 		self.eval()
-		#l = start_data.size(0)
 		generated = Variable(start_data, volatile=True)
 
 		num_pad = self.scope - generated.size(0)
@@ -91,15 +94,20 @@ class Model(nn.Module):
 			print("pad zero")
 			#ConstantPad1d(self.scope, pad_start=True).forward(generated)
 
-		#if l > self.scope:
-		#	start_data = start_data[l-start_data:l]
-
 		for i in range(num_generate):
 			input = generated[-self.scope:].view(1, 1, -1)
 			o = self.forward(input)[-1, :].squeeze()
-			max = torch.max(o, 0)[1].float()
-			s = (max / self.num_classes) * 2. - 1 # new sample
-			#print(s.data[0])
+
+			if self.sampled_generation:
+				soft_o = F.softmax(o)
+				np_o = soft_o.data.numpy()
+				s = np.random.choice(self.num_classes, p=np_o)
+				s = Variable(torch.FloatTensor([s]))
+				s = (s / self.num_classes) * 2. - 1
+			else:
+				max = torch.max(o, 0)[1].float()
+				s = (max / self.num_classes) * 2. - 1 # new sample
+
 			generated = torch.cat((generated, s), 0)
 
 		return generated
@@ -151,35 +159,43 @@ class Model(nn.Module):
 		return [conv_generated, fast_generated]
 
 
-
 	def fast_generate(self, num_generate, first_samples=torch.zeros((1))):
 		self.eval()
 
 		num_given_samples = first_samples.size(0)
 
+		# reset queues
 		for module in self.modules():
 			if hasattr(module, 'queue'):
 				module.queue.reset()
 
 		s = first_samples[0]
 
+		# create samples with the support from the first_samples
 		support_generated = []
-
 		for i in range(num_given_samples-1):
+			# replace generated sample by provided sample
 			r = s
 			s = first_samples[i+1]
 			for module in self.main.children():
 				r = module.generate(r)
 			support_generated.append(r)
 
+		# autoregressive sample generation
 		generated = []
-
 		for i in range(num_generate):
 			for module in self.main.children():
 				s = module.generate(s)
-			#print(s[0])
-			max = torch.max(s, 0)[1].data[0]
-			s = (max / self.num_classes) * 2. - 1 # new sample
+
+			if self.sampled_generation:
+				soft_o = F.softmax(s)
+				np_o = soft_o.data.numpy()
+				s = np.random.choice(self.num_classes, p=np_o)
+				s = (s / self.num_classes) * 2. - 1
+			else:
+				max = torch.max(s, 0)[1].data[0]
+				s = (max / self.num_classes) * 2. - 1 # new sample
+
 			generated.append(s)
 
 		return [generated, support_generated]
@@ -228,9 +244,6 @@ class Optimizer:
 			avg_loss += loss.data[0]
 
 			if i % self.avg_length == 0:
-				#print('output:', output[0].view(1, -1))
-				#print('output max:', output.max(1)[1].view(1, -1))
-				#print('targets:', targets.view(1, -1))
 				avg_loss = avg_loss / self.avg_length
 
 				losses.append(avg_loss)
