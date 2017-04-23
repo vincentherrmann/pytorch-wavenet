@@ -71,10 +71,6 @@ class Model(nn.Module):
 		self.main = main
 
 	def forward(self, input):
-		# gpu_ids = None
-		# if isinstance(input.data, torch.cuda.FloatTensor) and self.ngpu > 1:
-		# 	gpu_ids = range(self.ngpu)
-		# x = nn.parallel.data_parallel(self.main, input, gpu_ids)
 		x = self.main(input)
 		return x
 

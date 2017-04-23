@@ -12,7 +12,7 @@ model = Model(num_time_samples=10000,
               num_layers=10,
               num_hidden=32,
               num_classes=64)
-torch.save(model, 'untrained_model')
+#torch.save(model, 'untrained_model')
 print('model: ', model)
 print('scope: ', model.scope)
 

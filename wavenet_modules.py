@@ -6,17 +6,25 @@ from torch.autograd import Variable, Function
 import numpy as np
 
 class ConvDilated(nn.Module):
-	"""Applies dilation and a 1D convolution over a multi-channel input signal.
+	r"""Base module of the WaveNet architecture. Applies dilation and a 1D convolution over a multi-channel input signal.
 	Allows optional residual connection if the number of input channels equals the number of output channels.
+
+	Args:
+		in_channels (int): Number of input channels. Should be the size of the second dimension of the input tensor
+		out_channels (int): Number of channels produced by the convolution
+		kernel_size (int): Size of the convolution kernel
+		dilation (int): Target dilation. Will be the size of the first dimension in the output tensor
+		residual_connection (bool): If true, the dilated input will be added to the output of the convolution
+
+	Shape:
+		- Input: :math:`D_{in}, C_{in}, L_{in}`
+		- Output: :math:
 
 	:param num_channels_in: Number of input channels. Should be the size of the second dimension of the input tensor
 	:param num_channels_out: Number of output channels. Will be the size of the second dimension of the output tensor
 	:param kernel_size: Length of the convolution filter
 	:param dilation: Target dilation. Will be the first dimension of the output tensor
 	:param residual_connection: If true, the dilated input will be added to the output of the convolution
-
-
-
 	"""
 	def __init__(self,
 				 num_channels_in=1,
