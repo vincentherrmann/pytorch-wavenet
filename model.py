@@ -196,6 +196,7 @@ class Model(nn.Module):
 
 		return [generated, support_generated]
 
+
 class WaveNetModel(nn.Module):
 	def __init__(self,
 				 num_layers,
@@ -204,6 +205,8 @@ class WaveNetModel(nn.Module):
 				 kernel_size=2,
 				 hidden_channels=128,
 				 sampled_generation=False):
+
+		super(WaveNetModel, self).__init__()
 
 		self.num_classes = num_classes
 		self.sampled_generation = sampled_generation
@@ -234,6 +237,7 @@ class WaveNetModel(nn.Module):
 		scope = scope + self.last_block_scope
 
 		main.add_module('final', WaveNetFinalLayer(in_channels,
+												   num_classes=num_classes,
 												   out_length=self.last_block_scope))
 
 		self.scope = scope
@@ -268,7 +272,7 @@ class WaveNetModel(nn.Module):
 
 			generated = torch.cat((generated, s), 0)
 
-		return generated
+		return generated.data.tolist()
 
 	def fast_generate(self, num_generate, first_samples=torch.zeros((1))):
 		self.eval()
@@ -304,7 +308,7 @@ class WaveNetModel(nn.Module):
 				s = np.random.choice(self.num_classes, p=np_o)
 				s = (s / self.num_classes) * 2. - 1
 			else:
-				max = torch.max(s, 0)[1].data[0]
+				max = torch.max(s, 0)[1][0] #.data[0]
 				s = (max / self.num_classes) * 2. - 1 # new sample
 
 			generated.append(s)
@@ -312,15 +316,19 @@ class WaveNetModel(nn.Module):
 		return generated
 
 
+def print_last_loss(losses):
+	print("loss: ", losses[-1])
+
 
 class Optimizer:
-	def __init__(self, model, learning_rate=0.001, train_hook=None, avg_length=20, stop_threshold=0.2):
+	def __init__(self, model, stop_threshold, max_steps=None, learning_rate=0.001, train_hook=print_last_loss, avg_length=20):
 		self.model = model
 		self.optimizer = optim.Adam(model.parameters(),
 									lr=learning_rate)
 		self.hook = train_hook
 		self.avg_length = avg_length
 		self.stop_threshold = stop_threshold
+		self.max_steps = max_steps
 
 	def train(self, data):
 		self.model.train()  # set to train mode
@@ -354,6 +362,10 @@ class Optimizer:
 					torch.save(self.model.state_dict(), 'last_trained_model')
 					break
 				avg_loss = 0
+
+			if self.max_steps != None:
+				if i >= self.max_steps:
+					break
 
 
 class WaveNetData:

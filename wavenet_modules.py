@@ -70,8 +70,8 @@ class WaveNetLayer(nn.Module):
 		input = self.queue.dequeue(num_deq=self.kernel_size,
 								   dilation=self.dilation)
 
-		intput = input.unsqueeze(0)
-		intput = Variable(input, volatile=True)
+		input = input.unsqueeze(0)
+		#input = Variable(input, volatile=True)
 
 		r = F.relu(input)
 		r = self.dil_conv(r)
@@ -88,11 +88,14 @@ class WaveNetFinalLayer(nn.Module):
 
 	def __init__(self,
 				 in_channels,
+				 num_classes,
 				 out_length):
+
+		super(WaveNetFinalLayer, self).__init__()
 
 		self.out_length = out_length
 		self.conv = nn.Conv1d(in_channels=in_channels,
-							  out_channels=1,
+							  out_channels=num_classes,
 							  kernel_size=1,
 							  bias=True)
 
@@ -108,9 +111,10 @@ class WaveNetFinalLayer(nn.Module):
 		return r
 
 	def generate(self, new_sample):
-		r = new_sample.unsqueeze(0)
-		r = self.conv(Variable(r, volatile=True))
-		r = r.squeeze()
+		#r = new_sample.unsqueeze(0)
+		r = self.conv(new_sample)
+		#r = self.conv(Variable(r, volatile=True))
+		r = r.data.squeeze()
 		return r
 
 
@@ -269,7 +273,7 @@ class DilatedQueue:
 		self.max_length = max_length
 		self.data = data
 		if data == None:
-			self.data = torch.zeros(num_channels, max_length)
+			self.data = Variable(torch.zeros(num_channels, max_length))
 
 	def enqueue(self, input):
 		self.data[:, self.in_pos] = input
@@ -291,7 +295,7 @@ class DilatedQueue:
 		return t
 
 	def reset(self):
-		self.data = torch.torch.zeros(self.num_channels, self.max_length)
+		self.data = Variable(torch.zeros(self.num_channels, self.max_length))
 		self.in_pos = 0
 		self.out_pos = 0
 
