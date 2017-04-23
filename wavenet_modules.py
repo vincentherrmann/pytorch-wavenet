@@ -5,6 +5,116 @@ from torch.autograd import Variable, Function
 
 import numpy as np
 
+class WaveNetLayer(nn.Module):
+	def __init__(self,
+				 in_channels,
+				 out_channels,
+				 kernel_size=2,
+				 dilation=2,
+				 residual_connection=True):
+
+		super(WaveNetLayer, self).__init__()
+
+		self.kernel_size = kernel_size
+		self.dilation = dilation
+		self.residual = residual_connection
+
+		self.dil_conv = nn.Conv1d(in_channels=in_channels,
+								  out_channels=out_channels,
+								  kernel_size=kernel_size,
+								  bias=False)
+
+		self.onexone_conv = nn.Conv1d(in_channels=out_channels,
+									  out_channels=out_channels,
+									  kernel_size=1,
+									  bias=False)
+
+		self.queue = DilatedQueue(max_length=(kernel_size-1) * dilation + 1,
+								  num_channels=in_channels,
+								  dilation=dilation)
+
+	def forward(self, input):
+
+		#		|
+		# +----add
+		# |		|
+		# |	   1x1
+		# |		|
+		# |	   ReLU
+		# |		|
+		# |	   dil_conv
+		# |		|
+		# |	   ReLu
+		# +-----|
+
+		input = dilate(input, self.dilation)
+		r = F.relu(input)
+
+		# zero padding for convolution
+		l = r.size(2)
+		if l < self.kernel_size:
+			r = constant_pad_1d(r, self.kernel_size - l, dimension=2, pad_start=True)
+
+		r = self.dil_conv(r)
+		r = F.relu(r)
+		r = self.onexone_conv(r)
+
+		if self.residual:
+			input = input[:,:,(self.kernel_size-1):]
+			r = r + input.expand_as(r)
+
+		return r
+
+	def generate(self, new_sample):
+		self.queue.enqueue(new_sample)
+		input = self.queue.dequeue(num_deq=self.kernel_size,
+								   dilation=self.dilation)
+
+		intput = input.unsqueeze(0)
+		intput = Variable(input, volatile=True)
+
+		r = F.relu(input)
+		r = self.dil_conv(r)
+		r = F.relu(r)
+		r = self.onexone_conv(r)
+
+		if self.residual:
+			input = input[:,:,(self.kernel_size-1):]
+			r = r + input.expand_as(r)
+
+		return r
+
+class WaveNetFinalLayer(nn.Module):
+
+	def __init__(self,
+				 in_channels,
+				 out_length):
+
+		self.out_length = out_length
+		self.conv = nn.Conv1d(in_channels=in_channels,
+							  out_channels=1,
+							  kernel_size=1,
+							  bias=True)
+
+	def forward(self, input):
+		input = dilate(input, 1)
+		r = F.relu(input)
+		r = self.conv(r)
+
+		# reshape
+		[n, c, l] = r.size()
+		r = r.transpose(1, 2).contiguous().view(n * l, c)
+		r = r[-self.out_length:, :]
+		return r
+
+	def generate(self, new_sample):
+		r = new_sample.unsqueeze(0)
+		r = self.conv(Variable(r, volatile=True))
+		r = r.squeeze()
+		return r
+
+
+
 class ConvDilated(nn.Module):
 	r"""Base module of the WaveNet architecture. Applies dilation and a 1D convolution over a multi-channel input signal.
 	Allows optional residual connection if the number of input channels equals the number of output channels.
@@ -62,7 +172,8 @@ class ConvDilated(nn.Module):
 		r = self.conv(x)
 
 		if self.residual:
-			r = r + x[:,:,1:]
+			x = x[:,:,(self.kernel_size-1):]
+			r = r + x.expand_as(r)
 		# x = self.batchnorm()
 		r = F.relu(r)
 		return r
@@ -78,7 +189,8 @@ class ConvDilated(nn.Module):
 		r = self.conv(x)
 
 		if self.residual:
-			r = r + x[:,:,1]
+			x = x[:,:,(self.kernel_size-1):]
+			r = r + x.expand_as(r)
 		#x = self.batchnorm(x)
 		r = F.relu(r)
 		r = r.data.squeeze(0)

@@ -41,7 +41,7 @@ class Model(nn.Module):
 			num_additional = num_kernel - 1
 			dilation = 1
 			for i in range(num_layers):
-				residual = in_channels == out_channels
+				residual = True #in_channels == out_channels
 				name = 'b{}-l{}.conv_dilation{}'.format(b, i, dilation)
 				main.add_module(name, ConvDilated(in_channels,
 												  out_channels,
@@ -196,16 +196,131 @@ class Model(nn.Module):
 
 		return [generated, support_generated]
 
+class WaveNetModel(nn.Module):
+	def __init__(self,
+				 num_layers,
+				 num_blocks,
+				 num_classes,
+				 kernel_size=2,
+				 hidden_channels=128,
+				 sampled_generation=False):
+
+		self.num_classes = num_classes
+		self.sampled_generation = sampled_generation
+
+		main = nn.Sequential()
+
+		scope = 0
+		in_channels = 1
+		out_channels = hidden_channels
+
+		# build model
+		for b in range(num_blocks):
+			additional_scope = kernel_size-1
+			dilation = 1
+			for i in range(num_layers):
+				name = "b{}-l{}.wavenet_layer-d{}".format(b, i, dilation)
+				main.add_module(name, WaveNetLayer(in_channels,
+												   out_channels,
+												   kernel_size=kernel_size,
+												   dilation=dilation,
+												   residual_connection=True))
+				scope += additional_scope
+				additional_scope *= 2
+				dilation *= 2
+				in_channels = out_channels
+
+		self.last_block_scope = 2**num_layers
+		scope = scope + self.last_block_scope
+
+		main.add_module('final', WaveNetFinalLayer(in_channels,
+												   out_length=self.last_block_scope))
+
+		self.scope = scope
+		self.main = main
+
+	def forward(self, input):
+		x = self.main(input)
+		return x
+
+	def generate(self, num_generate, start_data=torch.zeros((1))):
+		self.eval()
+		generated = Variable(start_data, volatile=True)
+
+		num_pad = self.scope - generated.size(0)
+		if num_pad > 0:
+			generated = constant_pad_1d(generated, self.scope, pad_start=True)
+			print("pad zero")
+
+		for i in range(num_generate):
+			input = generated[-self.scope:].view(1, 1, -1)
+			o = self(input)[-1, :].squeeze()
+
+			if self.sampled_generation:
+				soft_o = F.softmax(o)
+				np_o = soft_o.data.numpy()
+				s = np.random.choice(self.num_classes, p=np_o)
+				s = Variable(torch.FloatTensor([s]))
+				s = (s / self.num_classes) * 2. - 1
+			else:
+				max = torch.max(o, 0)[1].float()
+				s = (max / self.num_classes) * 2. - 1  # new sample
+
+			generated = torch.cat((generated, s), 0)
+
+		return generated
+
+	def fast_generate(self, num_generate, first_samples=torch.zeros((1))):
+		self.eval()
+
+		num_given_samples = first_samples.size(0)
+
+		# reset queues
+		for module in self.modules():
+			if hasattr(module, 'queue'):
+				module.queue.reset()
+
+		s = first_samples[0]
+
+		# create samples with the support from the first_samples
+		support_generated = []
+		for i in range(num_given_samples-1):
+			# replace generated sample by provided sample
+			r = s
+			s = first_samples[i+1]
+			for module in self.main.children():
+				r = module.generate(r)
+			support_generated.append(r)
+
+		# autoregressive sample generation
+		generated = []
+		for i in range(num_generate):
+			for module in self.main.children():
+				s = module.generate(s)
+
+			if self.sampled_generation:
+				soft_o = F.softmax(s)
+				np_o = soft_o.data.numpy()
+				s = np.random.choice(self.num_classes, p=np_o)
+				s = (s / self.num_classes) * 2. - 1
+			else:
+				max = torch.max(s, 0)[1].data[0]
+				s = (max / self.num_classes) * 2. - 1 # new sample
+
+			generated.append(s)
+
+		return generated
+
+
 
 class Optimizer:
 	def __init__(self, model, learning_rate=0.001, train_hook=None, avg_length=20, stop_threshold=0.2):
 		self.model = model
-		self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+		self.optimizer = optim.Adam(model.parameters(),
+									lr=learning_rate)
 		self.hook = train_hook
 		self.avg_length = avg_length
 		self.stop_threshold = stop_threshold
-
-		#self.optimizer = optim.SGD(model.parameters(), lr=1000000., momentum=0.9)
 
 	def train(self, data):
 		self.model.train()  # set to train mode
@@ -213,9 +328,8 @@ class Optimizer:
 		avg_loss = 0
 		losses = []
 
-		#indices = torch.randperm(data.data_length-self.model.scope) + self.model.scope
 		indices = torch.randperm(data.data_length)
-		#indices = [20000, 30000, 25000]
+
 		while True:
 			i += 1
 			index = indices[i % indices.size(0)]
@@ -224,53 +338,25 @@ class Optimizer:
 
 			output = self.model(Variable(inputs))
 
-			#print('step...')
-			#labels = one_hot(targets, 256)
 			loss = F.cross_entropy(output.squeeze(), Variable(targets))
 
 			loss.backward()
-
-			#print("parameters:")
-			#for parameter in self.model.parameters():
-			#	print(parameter.data)
-			#	print(parameter.grad)
-
 			self.optimizer.step()
 
 			avg_loss += loss.data[0]
-
 			if i % self.avg_length == 0:
 				avg_loss = avg_loss / self.avg_length
-
 				losses.append(avg_loss)
 				if self.hook != None:
 					self.hook(losses)
-
 				if avg_loss < self.stop_threshold:
 					print('save model')
 					torch.save(self.model.state_dict(), 'last_trained_model')
 					break
-
 				avg_loss = 0
 
-		# while not terminal:
-		# 	i += 1
-		#
-		# 	self.optimizer.zero_grad()
-		# 	output = self.model(_inputs)
-		# 	loss = F.cross_entropy(output, _targets)
-		# 	loss.backward()
-		# 	self.optimizer.step()
-		#
-		# 	if loss < 1e-1:
-		# 		terminal = True
-		# 	losses.append(loss)
-		# 	if i % 50 == 0:
-		# 		plt.plot(losses)
-		# 		plt.show()
 
-
-class WavenetData:
+class WaveNetData:
 	def __init__(self, path, input_length, target_length, num_classes):
 		data = wavfile.read(path)[1][:, 0]
 
@@ -290,8 +376,6 @@ class WavenetData:
 
 		self.inputs = inputs
 		self.targets = targets
-		#print("inputs: ", inputs[10600:10900])
-		#print("targets: ", targets[10600:10900])
 		self.data_length = data.size
 		self.input_length = input_length
 		self.target_length = target_length
@@ -308,7 +392,6 @@ class WavenetData:
 										pad_width=(self.input_length-i, 0),
 										mode='constant')
 				this_input = this_input[None, None, :]
-				#this_input = self.inputs[0:i][None, None, :]
 			else:
 				this_input = self.inputs[i-self.input_length:i][None, None, :]
 
