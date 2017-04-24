@@ -11,12 +11,14 @@ class WaveNetLayer(nn.Module):
 				 out_channels,
 				 kernel_size=2,
 				 dilation=2,
+				 init_dilation=1,
 				 residual_connection=True):
 
 		super(WaveNetLayer, self).__init__()
 
 		self.kernel_size = kernel_size
 		self.dilation = dilation
+		self.init_dilation = init_dilation
 		self.residual = residual_connection
 
 		self.dil_conv = nn.Conv1d(in_channels=in_channels,
@@ -47,7 +49,9 @@ class WaveNetLayer(nn.Module):
 		# |	   ReLu
 		# +-----|
 
-		input = dilate(input, self.dilation)
+		input = dilate(input,
+					   dilation=self.dilation,
+					   init_dilation=self.init_dilation)
 		r = F.relu(input)
 
 		# zero padding for convolution
@@ -89,7 +93,8 @@ class WaveNetFinalLayer(nn.Module):
 	def __init__(self,
 				 in_channels,
 				 num_classes,
-				 out_length):
+				 out_length,
+				 init_dilation):
 
 		super(WaveNetFinalLayer, self).__init__()
 
@@ -98,16 +103,19 @@ class WaveNetFinalLayer(nn.Module):
 							  out_channels=num_classes,
 							  kernel_size=1,
 							  bias=True)
+		self.init_dilation = init_dilation
 
 	def forward(self, input):
-		input = dilate(input, 1)
+		input = dilate(input,
+					   dilation=1,
+					   init_dilation=self.init_dilation)
 		r = F.relu(input)
 		r = self.conv(r)
 
 		# reshape
 		[n, c, l] = r.size()
 		r = r.transpose(1, 2).contiguous().view(n * l, c)
-		r = r[-self.out_length:, :]
+		r = r[-self.out_length*n:, :]
 		return r
 
 	def generate(self, new_sample):
@@ -234,7 +242,7 @@ class Final(nn.Module):
 		x = x.squeeze()
 		return x
 
-def dilate(x, dilation, pad_start=True):
+def dilate(x, dilation, init_dilation=1, pad_start=True):
 	"""
 	:param x: Tensor of size (N, C, L), where N is the input dilation, C is the number of channels, and L is the input length
 	:param dilation: Target dilation. Will be the size of the first dimension of the output tensor.
@@ -242,9 +250,10 @@ def dilate(x, dilation, pad_start=True):
 	:return: The dilated tensor of size (dilation, C, L*N / dilation). The output might be zero padded at the start
 	"""
 
+
 	[n, c, l] = x.size()
-	dilation_factor = dilation / n
-	if dilation == n:
+	dilation_factor = dilation / init_dilation
+	if dilation_factor == 1:
 		return x
 
 	# zero padding for reshaping
@@ -253,13 +262,13 @@ def dilate(x, dilation, pad_start=True):
 		l = new_l
 		x = constant_pad_1d(x, new_l, dimension=2, pad_start=pad_start)
 
-	l = (l * n) // dilation
-	n = dilation
+	l = int(round(l / dilation_factor))
+	n = int(round(n * dilation_factor))
 
 	# reshape according to dilation
-	x = x.permute(1, 2, 0).contiguous()
+	x = x.permute(1, 2, 0).contiguous() # (n, c, l) -> (c, l, n)
 	x = x.view(c, l, n)
-	x = x.permute(2, 0, 1).contiguous()
+	x = x.permute(2, 0, 1).contiguous() # (c, l, n) -> (n, c, l)
 
 	return x
 

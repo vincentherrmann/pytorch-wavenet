@@ -1,31 +1,30 @@
 import time
 from model import WaveNetModel, Optimizer, WaveNetData
+import torch
 
 model = WaveNetModel(num_layers=10,
 					 num_blocks=2,
-					 num_classes=64,
-					 hidden_channels=32)
+					 num_classes=128,
+					 hidden_channels=64)
 
 print("model: ", model)
 print("scope: ", model.scope)
 
-data = WaveNetData('../train_samples/saber.wav',
+data = WaveNetData('../train_samples/violin.wav',
 				   input_length=model.scope,
 				   target_length=model.last_block_scope,
 				   num_classes=model.num_classes)
 start_tensor = data.get_minibatch([0])[0].squeeze()
 
-optimizer = Optimizer(model,
-                      learning_rate=0.001,
-					  max_steps=40,
-                      stop_threshold=0.1,
-                      avg_length=10)
+optimizer = Optimizer(model, mini_batch_size=1, avg_length=20)
 
 print('start training...')
 tic = time.time()
-optimizer.train(data)
+optimizer.train(data, epochs=100)
 toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))
+
+torch.save(model.state_dict(), "../model_parameters/violin_10-2-128-164")
 
 print('generate...')
 tic = time.time()
