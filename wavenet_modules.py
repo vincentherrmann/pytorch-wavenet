@@ -6,6 +6,22 @@ from torch.autograd import Variable, Function
 import numpy as np
 
 class WaveNetLayer(nn.Module):
+	r"""Base module of the WaveNet architecture. Applies dilation and a 1D convolution over a multi-channel input signal.
+		Allows optional residual connection if the number of input channels equals the number of output channels.
+
+		Args:
+			in_channels (int): Number of input channels. Should be the size of the second dimension of the input tensor
+			out_channels (int): Number of channels produced by the convolution
+			kernel_size (int): Size of the convolution kernel
+			dilation (int): Target dilation, affects dimensions 0 and 2 of the input tensor
+			dilation_init (int): Initial dilation of the input
+			residual_connection (bool): If true, the dilated input will be added to the output of the convolution
+
+		Shape:
+			- Input: :math:`N_{in}, C_{in}, L_{in}`
+			- Output: :math:`N_{out}, C_{out}, L_{out}` where
+			  :math:`d = dilation / dilation_init`, :math:`N_{out} = floor(N_{in}*d), L_{out} = floor(L_{in} / d)`
+	"""
 	def __init__(self,
 				 in_channels,
 				 out_channels,
@@ -125,122 +141,6 @@ class WaveNetFinalLayer(nn.Module):
 		r = r.data.squeeze()
 		return r
 
-
-
-class ConvDilated(nn.Module):
-	r"""Base module of the WaveNet architecture. Applies dilation and a 1D convolution over a multi-channel input signal.
-	Allows optional residual connection if the number of input channels equals the number of output channels.
-
-	Args:
-		in_channels (int): Number of input channels. Should be the size of the second dimension of the input tensor
-		out_channels (int): Number of channels produced by the convolution
-		kernel_size (int): Size of the convolution kernel
-		dilation (int): Target dilation. Will be the size of the first dimension in the output tensor
-		residual_connection (bool): If true, the dilated input will be added to the output of the convolution
-
-	Shape:
-		- Input: :math:`D_{in}, C_{in}, L_{in}`
-		- Output: :math:
-
-	:param num_channels_in: Number of input channels. Should be the size of the second dimension of the input tensor
-	:param num_channels_out: Number of output channels. Will be the size of the second dimension of the output tensor
-	:param kernel_size: Length of the convolution filter
-	:param dilation: Target dilation. Will be the first dimension of the output tensor
-	:param residual_connection: If true, the dilated input will be added to the output of the convolution
-	"""
-	def __init__(self,
-				 num_channels_in=1,
-				 num_channels_out=1,
-				 kernel_size=2,
-				 dilation=2,
-				 residual_connection=True):
-		super(ConvDilated, self).__init__()
-
-		self.num_channels_in = num_channels_in
-		self.num_channels_out = num_channels_out
-		self.kernel_size = kernel_size
-
-		self.conv = nn.Conv1d(in_channels=num_channels_in,
-							  out_channels=num_channels_out,
-							  kernel_size=kernel_size,
-							  bias=False)
-		#self.batchnorm = nn.BatchNorm1d(num_features=num_channels_out, affine=False)
-
-		self.dilation = dilation
-		self.residual = residual_connection
-
-		self.queue = DilatedQueue(max_length=(kernel_size-1) * dilation + 1,
-								  num_channels=num_channels_in,
-								  dilation=dilation)
-
-	def forward(self, x):
-		x = dilate(x, self.dilation)
-
-		l = x.size(2)
-		# zero padding for convolution
-		if l < self.kernel_size:
-			x = constant_pad_1d(x, self.kernel_size-l, dimension=2, pad_start=True)
-
-		r = self.conv(x)
-
-		if self.residual:
-			x = x[:,:,(self.kernel_size-1):]
-			r = r + x.expand_as(r)
-		# x = self.batchnorm()
-		r = F.relu(r)
-		return r
-
-	def generate(self, new_sample):
-		self.queue.enqueue(new_sample)
-		x = self.queue.dequeue(num_deq=self.kernel_size,
-							   dilation=self.dilation)
-
-		x = x.unsqueeze(0)
-		x = Variable(x, volatile=True)
-
-		r = self.conv(x)
-
-		if self.residual:
-			x = x[:,:,(self.kernel_size-1):]
-			r = r + x.expand_as(r)
-		#x = self.batchnorm(x)
-		r = F.relu(r)
-		r = r.data.squeeze(0)
-		return r
-
-class Final(nn.Module):
-	def __init__(self,
-				 in_channels=1,
-				 num_classes=256,
-				 out_length=1024):
-		super(Final, self).__init__()
-		self.num_classes = num_classes
-		self.in_channels = in_channels
-		self.out_length = out_length
-		self.conv = nn.Conv1d(in_channels,
-							  num_classes,
-							  kernel_size=1,
-							  bias=True)
-		#self.batchnorm = nn.BatchNorm1d(num_classes, affine=False)
-		#nn.init.normal(self.conv.weight)
-		#self.conv.weight = nn.Parameter(torch.FloatTensor([1]))
-
-	def forward(self, x):
-		#x = self.batchnorm(self.conv(x))
-		x = dilate(x, 1)
-		x = self.conv(x)
-
-		[n, c, l] = x.size()
-		x = x.transpose(1, 2).contiguous().view(n*l, c)
-		x = x[-self.out_length:, :]
-		return x
-
-	def generate(self, x):
-		#x = self.batchnorm(self.conv(Variable(x.unsqueeze(0), volatile=True)))
-		x = x.unsqueeze(0)
-		x = self.conv(Variable(x, volatile=True))
-		x = x.squeeze()
-		return x
 
 def dilate(x, dilation, init_dilation=1, pad_start=True):
 	"""

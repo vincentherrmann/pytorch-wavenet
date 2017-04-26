@@ -27,3 +27,5 @@ def one_hot(labels, num_labels):
 	x = torch.zeros(batch, num_labels).scatter_(1, labels.view(-1, 1), 1.)
 	return x
 
+
+
