@@ -168,7 +168,7 @@ class WaveNetModel2(nn.Module):
 
 		input = Variable(first_samples[0:1]).view(1, 1, 1)
 
-		# fill queues with given samples 
+		# fill queues with given samples
 		for i in range(num_given_samples-1):
 			x = self.wavenet(input,
 							 dilation_func=self.queue_dilate)
