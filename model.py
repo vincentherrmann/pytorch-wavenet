@@ -199,7 +199,7 @@ class Optimizer:
 				indices = self.new_epoch(data)
 
 				# make snapshots
-				if self.epoch % epochs_per_snapshot:
+				if self.epoch % epochs_per_snapshot == 0:
 					if file_path != None:
 						torch.save(self.model.state_dict(), file_path)
 						print("snapshot saved to ", file_path)
