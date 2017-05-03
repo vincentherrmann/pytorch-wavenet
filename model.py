@@ -169,11 +169,14 @@ class Optimizer:
 		self.epoch = 0
 
 
-	def train(self, data, epochs=10):
+	def train(self,
+			  data,
+			  epochs=10,
+			  epochs_per_snapshot=1,
+			  file_path=None):
 		self.model.train()  # set to train mode
 		i = 0
 		avg_loss = 0
-		epoch = -1
 		losses = []
 
 		self.epoch = -1
@@ -183,32 +186,42 @@ class Optimizer:
 		previous_loss = 1000
 
 		while True:
+
+			# check if epoch is completed
 			if (i+1)*m > len(indices):
-				if epoch >= epochs-1:
+				if self.epoch >= epochs-1:
 					print("training completed")
 					break
+
+				# new epoch
 				i = 0
 				avg_loss = 0
 				indices = self.new_epoch(data)
-				epoch += 1
 
+				# make snapshots
+				if self.epoch % epochs_per_snapshot:
+					if file_path != None:
+						torch.save(self.model.state_dict(), file_path)
+						print("snapshot saved to ", file_path)
+
+			# get data
 			self.optimizer.zero_grad()
 			minibatch_indices = indices[i*m:(i+1)*m]
 			inputs, targets = data.get_minibatch(minibatch_indices)
+			targets = targets.view(targets.size(0) * targets.size(1))
 
 			output = self.model(Variable(inputs))
-
-			targets = targets.view(targets.size(0)*targets.size(1))
 			loss = F.cross_entropy(output.squeeze(), Variable(targets))
 			loss.backward()
 
 			loss = loss.data[0]
 			if loss > previous_loss*3:
 				print("unexpected high loss: ", loss)
-				print("at minibatch ", minibatch_indices)
+				print("at minibatch ", minibatch_indices, " / ", data.data_length)
 
 			self.optimizer.step()
 
+			# train feedback
 			avg_loss += loss
 			i += 1
 			if i % self.avg_length == 0:
