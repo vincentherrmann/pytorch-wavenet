@@ -157,7 +157,8 @@ class WaveNetModel2(nn.Module):
 					  first_samples=torch.zeros((1)),
 					  sampled_generation=False,
 					  temperature=1.,
-					  progress_callback=None):
+					  progress_callback=None,
+					  use_cuda=False):
 		self.eval()
 		# reset queues
 		for queue in self.dilated_queues:
@@ -202,8 +203,10 @@ class WaveNetModel2(nn.Module):
 			generated.append(x)
 
 			# set new input
-
-			input = Variable(torch.FloatTensor([[[x]]]))
+			if use_cuda:
+				input = Variable(torch.cuda.FloatTensor([[[x]]]))
+			else:
+				input = Variable(torch.FloatTensor([[[x]]]))
 
 			# progress feedback
 			if (i+num_given_samples) % progress_dist == 0:
