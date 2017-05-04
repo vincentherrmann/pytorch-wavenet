@@ -156,6 +156,7 @@ class WaveNetModel2(nn.Module):
 					  num_samples,
 					  first_samples=torch.zeros((1)),
 					  sampled_generation=False,
+					  temperature=1.,
 					  progress_callback=None):
 		self.eval()
 		# reset queues
@@ -187,7 +188,8 @@ class WaveNetModel2(nn.Module):
 
 			if sampled_generation:
 				# sample from softmax distribution
-				prob = F.softmax(x.squeeze())
+				x = x.squeeze() / temperature
+				prob = F.softmax(x)
 				np_prob = prob.data.numpy()
 				x = np.random.choice(self.classes, p=np_prob)
 				x = (x / self.classes) * 2. - 1
@@ -200,6 +202,7 @@ class WaveNetModel2(nn.Module):
 			generated.append(x)
 
 			# set new input
+
 			input = Variable(torch.FloatTensor([[[x]]]))
 
 			# progress feedback
