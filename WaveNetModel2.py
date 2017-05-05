@@ -161,7 +161,7 @@ class WaveNetModel2(nn.Module):
 					  temperature=1.,
 					  progress_callback=None):
 		self.eval()
-		if first_samples == None:
+		if first_samples is None:
 			first_samples = self.dtype(1).zero_()
 
 		# reset queues
