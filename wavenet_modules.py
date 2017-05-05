@@ -221,7 +221,7 @@ def dilate(x, dilation, init_dilation=1, pad_start=True):
 	return x
 
 class DilatedQueue:
-	def __init__(self, max_length, data=None, dilation=1, num_deq=1, num_channels=1):
+	def __init__(self, max_length, data=None, dilation=1, num_deq=1, num_channels=1, dtype=torch.FloatTensor):
 		self.in_pos = 0
 		self.out_pos = 0
 		self.num_deq = num_deq
@@ -229,8 +229,9 @@ class DilatedQueue:
 		self.dilation = dilation
 		self.max_length = max_length
 		self.data = data
+		self.dtype = dtype
 		if data == None:
-			self.data = Variable(torch.zeros(num_channels, max_length))
+			self.data = Variable(dtype(num_channels, max_length).zero_())
 
 	def enqueue(self, input):
 		self.data[:, self.in_pos] = input
@@ -252,7 +253,7 @@ class DilatedQueue:
 		return t
 
 	def reset(self):
-		self.data = Variable(torch.zeros(self.num_channels, self.max_length))
+		self.data = Variable(self.dtype(self.num_channels, self.max_length).zero_())
 		self.in_pos = 0
 		self.out_pos = 0
 

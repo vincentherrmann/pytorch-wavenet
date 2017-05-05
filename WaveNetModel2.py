@@ -16,7 +16,8 @@ class WaveNetModel2(nn.Module):
 				 residual_channels,
 				 skip_channels,
 				 classes,
-				 kernel_size=2):
+				 kernel_size=2,
+				 dtype=torch.FloatTensor):
 
 		super(WaveNetModel2, self).__init__()
 
@@ -27,6 +28,7 @@ class WaveNetModel2(nn.Module):
 		self.skip_channels = skip_channels
 		self.classes = classes
 		self.kernel_size = kernel_size
+		self.dtype = dtype
 
 		# build model
 		scope = 0
@@ -154,12 +156,14 @@ class WaveNetModel2(nn.Module):
 
 	def generate_fast(self,
 					  num_samples,
-					  first_samples=torch.zeros((1)),
+					  first_samples=None,
 					  sampled_generation=False,
 					  temperature=1.,
-					  progress_callback=None,
-					  use_cuda=False):
+					  progress_callback=None):
 		self.eval()
+		if first_samples == None:
+			first_samples = self.dtype(1).zero_()
+
 		# reset queues
 		for queue in self.dilated_queues:
 			queue.reset()
@@ -168,13 +172,13 @@ class WaveNetModel2(nn.Module):
 		total_samples = num_given_samples + num_samples
 		progress_dist = total_samples // 100
 
-		input = Variable(first_samples[0:1]).view(1, 1, 1)
+		input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
 
 		# fill queues with given samples
 		for i in range(num_given_samples-1):
 			x = self.wavenet(input,
 							 dilation_func=self.queue_dilate)
-			input = Variable(first_samples[i+1:i+2]).view(1,1,1)
+			input = Variable(first_samples[i+1:i+2], volatile=True).view(1,1,1)
 
 			# progress feedback
 			if i % progress_dist == 0:
@@ -203,10 +207,7 @@ class WaveNetModel2(nn.Module):
 			generated.append(x)
 
 			# set new input
-			if use_cuda:
-				input = Variable(torch.cuda.FloatTensor([[[x]]]))
-			else:
-				input = Variable(torch.FloatTensor([[[x]]]))
+			input = Variable(self.dtype([[[x]]]), volatile=True)
 
 			# progress feedback
 			if (i+num_given_samples) % progress_dist == 0:
