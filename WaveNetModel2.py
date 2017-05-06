@@ -56,7 +56,8 @@ class WaveNetModel2(nn.Module):
 				# dilated queues for fast generation
 				self.dilated_queues.append(DilatedQueue(max_length=(kernel_size - 1) * new_dilation + 1,
 														num_channels=residual_channels,
-														dilation=new_dilation))
+														dilation=new_dilation,
+														dtype=dtype))
 
 				# dilated convolution
 				self.dilated_convs.append(nn.Conv1d(in_channels=residual_channels,
