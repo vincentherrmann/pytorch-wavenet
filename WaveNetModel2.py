@@ -90,6 +90,9 @@ class WaveNetModel2(nn.Module):
 		self.scope = scope + self.last_block_scope
 
 	def wavenet(self, input, dilation_func):
+
+		import pdb; pdb.set_trace()
+
 		x = self.start_conv(input)
 		skip = 0
 
@@ -139,6 +142,9 @@ class WaveNetModel2(nn.Module):
 		x = queue.dequeue(num_deq=self.kernel_size,
 						  dilation=dilation)
 		x = x.unsqueeze(0)
+
+		import pdb; pdb.set_trace()
+
 		return x
 
 	def forward(self, input):
@@ -169,8 +175,7 @@ class WaveNetModel2(nn.Module):
 		for queue in self.dilated_queues:
 			queue.reset()
 
-		import pdb;
-		pdb.set_trace()
+		import pdb; pdb.set_trace()
 
 		num_given_samples = first_samples.size(0)
 		total_samples = num_given_samples + num_samples
