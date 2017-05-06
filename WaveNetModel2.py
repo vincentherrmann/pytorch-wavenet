@@ -161,8 +161,6 @@ class WaveNetModel2(nn.Module):
 					  temperature=1.,
 					  progress_callback=None):
 
-		import pdb; pdb.set_trace()
-
 		self.eval()
 		if first_samples is None:
 			first_samples = self.dtype(1).zero_()
@@ -170,6 +168,9 @@ class WaveNetModel2(nn.Module):
 		# reset queues
 		for queue in self.dilated_queues:
 			queue.reset()
+
+		import pdb;
+		pdb.set_trace()
 
 		num_given_samples = first_samples.size(0)
 		total_samples = num_given_samples + num_samples
