@@ -160,6 +160,9 @@ class WaveNetModel2(nn.Module):
 					  sampled_generation=False,
 					  temperature=1.,
 					  progress_callback=None):
+
+		import pdb; pdb.set_trace()
+
 		self.eval()
 		if first_samples is None:
 			first_samples = self.dtype(1).zero_()
