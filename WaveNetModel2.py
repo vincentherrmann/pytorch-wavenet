@@ -144,7 +144,7 @@ class WaveNetModel2(nn.Module):
 						  dilation=dilation)
 		x = x.unsqueeze(0)
 
-		import pdb; pdb.set_trace()
+		#import pdb; pdb.set_trace()
 
 		return x
 
@@ -176,7 +176,7 @@ class WaveNetModel2(nn.Module):
 		for queue in self.dilated_queues:
 			queue.reset()
 
-		import pdb; pdb.set_trace()
+		#import pdb; pdb.set_trace()
 
 		num_given_samples = first_samples.size(0)
 		total_samples = num_given_samples + num_samples
