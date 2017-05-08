@@ -31,7 +31,7 @@ class WaveNetModel2(nn.Module):
 		self.dtype = dtype
 
 		# build model
-		scope = 0
+		receptive_field = 0
 		init_dilation = 1
 
 		self.dilations = []
@@ -77,7 +77,7 @@ class WaveNetModel2(nn.Module):
 												 kernel_size=1,
 												 bias=False))
 
-				scope += additional_scope
+				receptive_field += additional_scope
 				additional_scope *= 2
 				init_dilation = new_dilation
 				new_dilation *= 2
@@ -87,8 +87,8 @@ class WaveNetModel2(nn.Module):
 								  kernel_size=1,
 								  bias=True)
 
-		self.last_block_scope = 2 ** (layers - 1)
-		self.scope = scope + self.last_block_scope
+		self.output_length = 2 ** (layers - 1)
+		self.receptive_field = receptive_field + self.output_length
 
 	def wavenet(self, input, dilation_func):
 
@@ -154,7 +154,7 @@ class WaveNetModel2(nn.Module):
 
 		# reshape output
 		[n, c, l] = x.size()
-		l = self.last_block_scope
+		l = self.output_length
 		x = x[:,:,-l:]
 		x = x.transpose(1, 2).contiguous()
 		x =	x.view(n * l, c)
@@ -176,7 +176,7 @@ class WaveNetModel2(nn.Module):
 		for queue in self.dilated_queues:
 			queue.reset()
 
-		import pdb; pdb.set_trace()
+		#import pdb; pdb.set_trace()
 
 		num_given_samples = first_samples.size(0)
 		total_samples = num_given_samples + num_samples

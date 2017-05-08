@@ -1,6 +1,7 @@
 import time
 from model import WaveNetModel, Optimizer, WaveNetData
 import torch
+import numpy as np
 
 model = WaveNetModel(num_layers=10,
 					 num_blocks=2,
@@ -9,6 +10,7 @@ model = WaveNetModel(num_layers=10,
 
 print("model: ", model)
 print("scope: ", model.scope)
+print("parameter count", model.parameter_count())
 
 data = WaveNetData('../train_samples/violin.wav',
 				   input_length=model.scope,
