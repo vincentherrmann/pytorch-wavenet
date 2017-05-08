@@ -1,6 +1,6 @@
 import time
 
-from model import Model, Optimizer, WaveNetData
+from wavenet_training import Model, Optimizer, WaveNetData
 
 from IPython.display import Audio
 from IPython.core.debugger import Tracer

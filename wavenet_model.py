@@ -7,8 +7,7 @@ from scipy.io import wavfile
 from random import randint
 from wavenet_modules import *
 
-
-class WaveNetModel2(nn.Module):
+class WaveNetModel(nn.Module):
 	def __init__(self,
 				 layers,
 				 blocks,
@@ -19,7 +18,7 @@ class WaveNetModel2(nn.Module):
 				 kernel_size=2,
 				 dtype=torch.FloatTensor):
 
-		super(WaveNetModel2, self).__init__()
+		super(WaveNetModel, self).__init__()
 
 		self.layers = layers
 		self.blocks = blocks
@@ -92,8 +91,6 @@ class WaveNetModel2(nn.Module):
 
 	def wavenet(self, input, dilation_func):
 
-		#import pdb; pdb.set_trace()
-
 		x = self.start_conv(input)
 		skip = 0
 
@@ -118,7 +115,7 @@ class WaveNetModel2(nn.Module):
 
 			# parametrized skip connection
 			s = x
-			if (x.size(2) != 1):  # reshape s to make it compatible with skip
+			if x.size(2) != 1:  # reshape s to make it compatible with skip
 				s = dilate(x, 1, init_dilation=dilation)
 			s = self.skip_convs[i](s)
 			if skip != 0:
@@ -143,8 +140,6 @@ class WaveNetModel2(nn.Module):
 		x = queue.dequeue(num_deq=self.kernel_size,
 						  dilation=dilation)
 		x = x.unsqueeze(0)
-
-		#import pdb; pdb.set_trace()
 
 		return x
 
@@ -176,8 +171,6 @@ class WaveNetModel2(nn.Module):
 		for queue in self.dilated_queues:
 			queue.reset()
 
-		#import pdb; pdb.set_trace()
-
 		num_given_samples = first_samples.size(0)
 		total_samples = num_given_samples + num_samples
 		progress_dist = total_samples // 100
@@ -196,7 +189,7 @@ class WaveNetModel2(nn.Module):
 					progress_callback(i, total_samples)
 
 		# generate new samples
-		generated = []
+		generated = np.array([])
 		for i in range(num_samples):
 			x = self.wavenet(input,
 							 dilation_func=self.queue_dilate)
@@ -207,17 +200,20 @@ class WaveNetModel2(nn.Module):
 				prob = F.softmax(x)
 				np_prob = prob.data.numpy()
 				x = np.random.choice(self.classes, p=np_prob)
-				x = (x / self.classes) * 2. - 1
+				x = np.array([x])
 			else:
 				# convert to sample value
 				x = x.squeeze()
 				x = torch.max(x, 0)[1][0]
-				x = (x.data[0] / self.classes) * 2. - 1
+				x = x.data.numpy()
 
-			generated.append(x)
+			x = (x / self.classes) * 2. - 1
+			x = mu_law_expansion(x, self.classes)
+
+			generated = np.append(generated, x)
 
 			# set new input
-			input = Variable(self.dtype([[[x]]]), volatile=True)
+			input = Variable(self.dtype([[x]]), volatile=True)
 
 			# progress feedback
 			if (i+num_given_samples) % progress_dist == 0:

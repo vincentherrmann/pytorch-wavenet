@@ -305,3 +305,11 @@ def constant_pad_1d(input,
 					value=0,
 					pad_start=False):
 	return ConstantPad1d(target_size, dimension, value, pad_start)(input)
+
+def mu_law_econding(data, mu):
+	mu_x = np.sign(data) * np.log(1 + mu * np.abs(data)) / np.log(mu + 1)
+	return mu_x
+
+def mu_law_expansion(data, mu):
+	s = np.sign(data) * (np.exp(np.abs(data) * np.log(mu + 1)) - 1) / mu
+	return s

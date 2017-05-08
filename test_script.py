@@ -2,8 +2,7 @@ from time import time
 import torch
 import numpy as np
 from torch.autograd import Variable
-from utils import make_batch, one_hot
-from model import Model, Optimizer, WavenetData, ConvDilated
+from wavenet_training import Model, Optimizer, WavenetData, ConvDilated
 from scipy.io import wavfile
 import visdom
 
