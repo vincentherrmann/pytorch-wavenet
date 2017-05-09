@@ -11,7 +11,7 @@ model = Model(num_time_samples=10000,
               num_layers=10,
               num_hidden=32,
               num_classes=64)
-#torch.save(model, 'untrained_model')
+# torch.save(model, 'untrained_model')
 print('model: ', model)
 print('scope: ', model.scope)
 
@@ -26,12 +26,13 @@ start_tensor = data.get_minibatch([12345])[0].squeeze()
 
 
 def hook(losses):
-	print("loss: ", losses[-1])
+    print("loss: ", losses[-1])
+
 
 optimizer.hook = hook
 
 print('start training...')
-#tic = time.time()
+# tic = time.time()
 optimizer.train(data)
-#toc = time.time()
+# toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))

@@ -10,7 +10,6 @@ from IPython import display
 import torch
 import numpy as np
 
-
 model = Model(num_time_samples=10000,
               num_blocks=2,
               num_layers=11,
@@ -36,10 +35,6 @@ optimizer.train(data)
 toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))
 
-
-
-
-
 model.load_state_dict(torch.load("trained_state_piano"))
 
 data = WavenetData('sine.wav',
@@ -47,7 +42,7 @@ data = WavenetData('sine.wav',
                    target_length=model.last_block_scope,
                    num_classes=model.num_classes)
 
-#start_tensor = data.get_minibatch([12345])[0].squeeze()
+# start_tensor = data.get_minibatch([12345])[0].squeeze()
 start_tensor = torch.zeros((model.scope)) + 0.0
 
 # print('generate...')
@@ -60,7 +55,7 @@ print('generate...')
 tic = time.time()
 [generated, support_generated] = model.fast_generate(200, first_samples=torch.zeros((1)))
 toc = time.time()
-print('Generating took {} seconds.'.format(toc-tic))
+print('Generating took {} seconds.'.format(toc - tic))
 
 # print('generate...')
 # tic = time.time()
