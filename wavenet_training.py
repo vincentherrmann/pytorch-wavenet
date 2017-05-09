@@ -1,13 +1,17 @@
 import torch
 import torch.optim as optim
 import time
+from datetime import datetime
 import librosa
 import threading
 import torch.nn.functional as F
 from torch.autograd import Variable
-from scipy.io import wavfile
 from random import randint, shuffle
+
 from wavenet_modules import *
+
+def print_last_loss(losses):
+	print("loss: ", losses[-1])
 
 class WaveNetOptimizer:
 	def __init__(self,
@@ -109,12 +113,10 @@ class WaveNetOptimizer:
 			if toc - tic >= snapshot_interval:
 				if snapshot_file != None:
 					torch.save(self.model.state_dict(), snapshot_file)
-					print("snapshot saved to ", snapshot_file)
+					date = str(datetime.now())
+					print(date, ": snapshot saved to ", snapshot_file)
 				tic = toc
 
-
-def print_last_loss(losses):
-	print("loss: ", losses[-1])
 
 
 class AudioFileLoader:
