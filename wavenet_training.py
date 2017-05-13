@@ -145,20 +145,28 @@ class AudioFileLoader:
 
         # data that can be loaded in a background thread
         self.loaded_data = []
-        self.load_thread = threading.Thread(target=self.load_new_chunk, args=[])
+        self.load_thread = None #threading.Thread(target=self.load_new_chunk, args=[])
+        self.available_segments = 0
 
         # training data
         self.inputs = []
         self.targets = []
         self.training_indices = []
         self.training_index_count = 0
+        self.training_segment_duration = 0.
         self.current_training_index = 0
 
+        self.segments_per_chunk = 0
+        self.minibatches_per_segment = 0
+        self.segment_positions = np.array(0)
+        self.chunk_position = 0
+
         # test data
-        self.test_inputs = []
-        self.test_targets = []
+        self.test_inputs = np.array(0)
+        self.test_targets = np.array(0)
         self.test_index_count = 0
-        self.test_positions
+        self.test_positions = []
+        self.test_segment_duration = 0.
 
         # calculate training data duration
         self.data_duration = 0
@@ -186,48 +194,54 @@ class AudioFileLoader:
         targets = quantized[1::]
         return inputs, targets
 
-
     def create_test_set(self, segments=32, minibatches_per_segment=8):
         '''
         Create test set from data that will be excluded from all training data
         '''
 
-        self.test_inputs = []
-        self.test_targets = []
         self.test_index_count = segments * minibatches_per_segment
+        self.test_inputs = self.dtype(self.test_index_count, 1, self.receptive_field).zero_()
+        self.test_targets = self.ltype(self.test_index_count, self.target_length).zero_()
+
         self.test_segment_duration = (self.target_length * minibatches_per_segment) / self.sampling_rate
         print("The test set has a total duration of ", segments*self.test_segment_duration, " s")
 
-        available_segments = self.data_duration // self.test_segment_duration
+        self.available_segments = int(self.data_duration // self.test_segment_duration) - 1
         test_offset = uniform(0, self.test_segment_duration)
-        self.test_positions = np.random.choice(available_segments, size=segments, replace=False) * self.test_segment_duration + test_offset
-        additional_receptive_field = self.receptive_field - self.target_length # negative offset to accommodate for the receptive field
+        positions = np.random.choice(self.available_segments, size=segments, replace=False)
+        self.test_positions = positions * self.test_segment_duration + test_offset
 
-        for p in self.test_positions:
-            d = self.load_segment(segment_position=p - additional_receptive_field,
-                                  duration=self.test_segment_duration + additional_receptive_field + 1) # + 1 for the targets
+        additional_receptive_field = (self.receptive_field - self.target_length) / self.sampling_rate # negative offset to accommodate for the receptive field
+        duration = self.test_segment_duration + additional_receptive_field + (1/self.sampling_rate) # + 1 for the targets
+
+        for s in range(segments):
+            position = self.test_positions[s] - additional_receptive_field
+            d = self.load_segment(segment_position=position,
+                                  duration=duration)
             i, t = self.quantize_data(d)
-            self.test_inputs.append(i)
-            self.test_targets.append(t)
+            i = self.dtype(i)
+            t = self.ltype(t)
 
-
-    def get_test_minibatches(self, minibatch_size=8):
-        minibatches = []
-        current_index = 0
-        #while current_index < self.test_index_count:
-
+            for m in range(minibatches_per_segment):
+                minibatch_index = s*minibatches_per_segment + m
+                position = m*self.target_length + self.receptive_field
+                self.test_inputs[minibatch_index, :, :] = i[position-self.receptive_field:position]
+                self.test_targets[minibatch_index, :] = t[position-self.target_length:position]
 
     def start_new_epoch(self, segments_per_chunk=16, minibatches_per_segment=32):
         self.segments_per_chunk = segments_per_chunk
+        self.minibatches_per_segment = minibatches_per_segment
         self.training_index_count = segments_per_chunk * minibatches_per_segment
         self.training_segment_duration = (self.target_length * minibatches_per_segment) / self.sampling_rate
 
         training_offset = uniform(0, self.training_segment_duration)
-        available_segments = self.data_duration // self.training_segment_duration
+        self.available_segments = int(self.data_duration // self.training_segment_duration) - 1
 
-        self.segment_positions = np.random.permutation(available_segments) * self.training_segment_duration + training_offset
+        self.segment_positions = np.random.permutation(self.available_segments) * self.training_segment_duration + training_offset
         self.chunk_position = 0
 
+        self.load_new_chunk()
+        self.use_new_chunk()
 
     def load_new_chunk(self):
         self.loaded_data = []
@@ -242,7 +256,7 @@ class AudioFileLoader:
             for test_position in self.test_positions:
                 train_seg_end = segment_position + self.training_segment_duration
                 test_seg_end = test_position + self.test_segment_duration
-                if train_seg_end > test_position & segment_position < test_seg_end:
+                if (train_seg_end > test_position) & (segment_position < test_seg_end):
                     segment_is_blocked = True
                     break
 
@@ -250,8 +264,7 @@ class AudioFileLoader:
 
             if current_chunk_position > len(self.segment_positions):
                 if self.epoch_finished_callback != None:
-                    self.new_epoch_callback()
-                    break
+                    self.epoch_finished_callback()
                 else:
                     break
 
@@ -264,10 +277,10 @@ class AudioFileLoader:
 
         self.chunk_position = current_chunk_position
 
-
     def use_new_chunk(self):
         # wait for loading to finish
-        self.load_thread.join()
+        if self.load_thread != None:
+            self.load_thread.join()
         self.sample_indices = np.random.permutation(self.training_index_count)
         self.current_training_index = 0
         self.inputs = []
@@ -275,11 +288,10 @@ class AudioFileLoader:
 
         for inputs, targets in self.loaded_data:
             self.inputs.append(self.dtype(inputs))
-            self.targets.append(self.ltype(inputs))
+            self.targets.append(self.ltype(targets))
 
         self.load_thread = threading.Thread(target=self.load_new_chunk)
         self.load_thread.start()
-
 
     def get_minibatch(self, minibatch_size):
         input = self.dtype(minibatch_size, 1, self.receptive_field).zero_()
@@ -287,63 +299,42 @@ class AudioFileLoader:
 
         for i in range(minibatch_size):
             index = self.sample_indices[self.current_training_index]
-            segment = index // self.segments_per_chunk
-            position = (index % self.segments_per_chunk) * self.target_length + self.rec + 1
+            segment = index // self.minibatches_per_segment
+            position = (index % self.minibatches_per_segment) * self.target_length + self.receptive_field
 
             sample_length = min(position, self.receptive_field)
-            input[i, :, -sample_length] = self.inputs[segment][index - sample_length:index]
+            input[i, :, -sample_length:] = self.inputs[segment][(position - sample_length):position]
 
             sample_length = min(position, self.target_length)
-            target[i, :, -sample_length] = self.inputs[segment][index - sample_length:index]
+            target[i, -sample_length:] = self.targets[segment][(position - sample_length):position]
 
             self.current_training_index += 1
-            if self.current_training_index > len(self.training_index_count):
+            if self.current_training_index > self.training_index_count:
                 self.use_new_chunk()
 
         return input, target
 
-
-
-    def get_wavenet_minibatch(self, indices, receptive_field, target_length):
-        n = len(indices)
-        input = self.dtype(n, 1, receptive_field).zero_()
-        target = self.ltype(n, target_length).zero_()
-
-        for i in range(n):
-            index = indices[i] + 1
-
-            sample_length = min(index, receptive_field)
-            input[i, :, -sample_length:] = self.inputs[index - sample_length:index]
-
-            sample_length = min(index, target_length)
-            target[i, -sample_length:] = self.targets[index - sample_length:index]
-
-        return input, target
-
-
-
-
     def load_segment(self, segment_position, duration):
         # find the right file
         file_index = 0
-        while self.start_positions[file_index+1] < segment_position:
+        while self.start_positions[file_index+1] <= segment_position:
             file_index += 1
-            if file_index+1 > len(self.start_positions):
+            if file_index+1 >= len(self.start_positions):
                 print("position ", segment_position, "is to not available")
-                return np.array()
+                return np.array(0)
         file_path = self.paths[file_index]
 
         # load from file
         offset = segment_position - self.start_positions[file_index]
-        new_data, sr = librosa.load(self.paths[self.current_file],
+        new_data, sr = librosa.load(path=file_path,
                                     sr=self.sampling_rate,
                                     mono=True,
-                                    offset=self.offset,
+                                    offset=offset,
                                     duration=duration)
 
         # if the file was not long enough, recursively call this function on the next file to get the remaining duration
         new_loaded_duration = len(new_data) / self.sampling_rate
-        if new_loaded_duration < duration:
+        if new_loaded_duration < duration-0.00001:
             new_position = self.start_positions[file_index+1]
             new_duration = duration - new_loaded_duration
             additional_data = self.load_segment(new_position, new_duration)
@@ -353,78 +344,94 @@ class AudioFileLoader:
 
 
 
-
-    def start_new_epoch(self, shuffle_files=True):
-        '''
-        Start a new epoch. The order of the files can be shuffled.
-        '''
-
-        print("new epoch")
-        if shuffle_files:
-            shuffle(self.paths)
-        self.current_file = 0
-        self.current_offset = 0
-
-        self.load_new_chunk(self.max_load_duration)
-        return self.use_new_chunk()
-
-    def use_new_chunk(self):
-        '''
-        Move the previously loaded data into a pytorch (cuda-)tensor and loads the next chunk in a background thread
-        '''
-        self.inputs = self.dtype(self.loaded_data[0])
-        self.targets = self.ltype(self.loaded_data[1])
-
-        while self.load_thread.is_alive():
-            # wait...
-            i = 0
-
-        # If there are no files left, return 0
-        if self.current_file >= len(self.paths):
-            # return self.start_new_epoch()
-            return 0
-
-        self.load_thread = threading.Thread(target=self.load_new_chunk, args=[self.max_load_duration])
-        self.load_thread.start()
-        return self.inputs.size(0)
-
-
-
-    def load_new_chunk(self, duration):
-        '''
-        Load a new chunk of data with the specified duration (in seconds) from multiple disc files into memory.
-        For better performance, this can be called in a background thread.
-        '''
-        print("load new chunk")
-        loaded_duration = 0
-        data = np.array(0)
-
-        # loop though files until the specified duration is loaded
-        while loaded_duration < duration:
-            file = self.paths[self.current_file]
-            remaining_duration = duration - loaded_duration
-            print("data from ", file)
-            # print("file number: ", self.current_file)
-            # print("offset: ", self.current_offset)
-            new_data, sr = librosa.load(self.paths[self.current_file],
-                                        sr=self.sampling_rate,
-                                        mono=True,
-                                        offset=self.current_offset,
-                                        duration=remaining_duration)
-            new_loaded_duration = len(new_data) / self.sampling_rate
-            data = np.append(data, new_data)
-            loaded_duration += new_loaded_duration
-
-            if new_loaded_duration < remaining_duration:  # if this file was loaded completely
-                # move to next file
-                self.current_file += 1
-                self.current_offset = 0
-                # break if not enough data is available
-                if self.current_file >= len(self.paths):
-                    break
-            else:
-                self.current_offset += new_loaded_duration
-
-        data = self.quantize_data(data)
-        self.loaded_data = data
-
+    # def get_wavenet_minibatch(self, indices, receptive_field, target_length):
+    #     n = len(indices)
+    #     input = self.dtype(n, 1, receptive_field).zero_()
+    #     target = self.ltype(n, target_length).zero_()
+    #
+    #     for i in range(n):
+    #         index = indices[i] + 1
+    #
+    #         sample_length = min(index, receptive_field)
+    #         input[i, :, -sample_length:] = self.inputs[index - sample_length:index]
+    #
+    #         sample_length = min(index, target_length)
+    #         target[i, -sample_length:] = self.targets[index - sample_length:index]
+    #
+    #     return input, target
+    #
+    #
+    #
+    # def start_new_epoch(self, shuffle_files=True):
+    #     '''
+    #     Start a new epoch. The order of the files can be shuffled.
+    #     '''
+    #
+    #     print("new epoch")
+    #     if shuffle_files:
+    #         shuffle(self.paths)
+    #     self.current_file = 0
+    #     self.current_offset = 0
+    #
+    #     self.load_new_chunk(self.max_load_duration)
+    #     return self.use_new_chunk()
+    #
+    # def use_new_chunk(self):
+    #     '''
+    #     Move the previously loaded data into a pytorch (cuda-)tensor and loads the next chunk in a background thread
+    #     '''
+    #     self.inputs = self.dtype(self.loaded_data[0])
+    #     self.targets = self.ltype(self.loaded_data[1])
+    #
+    #     while self.load_thread.is_alive():
+    #         # wait...
+    #         i = 0
+    #
+    #     # If there are no files left, return 0
+    #     if self.current_file >= len(self.paths):
+    #         # return self.start_new_epoch()
+    #         return 0
+    #
+    #     self.load_thread = threading.Thread(target=self.load_new_chunk, args=[self.max_load_duration])
+    #     self.load_thread.start()
+    #     return self.inputs.size(0)
+    #
+    #
+    #
+    # def load_new_chunk(self, duration):
+    #     '''
+    #     Load a new chunk of data with the specified duration (in seconds) from multiple disc files into memory.
+    #     For better performance, this can be called in a background thread.
+    #     '''
+    #     print("load new chunk")
+    #     loaded_duration = 0
+    #     data = np.array(0)
+    #
+    #     # loop though files until the specified duration is loaded
+    #     while loaded_duration < duration:
+    #         file = self.paths[self.current_file]
+    #         remaining_duration = duration - loaded_duration
+    #         print("data from ", file)
+    #         # print("file number: ", self.current_file)
+    #         # print("offset: ", self.current_offset)
+    #         new_data, sr = librosa.load(self.paths[self.current_file],
+    #                                     sr=self.sampling_rate,
+    #                                     mono=True,
+    #                                     offset=self.current_offset,
+    #                                     duration=remaining_duration)
+    #         new_loaded_duration = len(new_data) / self.sampling_rate
+    #         data = np.append(data, new_data)
+    #         loaded_duration += new_loaded_duration
+    #
+    #         if new_loaded_duration < remaining_duration:  # if this file was loaded completely
+    #             # move to next file
+    #             self.current_file += 1
+    #             self.current_offset = 0
+    #             # break if not enough data is available
+    #             if self.current_file >= len(self.paths):
+    #                 break
+    #         else:
+    #             self.current_offset += new_loaded_duration
+    #
+    #     data = self.quantize_data(data)
+    #     self.loaded_data = data
