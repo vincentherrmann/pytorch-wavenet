@@ -146,7 +146,6 @@ class AudioFileLoader:
         # data that can be loaded in a background thread
         self.loaded_data = []
         self.load_thread = None #threading.Thread(target=self.load_new_chunk, args=[])
-        self.available_segments = 0
 
         # training data
         self.inputs = []
@@ -157,9 +156,10 @@ class AudioFileLoader:
         self.current_training_index = 0
 
         self.segments_per_chunk = 0
-        self.minibatches_per_segment = 0
+        self.examples_per_segment = 0
         self.segment_positions = np.array(0)
         self.chunk_position = 0
+        self.additional_receptive_field = 0
 
         # test data
         self.test_inputs = np.array(0)
@@ -194,60 +194,79 @@ class AudioFileLoader:
         targets = quantized[1::]
         return inputs, targets
 
-    def create_test_set(self, segments=32, minibatches_per_segment=8):
+    def create_test_set(self, segments=32, examples_per_segment=8):
         '''
         Create test set from data that will be excluded from all training data
         '''
 
-        self.test_index_count = segments * minibatches_per_segment
+        self.test_index_count = segments * examples_per_segment
         self.test_inputs = self.dtype(self.test_index_count, 1, self.receptive_field).zero_()
         self.test_targets = self.ltype(self.test_index_count, self.target_length).zero_()
 
-        self.test_segment_duration = (self.target_length * minibatches_per_segment) / self.sampling_rate
+        self.test_segment_duration = (self.target_length * examples_per_segment) / self.sampling_rate
         print("The test set has a total duration of ", segments*self.test_segment_duration, " s")
 
-        self.available_segments = int(self.data_duration // self.test_segment_duration) - 1
-        test_offset = uniform(0, self.test_segment_duration)
-        positions = np.random.choice(self.available_segments, size=segments, replace=False)
+        available_segments = int(self.data_duration // self.test_segment_duration) - 1 # number of segments that can be chosen from
+        test_offset = uniform(0, self.test_segment_duration) # some random offset
+        positions = np.random.choice(available_segments, size=segments, replace=False)
         self.test_positions = positions * self.test_segment_duration + test_offset
 
-        additional_receptive_field = (self.receptive_field - self.target_length) / self.sampling_rate # negative offset to accommodate for the receptive field
-        duration = self.test_segment_duration + additional_receptive_field + (1/self.sampling_rate) # + 1 for the targets
+        self.additional_receptive_field = (self.receptive_field - self.target_length + 1) / self.sampling_rate # negative offset to accommodate for the receptive field
+        duration = self.test_segment_duration + self.additional_receptive_field
 
         for s in range(segments):
-            position = self.test_positions[s] - additional_receptive_field
+            position = self.test_positions[s] - self.additional_receptive_field
             d = self.load_segment(segment_position=position,
                                   duration=duration)
             i, t = self.quantize_data(d)
             i = self.dtype(i)
             t = self.ltype(t)
 
-            for m in range(minibatches_per_segment):
-                minibatch_index = s*minibatches_per_segment + m
+            for m in range(examples_per_segment):
+                example_index = s * examples_per_segment + m
                 position = m*self.target_length + self.receptive_field
-                self.test_inputs[minibatch_index, :, :] = i[position-self.receptive_field:position]
-                self.test_targets[minibatch_index, :] = t[position-self.target_length:position]
+                self.test_inputs[example_index, :, :] = i[position - self.receptive_field:position]
+                self.test_targets[example_index, :] = t[position - self.target_length:position]
 
-    def start_new_epoch(self, segments_per_chunk=16, minibatches_per_segment=32):
+    def start_new_epoch(self, segments_per_chunk=16, examples_per_segment=32):
+        # wait for loading to finish
+        # if self.load_thread != None:
+        #     if self.load_thread.is_alive():
+        #         self.load_thread.join()
+
+        print("\n start new epoch")
+
         self.segments_per_chunk = segments_per_chunk
-        self.minibatches_per_segment = minibatches_per_segment
-        self.training_index_count = segments_per_chunk * minibatches_per_segment
-        self.training_segment_duration = (self.target_length * minibatches_per_segment) / self.sampling_rate
+        self.examples_per_segment = examples_per_segment
+        self.training_index_count = segments_per_chunk * examples_per_segment
+        self.training_segment_duration = (self.target_length * examples_per_segment) / self.sampling_rate
 
         training_offset = uniform(0, self.training_segment_duration)
-        self.available_segments = int(self.data_duration // self.training_segment_duration) - 1
+        available_segments = int(self.data_duration // self.training_segment_duration) - 1
 
-        self.segment_positions = np.random.permutation(self.available_segments) * self.training_segment_duration + training_offset
+        if(available_segments < segments_per_chunk):
+            print("There are not enough segments available in the training set to produce one chunk")
+
+        self.segment_positions = np.random.permutation(available_segments) * self.training_segment_duration + training_offset
         self.chunk_position = 0
+        print("with positions: ", self.segment_positions)
 
-        self.load_new_chunk()
-        self.use_new_chunk()
+        #self.load_new_chunk()
+        #self.use_new_chunk()
 
     def load_new_chunk(self):
+        print("load new chunk with start segment index ", self.chunk_position)
         self.loaded_data = []
         current_chunk_position = self.chunk_position
 
         while len(self.loaded_data) < self.segments_per_chunk:
+            if current_chunk_position >= len(self.segment_positions):
+                print("epoch finished")
+                if self.epoch_finished_callback != None:
+                    self.epoch_finished_callback()
+                current_chunk_position = self.chunk_position
+                #break
+
             segment_position = self.segment_positions[current_chunk_position]
 
             # check if this segment overlaps with any test segment,
@@ -257,50 +276,66 @@ class AudioFileLoader:
                 train_seg_end = segment_position + self.training_segment_duration
                 test_seg_end = test_position + self.test_segment_duration
                 if (train_seg_end > test_position) & (segment_position < test_seg_end):
+                    print("block segment at position ", test_position)
                     segment_is_blocked = True
                     break
 
             current_chunk_position += 1
 
-            if current_chunk_position > len(self.segment_positions):
-                if self.epoch_finished_callback != None:
-                    self.epoch_finished_callback()
-                else:
-                    break
-
             if segment_is_blocked:
                 continue
 
-            new_data = self.load_segment(segment_position, self.training_segment_duration)
+            new_data = self.load_segment(segment_position, self.training_segment_duration + self.additional_receptive_field)
             i, t = self.quantize_data(new_data)
             self.loaded_data.append((i, t))
 
+        self.training_index_count = len(self.loaded_data) * self.examples_per_segment
         self.chunk_position = current_chunk_position
+        print("there are ", len(self.loaded_data), " segments in the newly loaded chunk")
+
 
     def use_new_chunk(self):
+        print("use loaded chunk with ", len(self.loaded_data), "segments")
+        # if len(self.loaded_data) == 0:
+        #     if self.epoch_finished_callback != None:
+        #         self.epoch_finished_callback()
+
         # wait for loading to finish
         if self.load_thread != None:
-            self.load_thread.join()
+            if self.load_thread.is_alive():
+                self.load_thread.join()
+
+        if len(self.loaded_data) == 0:
+            print("no data loaded?!")
+
         self.sample_indices = np.random.permutation(self.training_index_count)
+        #print("last training index count: ", self.training_index_count)
         self.current_training_index = 0
-        self.inputs = []
-        self.targets = []
+
+        if len(self.inputs) >= self.segments_per_chunk:
+            self.inputs = []
+            self.targets = []
 
         for inputs, targets in self.loaded_data:
             self.inputs.append(self.dtype(inputs))
             self.targets.append(self.ltype(targets))
 
+        #self.load_new_chunk()
         self.load_thread = threading.Thread(target=self.load_new_chunk)
         self.load_thread.start()
 
     def get_minibatch(self, minibatch_size):
+        print("    load minibatch")
         input = self.dtype(minibatch_size, 1, self.receptive_field).zero_()
         target = self.ltype(minibatch_size, self.target_length).zero_()
 
+        if self.training_index_count < minibatch_size:
+            print("not enough data for one minibatch in chunk. You should probably load bigger chunks into memory.")
+
         for i in range(minibatch_size):
             index = self.sample_indices[self.current_training_index]
-            segment = index // self.minibatches_per_segment
-            position = (index % self.minibatches_per_segment) * self.target_length + self.receptive_field
+            segment = index // self.examples_per_segment
+            position = (index % self.examples_per_segment) * self.target_length + self.receptive_field
 
             sample_length = min(position, self.receptive_field)
             input[i, :, -sample_length:] = self.inputs[segment][(position - sample_length):position]
@@ -309,7 +344,8 @@ class AudioFileLoader:
             target[i, -sample_length:] = self.targets[segment][(position - sample_length):position]
 
             self.current_training_index += 1
-            if self.current_training_index > self.training_index_count:
+            if self.current_training_index >= self.training_index_count:
+                print("use new chunk")
                 self.use_new_chunk()
 
         return input, target
