@@ -245,7 +245,11 @@ class AudioFileLoader:
                                   duration=duration)
             i, t = self.quantize_data(d)
             i = self.dtype(i)
-            t = self.ltype(t)
+
+            t_temp = torch.from_numpy(t)
+            if self.ltype.is_cuda:
+                t_temp = t_temp.cuda()
+            t = self.ltype(t_temp)
 
             for m in range(examples_per_segment):
                 example_index = s * examples_per_segment + m
@@ -344,7 +348,10 @@ class AudioFileLoader:
 
         for inputs, targets in self.loaded_data:
             self.inputs.append(self.dtype(inputs))
-            self.targets.append(self.ltype(targets))
+            t_temp = torch.from_numpy(targets)
+            if self.ltype.is_cuda:
+                t_temp = t_temp.cuda()
+            self.targets.append(self.ltype(t_temp))
 
         #self.load_new_chunk()
         self.load_thread = threading.Thread(target=self.load_new_chunk)
@@ -382,7 +389,7 @@ class AudioFileLoader:
         while self.start_positions[file_index+1] <= segment_position:
             file_index += 1
             if file_index+1 >= len(self.start_positions):
-                print("position ", segment_position, "is to not available")
+                print("position ", segment_position, "is not available")
                 return np.array(0)
         file_path = self.paths[file_index]
 
