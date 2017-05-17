@@ -263,7 +263,7 @@ class AudioFileLoader:
         #     if self.load_thread.is_alive():
         #         self.load_thread.join()
 
-        print("\n start new epoch")
+        #print("\n start new epoch")
 
         self.segments_per_chunk = segments_per_chunk
         self.examples_per_segment = examples_per_segment
@@ -278,7 +278,7 @@ class AudioFileLoader:
 
         self.segment_positions = np.random.permutation(available_segments) * self.training_segment_duration + training_offset
         self.chunk_position = 0
-        print("with positions: ", self.segment_positions)
+        #print("with positions: ", self.segment_positions)
 
         #self.load_new_chunk()
         #self.use_new_chunk()
@@ -291,7 +291,7 @@ class AudioFileLoader:
 
         while len(self.loaded_data) < self.segments_per_chunk:
             if current_chunk_position >= len(self.segment_positions):
-                print("epoch finished")
+                #print("epoch finished")
                 if self.epoch_finished_callback != None:
                     self.epoch_finished_callback()
                 current_chunk_position = self.chunk_position
@@ -306,7 +306,7 @@ class AudioFileLoader:
                 train_seg_end = segment_position + self.training_segment_duration
                 test_seg_end = test_position + self.test_segment_duration
                 if (train_seg_end > test_position) & (segment_position < test_seg_end):
-                    print("block segment at position ", test_position)
+                    #print("block segment at position ", test_position)
                     segment_is_blocked = True
                     break
 
@@ -321,7 +321,7 @@ class AudioFileLoader:
 
         self.training_index_count = len(self.loaded_data) * self.examples_per_segment
         self.chunk_position = current_chunk_position
-        print("there are ", len(self.loaded_data), " segments in the newly loaded chunk")
+        #print("there are ", len(self.loaded_data), " segments in the newly loaded chunk")
         toc = time.time()
         print("loading this chunk took ", toc-tic, " seconds")
 
