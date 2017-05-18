@@ -11,12 +11,12 @@ from random import randint, shuffle, uniform
 from wavenet_modules import *
 
 
-def print_last_loss(losses):
-    print("loss: ", losses[-1])
+def print_last_loss(opt):
+    print("loss: ", opt.losses[-1])
 
 
-def print_last_test_result(test_losses):
-    print("test loss: ", test_losses[-1])
+def print_last_test_result(opt):
+    print("test loss: ", opt.test_results[-1])
 
 
 class WaveNetOptimizer:
@@ -49,12 +49,19 @@ class WaveNetOptimizer:
         self.snapshot_interval = snapshot_interval
         self.snapshot_file = snapshot_file
 
+        self.losses = []
+        self.loss_positions = []
+        self.test_results = []
+        self.test_result_positions = []
         self.current_epoch = 0
         self.epochs = 1
         self.segments_per_chunk = 16
         self.examples_per_segment = 32
 
     def new_epoch(self):
+        '''
+        Start a new epoch or end training
+        '''
         self.current_epoch += 1
         if self.current_epoch >= self.epochs:
             print("training finished")
@@ -64,7 +71,12 @@ class WaveNetOptimizer:
         self.data.start_new_epoch(segments_per_chunk=self.segments_per_chunk,
                                   examples_per_segment=self.examples_per_segment)
 
-    def test_model(self, test_m=16):
+    def test_model(self, position, test_m=16):
+        '''
+        Run model on test set and report the result
+
+        :param test_m: number of examples from the test set in one minibatch
+        '''
         self.model.eval()
         avg_loss = 0
         i = 0
@@ -81,7 +93,12 @@ class WaveNetOptimizer:
             i += test_m
 
         avg_loss = avg_loss * test_m / self.data.test_index_count
-        print("test loss: ", avg_loss)
+        self.test_results.append(avg_loss)
+        self.test_result_positions.append(position)
+        if self.test_report_callback is not None:
+            self.test_report_callback(self)
+        #print("test loss: ", avg_loss)
+
         self.model.train()
 
     def train(self,
@@ -90,6 +107,16 @@ class WaveNetOptimizer:
               epochs=100,
               segments_per_chunk=16,
               examples_per_segment=32):
+
+        '''
+        Train a Wavenet model
+
+        :param learning_rate: Learning rate of the optimizer
+        :param minibatch_size: Number of examples in one minibatch
+        :param epochs: Number of training epochs
+        :param segments_per_chunk: Number of segments from the training data that are simultaneously loaded into memory
+        :param examples_per_segment: The number of examples each of these segments contains
+        '''
 
         self.optimizer.lr = learning_rate
         self.epochs = epochs
@@ -135,14 +162,17 @@ class WaveNetOptimizer:
             if i % self.report_interval == 0:
                 avg_loss /= self.report_interval
                 previous_loss = avg_loss
-                losses.append(avg_loss)
+
+                self.losses.append(avg_loss)
+                self.loss_positions.append(i)
+
                 if self.report_callback != None:
-                    self.report_callback(losses)
+                    self.report_callback(self)
                 avg_loss = 0
 
             # run on test set
             if i % self.test_interval == 0:
-                self.test_model()
+                self.test_model(i)
 
             # snapshot
             if i % self.snapshot_interval == 0:
@@ -254,6 +284,8 @@ class AudioFileLoader:
             for m in range(examples_per_segment):
                 example_index = s * examples_per_segment + m
                 position = m*self.target_length + self.receptive_field
+                if position > i.size(0):
+                    print("index ", position, " is not avialable in a tensor of size ", i.size(0))
                 self.test_inputs[example_index, :, :] = i[position - self.receptive_field:position]
                 self.test_targets[example_index, :] = t[position - self.target_length:position]
 
@@ -285,7 +317,7 @@ class AudioFileLoader:
 
     def load_new_chunk(self):
         tic = time.time()
-        print("load new chunk with start segment index ", self.chunk_position)
+        #print("load new chunk with start segment index ", self.chunk_position)
         self.loaded_data = []
         current_chunk_position = self.chunk_position
 
@@ -323,11 +355,12 @@ class AudioFileLoader:
         self.chunk_position = current_chunk_position
         #print("there are ", len(self.loaded_data), " segments in the newly loaded chunk")
         toc = time.time()
-        print("loading this chunk took ", toc-tic, " seconds")
+        if toc-tic > 60:
+            print("loading this chunk took ", toc-tic, " seconds")
 
 
     def use_new_chunk(self):
-        print("use loaded chunk with ", len(self.loaded_data), "segments")
+        #print("use loaded chunk with ", len(self.loaded_data), "segments")
 
         # wait for loading to finish
         if self.load_thread != None:
@@ -370,6 +403,9 @@ class AudioFileLoader:
             segment = index // self.examples_per_segment
             position = (index % self.examples_per_segment) * self.target_length + self.receptive_field
 
+            if position > self.inputs[segment].size(0):
+                print("index ", position, " is not avialable in a tensor of size ", self.inputs[segment].size(0))
+
             sample_length = min(position, self.receptive_field)
             input[i, :, -sample_length:] = self.inputs[segment][(position - sample_length):position]
 
@@ -378,7 +414,7 @@ class AudioFileLoader:
 
             self.current_training_index += 1
             if self.current_training_index >= self.training_index_count:
-                print("use new chunk")
+                #print("use new chunk")
                 self.use_new_chunk()
 
         return input, target
