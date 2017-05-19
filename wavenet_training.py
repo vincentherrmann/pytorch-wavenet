@@ -126,7 +126,10 @@ class WaveNetOptimizer:
         self.model.train()  # set to train mode
         i = 0  # step index
         avg_loss = 0
-        losses = []
+        self.losses = []
+        self.loss_positions = []
+        self.test_results = []
+        self.test_result_positions = []
         previous_loss = 1000
         self.current_epoch = -1
 

@@ -98,14 +98,6 @@ class WaveNetModel(nn.Module):
         # WaveNet layers
         for i in range(self.blocks * self.layers):
 
-            #			 |----------------------------|		*residual*
-            # 			 |							  |
-            # -> dilate -|-- conv -- ReLU -|-- 1x1 -- + -->	*input*
-            #							   |
-            #							  1x1
-            #							   |
-            # ---------------------------> + ------------->	*skip*
-
             #			 |---------------------------------|		*residual*
             #            |                                 |
             # 			 |	   |-- tanh --|			       |
@@ -129,7 +121,7 @@ class WaveNetModel(nn.Module):
 
             # parametrized skip connection
             s = x
-            if x.size(2) != 1:  # reshape s to make it compatible with skip
+            if x.size(2) != 1:
                 s = dilate(x, 1, init_dilation=dilation)
             s = self.skip_convs[i](s)
             if skip != 0:

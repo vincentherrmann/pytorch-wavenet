@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import torch
 import numpy as np
 
-model = WaveNetModel(layers=10,
+model = WaveNetModel(layers=7,
                      blocks=2,
                      dilation_channels=32,
                      residual_channels=32,
@@ -24,14 +24,17 @@ print("scope: ", model.receptive_field)
 # 				   target_length=model.output_length,
 # 				   num_classes=model.classes)
 
-data = ["../train_samples/hihat.wav",
-        "../train_samples/piano.wav",
-        "../train_samples/saber.wav",
-        "../train_samples/violin.wav",
-        "../train_samples/sine.wav",
-        "../train_samples/bach_full.wav",
-        "../train_samples/sapiens.wav"]
+# data = ["../train_samples/hihat.wav",
+#         "../train_samples/piano.wav",
+#         "../train_samples/saber.wav",
+#         "../train_samples/violin.wav",
+#         "../train_samples/sine.wav",
+#         "../train_samples/bach_full.wav",
+#         "../train_samples/sapiens.wav"]
         #"/Users/vincentherrmann/Music/Mischa Maisky plays Bach Cello Suite No.1 in G (full).wav"]
+
+data = ["../train_samples/piano.wav"]
+
 
 data_loader = AudioFileLoader(data,
                               classes=model.classes,
@@ -39,8 +42,7 @@ data_loader = AudioFileLoader(data,
                               target_length=model.output_length,
                               dtype=model.dtype,
                               ltype=torch.LongTensor,
-                              sampling_rate=11025,
-                              epoch_finished_callback=None)
+                              sampling_rate=44100)
 
 
 # start_tensor = data.get_minibatch([0])[0].squeeze()
@@ -48,9 +50,11 @@ data_loader = AudioFileLoader(data,
 # 												 receptive_field=model.receptive_field,
 # 												 target_length=model.output_length)
 optimizer = WaveNetOptimizer(model,
-                             mini_batch_size=4,
-                             report_length=4,
-                             test_interval=16)
+                             data=data_loader,
+                             test_segments=4,
+                             examples_per_test_segment=2,
+                             report_interval=4,
+                             test_interval=32)
 
 # optimizer = Optimizer(model, learning_rate=0.001, mini_batch_size=4, avg_length=2)
 
@@ -62,8 +66,11 @@ optimizer = WaveNetOptimizer(model,
 print('start training...')
 tic = time.time()
 # optimizer.train(data, epochs=100)
-optimizer.train(data_loader,
-                epochs=10)
+optimizer.train(learning_rate=0.001,
+                minibatch_size=4,
+                epochs=10,
+                segments_per_chunk=4,
+                examples_per_segment=8)
 toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))
 
