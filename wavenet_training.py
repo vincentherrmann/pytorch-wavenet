@@ -50,6 +50,7 @@ class WaveNetOptimizer:
         self.snapshot_file = snapshot_file
 
         self.losses = []
+        self.step_times = []
         self.loss_positions = []
         self.test_results = []
         self.test_result_positions = []
@@ -126,7 +127,9 @@ class WaveNetOptimizer:
         self.model.train()  # set to train mode
         i = 0  # step index
         avg_loss = 0
+        avg_time = 0
         self.losses = []
+        self.step_times = []
         self.loss_positions = []
         self.test_results = []
         self.test_result_positions = []
@@ -139,6 +142,7 @@ class WaveNetOptimizer:
 
         # train loop
         while True:
+            tic = time.time()
             self.optimizer.zero_grad()
 
             # get data
@@ -158,24 +162,30 @@ class WaveNetOptimizer:
 
             self.optimizer.step()
 
+            step_time = time.time() - tic
+            avg_time += step_time
             avg_loss += loss
             i += 1
 
             # train feedback
             if i % self.report_interval == 0:
                 avg_loss /= self.report_interval
+                avg_time /= self.report_interval
                 previous_loss = avg_loss
 
                 self.losses.append(avg_loss)
+                self.step_times.append(avg_time)
                 self.loss_positions.append(i)
 
                 if self.report_callback != None:
                     self.report_callback(self)
                 avg_loss = 0
+                avg_time = 0
 
             # run on test set
             if i % self.test_interval == 0:
                 self.test_model(i)
+                print("average test time: ", self.step_times[-1])
 
             # snapshot
             if i % self.snapshot_interval == 0:
