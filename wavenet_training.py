@@ -15,21 +15,21 @@ def print_last_loss(opt):
     print("loss: ", opt.losses[-1])
 
 
-def print_last_test_result(opt):
-    print("test loss: ", opt.test_results[-1])
+def print_last_validation_result(opt):
+    print("validation loss: ", opt.validation_results[-1])
 
 
 class WaveNetOptimizer:
     def __init__(self,
                  model,
                  data,
-                 test_segments=0,
-                 examples_per_test_segment=8,
+                 validation_segments=0,
+                 examples_per_validation_segment=8,
                  optimizer=optim.Adam,
                  report_callback=print_last_loss,
                  report_interval=8,
-                 test_report_callback=print_last_test_result,
-                 test_interval=64,
+                 validation_report_callback=print_last_validation_result,
+                 validation_interval=64,
                  snapshot_interval=256,
                  snapshot_file=None):
 
@@ -38,26 +38,33 @@ class WaveNetOptimizer:
         self.data.epoch_finished_callback = self.new_epoch
         self.optimizer = optimizer(params=self.model.parameters())
 
-        if test_segments > 0:
-            self.data.create_test_set(segments=test_segments,
-                                      examples_per_segment=examples_per_test_segment)
+        if validation_segments > 0:
+            self.data.create_validation_set(segments=validation_segments,
+                                            examples_per_segment=examples_per_validation_segment)
 
         self.report_callback = report_callback
         self.report_interval = report_interval
-        self.test_report_callback = test_report_callback
-        self.test_interval = test_interval
+        self.validation_report_callback = validation_report_callback
+        self.validation_interval = validation_interval
         self.snapshot_interval = snapshot_interval
         self.snapshot_file = snapshot_file
 
+        self.i = 0 # current step
         self.losses = []
         self.step_times = []
         self.loss_positions = []
-        self.test_results = []
-        self.test_result_positions = []
-        self.current_epoch = 0
+        self.validation_results = []
+        self.validation_result_positions = []
+        self.avg_loss = 0
+        self.avg_time = 0
+        self.current_epoch = -1
         self.epochs = 1
         self.segments_per_chunk = 16
         self.examples_per_segment = 32
+
+        self.new_epoch()
+        self.data.load_new_chunk()
+        self.data.use_new_chunk()
 
     def new_epoch(self):
         '''
@@ -72,35 +79,51 @@ class WaveNetOptimizer:
         self.data.start_new_epoch(segments_per_chunk=self.segments_per_chunk,
                                   examples_per_segment=self.examples_per_segment)
 
-    def test_model(self, position, test_m=16):
+    def validate_model(self, position, validation_m=16):
         '''
-        Run model on test set and report the result
+        Run model on validation set and report the result
 
-        :param test_m: number of examples from the test set in one minibatch
+        :param validation_m: number of examples from the validation set in one minibatch
         '''
         self.model.eval()
         avg_loss = 0
         i = 0
 
-        while i < self.data.test_index_count:
-            inputs = self.data.test_inputs[i:(i+test_m), :, :]
+        while i < self.data.validation_index_count:
+            inputs = self.data.validation_inputs[i:(i + validation_m), :, :]
             inputs = Variable(inputs, volatile=True)
-            targets = self.data.test_targets[i:(i+test_m), :]
+            targets = self.data.validation_targets[i:(i + validation_m), :]
             targets = targets.view(targets.size(0) * targets.size(1))
             targets = Variable(targets, volatile=True)
             output = self.model(inputs)
             loss = F.cross_entropy(output.squeeze(), targets).data[0]
             avg_loss += loss
-            i += test_m
+            i += validation_m
 
-        avg_loss = avg_loss * test_m / self.data.test_index_count
-        self.test_results.append(avg_loss)
-        self.test_result_positions.append(position)
-        if self.test_report_callback is not None:
-            self.test_report_callback(self)
-        #print("test loss: ", avg_loss)
+        avg_loss = avg_loss * validation_m / self.data.validation_index_count
+        self.validation_results.append(avg_loss)
+        self.validation_result_positions.append(position)
+        if self.validation_report_callback is not None:
+            self.validation_report_callback(self)
+        #print("validation loss: ", avg_loss)
 
         self.model.train()
+
+    def reset_training(self):
+        self.i = 0
+        self.losses = []
+        self.step_times = []
+        self.loss_positions = []
+        self.validation_results = []
+        self.validation_result_positions = []
+        self.avg_loss = 0
+        self.avg_time = 0
+        self.current_epoch = -1
+
+        self.new_epoch()
+        self.data.load_new_chunk()
+        self.data.use_new_chunk()
+
 
     def train(self,
               learning_rate=0.001,
@@ -125,20 +148,6 @@ class WaveNetOptimizer:
         self.examples_per_segment = examples_per_segment
 
         self.model.train()  # set to train mode
-        i = 0  # step index
-        avg_loss = 0
-        avg_time = 0
-        self.losses = []
-        self.step_times = []
-        self.loss_positions = []
-        self.test_results = []
-        self.test_result_positions = []
-        previous_loss = 1000
-        self.current_epoch = -1
-
-        self.new_epoch()
-        self.data.load_new_chunk()
-        self.data.use_new_chunk()
 
         # train loop
         while True:
@@ -165,10 +174,10 @@ class WaveNetOptimizer:
             step_time = time.time() - tic
             avg_time += step_time
             avg_loss += loss
-            i += 1
+            self.i += 1
 
             # train feedback
-            if i % self.report_interval == 0:
+            if self.i % self.report_interval == 0:
                 avg_loss /= self.report_interval
                 avg_time /= self.report_interval
                 previous_loss = avg_loss
@@ -182,13 +191,13 @@ class WaveNetOptimizer:
                 avg_loss = 0
                 avg_time = 0
 
-            # run on test set
-            if i % self.test_interval == 0:
-                self.test_model(i)
-                print("average test time: ", self.step_times[-1])
+            # run on validation set
+            if self.i % self.validation_interval == 0:
+                self.validate_model(i)
+                print("average step time: ", self.step_times[-1])
 
             # snapshot
-            if i % self.snapshot_interval == 0:
+            if self.i % self.snapshot_interval == 0:
                 if self.snapshot_file != None:
                     torch.save(self.model.state_dict(), self.snapshot_file)
                     date = str(datetime.now())
@@ -235,12 +244,12 @@ class AudioFileLoader:
         self.chunk_position = 0
         self.additional_receptive_field = (self.receptive_field - self.target_length + 1) / self.sampling_rate # negative offset to accommodate for the receptive field
 
-        # test data
-        self.test_inputs = np.array(0)
-        self.test_targets = np.array(0)
-        self.test_index_count = 0
-        self.test_positions = []
-        self.test_segment_duration = 0.
+        # validation data
+        self.validation_inputs = np.array(0)
+        self.validation_targets = np.array(0)
+        self.validation_index_count = 0
+        self.validation_positions = []
+        self.validation_segment_duration = 0.
 
         # calculate training data duration
         self.data_duration = 0
@@ -263,27 +272,27 @@ class AudioFileLoader:
         targets = quantized[1::]
         return inputs, targets
 
-    def create_test_set(self, segments=32, examples_per_segment=8):
+    def create_validation_set(self, segments=32, examples_per_segment=8):
         '''
-        Create test set from data that will be excluded from all training data
+        Create validation set from data that will be excluded from all training data
         '''
 
-        self.test_index_count = segments * examples_per_segment
-        self.test_inputs = self.dtype(self.test_index_count, 1, self.receptive_field).zero_()
-        self.test_targets = self.ltype(self.test_index_count, self.target_length).zero_()
+        self.validation_index_count = segments * examples_per_segment
+        self.validation_inputs = self.dtype(self.validation_index_count, 1, self.receptive_field).zero_()
+        self.validation_targets = self.ltype(self.validation_index_count, self.target_length).zero_()
 
-        self.test_segment_duration = (self.target_length * examples_per_segment) / self.sampling_rate
-        print("The test set has a total duration of ", segments*self.test_segment_duration, " s")
+        self.validation_segment_duration = (self.target_length * examples_per_segment) / self.sampling_rate
+        print("The validation set has a total duration of ", segments * self.validation_segment_duration, " s")
 
-        available_segments = int(self.data_duration // self.test_segment_duration) - 1 # number of segments that can be chosen from
-        test_offset = uniform(0, self.test_segment_duration) # some random offset
+        available_segments = int(self.data_duration // self.validation_segment_duration) - 1 # number of segments that can be chosen from
+        validation_offset = uniform(0, self.validation_segment_duration) # some random offset
         positions = np.random.choice(available_segments, size=segments, replace=False)
-        self.test_positions = positions * self.test_segment_duration + test_offset
+        self.validation_positions = positions * self.validation_segment_duration + validation_offset
 
-        duration = self.test_segment_duration + self.additional_receptive_field
+        duration = self.validation_segment_duration + self.additional_receptive_field
 
         for s in range(segments):
-            position = self.test_positions[s] - self.additional_receptive_field
+            position = self.validation_positions[s] - self.additional_receptive_field
             d = self.load_segment(segment_position=position,
                                   duration=duration)
             i, t = self.quantize_data(d)
@@ -299,8 +308,8 @@ class AudioFileLoader:
                 position = m*self.target_length + self.receptive_field
                 if position > i.size(0):
                     print("index ", position, " is not avialable in a tensor of size ", i.size(0))
-                self.test_inputs[example_index, :, :] = i[position - self.receptive_field:position]
-                self.test_targets[example_index, :] = t[position - self.target_length:position]
+                self.validation_inputs[example_index, :, :] = i[position - self.receptive_field:position]
+                self.validation_targets[example_index, :] = t[position - self.target_length:position]
 
     def start_new_epoch(self, segments_per_chunk=16, examples_per_segment=32):
         # wait for loading to finish
@@ -344,14 +353,14 @@ class AudioFileLoader:
 
             segment_position = self.segment_positions[current_chunk_position]
 
-            # check if this segment overlaps with any test segment,
+            # check if this segment overlaps with any validation segment,
             # if yes, then block it
             segment_is_blocked = False
-            for test_position in self.test_positions:
+            for validation_position in self.validation_positions:
                 train_seg_end = segment_position + self.training_segment_duration
-                test_seg_end = test_position + self.test_segment_duration
-                if (train_seg_end > test_position) & (segment_position < test_seg_end):
-                    #print("block segment at position ", test_position)
+                validation_seg_end = validation_position + self.validation_segment_duration
+                if (train_seg_end > validation_position) & (segment_position < validation_seg_end):
+                    #print("block segment at position ", validation_position)
                     segment_is_blocked = True
                     break
 
