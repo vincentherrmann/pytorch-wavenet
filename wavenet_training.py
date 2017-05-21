@@ -172,28 +172,28 @@ class WaveNetOptimizer:
             self.optimizer.step()
 
             step_time = time.time() - tic
-            avg_time += step_time
-            avg_loss += loss
+            self.avg_time += step_time
+            self.avg_loss += loss
             self.i += 1
 
             # train feedback
             if self.i % self.report_interval == 0:
-                avg_loss /= self.report_interval
-                avg_time /= self.report_interval
-                previous_loss = avg_loss
+                self.avg_loss /= self.report_interval
+                self.avg_time /= self.report_interval
+                previous_loss = self.avg_loss
 
-                self.losses.append(avg_loss)
-                self.step_times.append(avg_time)
-                self.loss_positions.append(i)
+                self.losses.append(self.avg_loss)
+                self.step_times.append(self.avg_time)
+                self.loss_positions.append(self.i)
 
                 if self.report_callback != None:
                     self.report_callback(self)
-                avg_loss = 0
-                avg_time = 0
+                self.avg_loss = 0
+                self.avg_time = 0
 
             # run on validation set
             if self.i % self.validation_interval == 0:
-                self.validate_model(i)
+                self.validate_model(self.i)
                 print("average step time: ", self.step_times[-1])
 
             # snapshot
