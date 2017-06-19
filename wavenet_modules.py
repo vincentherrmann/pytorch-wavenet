@@ -1,9 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import Parameter
 from torch.autograd import Variable, Function
 
 import numpy as np
+
+def selu(x):
+    alpha = 1.6732632423543772848170429916717
+    scale = 1.0507009873554804934193349852946
+    return scale * F.elu(x, alpha)
 
 
 class WaveNetLayer(nn.Module):
@@ -298,6 +304,111 @@ class ConstantPad1d(Function):
         return grad_input
 
 
+class Conv1dExtendable(nn.Conv1d):
+    def __init__(self, *args, **kwargs):
+        super(Conv1dExtendable, self).__init__(*args, **kwargs)
+        self.init_ncc()
+        self.input_tied_modules = [] # modules whose input is sensitive to the output size of this module
+        self.output_tied_modules = [] # modules whose output size has to be compatible this this modules output
+
+    def init_ncc(self):
+        w = self.weight.view(self.weight.size(0), -1)  # size: (G, F*J)
+        mean = torch.mean(w, dim=1).unsqueeze(1).expand_as(w)
+        self.t0_factor = w - mean
+        self.t0_norm = torch.norm(w, p=2, dim=1)
+        self.start_ncc = Variable(torch.zeros(self.out_channels))
+        self.start_ncc = self.normalized_cross_correlation()
+
+    def normalized_cross_correlation(self):
+        w = self.weight.view(self.weight.size(0), -1)
+        t_norm = torch.norm(w, p=2, dim=1)
+
+        # If there is only one input channel, no sensible ncc can be calculated, return instead the ratio of the norms
+        if self.in_channels == 1 & sum(self.kernel_size) == 1:
+            ncc = w.squeeze() / torch.norm(self.t0_norm, 2)
+            ncc = ncc - self.start_ncc
+            return ncc
+        mean = torch.mean(w, dim=1).unsqueeze(1).expand_as(w)
+        t_factor = w - mean
+        h_product = self.t0_factor * t_factor
+        covariance = torch.sum(h_product, dim=1) #/ (w.size(1)-1)
+
+        #t_sd = torch.std(w, dim=1)
+        #normalization_factor = 1 / (self.t0_sd * t_sd)
+
+        denominator = self.t0_norm * t_norm
+
+        ncc = covariance / denominator
+        ncc = ncc - self.start_ncc
+        return ncc
+
+    def split_feature(self, feature_number):
+        self.split_output_channel(channel_number=feature_number)
+        for dep in self.input_tied_modules:
+            dep.split_input_channel(channel_number=feature_number)
+        for dep in self.output_tied_modules:
+            dep.split_output_channel(channel_number=feature_number)
+
+    def split_features(self, threshold):
+        ncc = self.normalized_cross_correlation()
+        for i, ncc_value in enumerate(ncc):
+            if ncc_value < threshold:
+                print("ncc value for feature ", i, ": ", ncc_value)
+                self.split_feature(i)
+
+    def split_output_channel(self, channel_number):
+        '''
+        Split one output channel (a feature) in two, but retain the same summed value
+
+        :param channel_number: The number of the channel that will be split
+        '''
+
+        # weight tensor: (out_channels, in_channels, kernel_size)
+        self.out_channels += 1
+
+        original_weight = self.weight.data
+        split_positions = 2 * torch.rand(self.in_channels, self.kernel_size[0])
+
+        new_weight = torch.zeros(self.out_channels, self.in_channels, self.kernel_size[0])
+        if channel_number > 0:
+            new_weight[0:channel_number, :, :] = original_weight[0:channel_number, :, :]
+        new_weight[channel_number, :, :] = original_weight[channel_number, :, :] * split_positions
+        new_weight[channel_number + 1, :, :] = original_weight[channel_number, :, :] * (2 - split_positions)
+        if channel_number + 2 < self.out_channels:
+            new_weight[channel_number + 2:, :, :] = original_weight[channel_number + 1:, :, :]
+
+        if self.bias is not None:
+            original_bias = self.bias.data
+            new_bias = torch.zeros(self.out_channels)
+            new_bias[0:channel_number+1] = original_bias[0:channel_number+1]
+            new_bias[channel_number+1:] = original_bias[channel_number:]
+            self.bias = Parameter(new_bias)
+
+        self.weight = Parameter(new_weight)
+        self.init_ncc()
+
+    def split_input_channel(self, channel_number):
+
+        if channel_number > self.in_channels:
+            print("cannot split in channel ", channel_number)
+            return
+
+        self.in_channels += 1
+        original_weight = self.weight.data
+        duplicated_slice = original_weight[:, channel_number, :] * 0.5
+
+        new_weight = torch.zeros(self.out_channels, self.in_channels, self.kernel_size[0])
+        if channel_number > 0:
+            new_weight[:, 0:channel_number, :] = original_weight[:, 0:channel_number, :]
+        new_weight[:, channel_number, :] = duplicated_slice
+        new_weight[:, channel_number+1, :] = duplicated_slice
+        if channel_number+2 < self.in_channels:
+            new_weight[:, channel_number+2:, :] = original_weight[:, channel_number+1:, :]
+        self.weight = Parameter(new_weight)
+        self.init_ncc()
+
+
+
 def constant_pad_1d(input,
                     target_size,
                     dimension=0,
@@ -306,7 +417,7 @@ def constant_pad_1d(input,
     return ConstantPad1d(target_size, dimension, value, pad_start)(input)
 
 
-def mu_law_econding(data, mu):
+def mu_law_enconding(data, mu):
     mu_x = np.sign(data) * np.log(1 + mu * np.abs(data)) / np.log(mu + 1)
     return mu_x
 

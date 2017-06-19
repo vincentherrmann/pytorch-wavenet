@@ -31,9 +31,9 @@ class Test_AudioFileLoader(TestCase):
 
 
     def test_set(self):
-        self.audio_loader.create_test_set(segments=8, examples_per_segment=8)
-        print("test inputs: ", self.audio_loader.test_inputs)
-        print("test targets: ", self.audio_loader.test_targets)
+        self.audio_loader.create_validation_set(segments=8, examples_per_segment=8)
+        print("test inputs: ", self.audio_loader.validation_inputs)
+        print("test targets: ", self.audio_loader.validation_targets)
 
         self.audio_loader.start_new_epoch(segments_per_chunk=16,
                                           examples_per_segment=32)

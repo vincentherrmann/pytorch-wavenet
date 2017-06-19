@@ -1,7 +1,7 @@
 import torch
 from torch.autograd import Variable
 from unittest import TestCase
-from wavenet_training import ConvDilated, dilate
+from wavenet_training import dilate, Conv1dExtendable
 
 
 class Test_Dilation(TestCase):
@@ -35,38 +35,13 @@ class Test_Dilation(TestCase):
         dilated = dilate(input, 2)
         dilated = dilate(input, 4)
 
+class Test_Conv1dExtendable:
+    def test_ncc(self):
+        module = Conv1dExtendable(in_channels=3,
+                                  out_channels=5,
+                                  kernel_size=4)
 
-class Test_ConvDilated(TestCase):
-    def test_dilation(self):
-        module = ConvDilated(num_channels_in=1,
-                             num_channels_out=1,
-                             kernel_size=2,
-                             dilation=2)
-
-        module.conv.weight = torch.nn.Parameter(torch.FloatTensor([[[0, 1]]]))
-        w = module.conv.weight
-
-        input = Variable(torch.linspace(0, 12, steps=13).view(1, 1, 13))
-        dilated = module(input)
-        print(dilated)
-        assert dilated.size() == (2, 1, 6)
-        res = torch.FloatTensor([[[1, 3, 5, 7, 9, 11]],
-                                 [[2, 4, 6, 8, 10, 12]]])
-        assert dilated.data.equal(res)
-
-        module.dilation = 4
-        dilated = module(dilated)
-        print(dilated)
-        assert dilated.size() == (4, 1, 2)
-        res = torch.FloatTensor([[[5, 9]],
-                                 [[6, 10]],
-                                 [[7, 11]],
-                                 [[8, 12]]])
-        assert dilated.data.equal(res)
-
-        module.dilation = 1
-        dilated = module(dilated)
-        print(dilated)
-        assert dilated.size() == (1, 1, 7)
-        res = torch.FloatTensor([[[6, 7, 8, 9, 10, 11, 12]]])
-        assert dilated.data.equal(res)
+        rand = Variable(torch.rand(5, 3, 4))
+        module._parameters['weight'] = module.weight * module.weight + rand * 1
+        ncc = module.normalized_cross_correlation()
+        print(ncc)
