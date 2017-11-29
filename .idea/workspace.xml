@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a903b4e1-0d2d-4841-a5e1-29ba12e8fc60" name="Default" comment="Add automatic feature extension (experimental!)">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_cello.mp3" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model_parameters/hihat_7-2-128-64-64-64-2" afterPath="$PROJECT_DIR$/model_parameters/hihat_7-2-128-64-64-64-2" />
+    <list default="true" id="a903b4e1-0d2d-4841-a5e1-29ba12e8fc60" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet2Train-checkpoint.ipynb" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet2Train-checkpoint.ipynb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/WaveNet2Train.ipynb" afterPath="$PROJECT_DIR$/WaveNet2Train.ipynb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logger.py" afterPath="$PROJECT_DIR$/logger.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/test_expanding_wavenet.py" afterPath="$PROJECT_DIR$/tests/test_expanding_wavenet.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/test_modules.py" afterPath="$PROJECT_DIR$/tests/test_modules.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wavenet_modules.py" afterPath="$PROJECT_DIR$/wavenet_modules.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wavenet_training.py" afterPath="$PROJECT_DIR$/wavenet_training.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -31,8 +22,8 @@
           <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="330">
-                  <caret line="29" column="30" lean-forward="false" selection-start-line="29" selection-start-column="30" selection-end-line="29" selection-end-column="30" />
+                <state relative-caret-position="630">
+                  <caret line="49" column="0" lean-forward="false" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -180,6 +171,11 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -828,7 +824,14 @@
       <option name="project" value="LOCAL" />
       <updated>1497880035541</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="last commit before cleanup">
+      <created>1511950269238</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1511950269238</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -878,7 +881,7 @@
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.06104766" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49389523" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27901787" sideWeight="0.30366287" order="0" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27901787" sideWeight="0.30366287" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49704608" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328125" sideWeight="0.49704608" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21205357" sideWeight="0.47026387" order="6" side_tool="false" content_ui="tabs" />
@@ -918,7 +921,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix minibatch issue" />
     <MESSAGE value="Fix Snapshots" />
     <MESSAGE value="Add full Bach sample" />
     <MESSAGE value="Add cuda to generate_fast" />
@@ -943,7 +945,8 @@
     <MESSAGE value="Make training status persistent" />
     <MESSAGE value="Change to instance variables" />
     <MESSAGE value="Add automatic feature extension (experimental!)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add automatic feature extension (experimental!)" />
+    <MESSAGE value="last commit before cleanup" />
+    <option name="LAST_COMMIT_MESSAGE" value="last commit before cleanup" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1439,8 +1442,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/wavenet_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="29" column="30" lean-forward="false" selection-start-line="29" selection-start-column="30" selection-end-line="29" selection-end-column="30" />
+        <state relative-caret-position="630">
+          <caret line="49" column="0" lean-forward="false" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
           <folding />
         </state>
       </provider>
