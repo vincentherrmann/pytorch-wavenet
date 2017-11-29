@@ -2,6 +2,7 @@ import torch
 from torch.autograd import Variable
 from unittest import TestCase
 from wavenet_training import dilate, Conv1dExtendable
+from wavenet_modules import *
 
 
 class Test_Dilation(TestCase):
@@ -45,3 +46,20 @@ class Test_Conv1dExtendable:
         module._parameters['weight'] = module.weight * module.weight + rand * 1
         ncc = module.normalized_cross_correlation()
         print(ncc)
+
+class Test_Tensor_Inserting:
+    def test_insertion(self):
+        tensor = torch.rand(3, 4, 5)
+        print(tensor)
+        slice = torch.zeros(3, 5)
+
+        i = insert_slice(tensor=tensor, slice=slice, dim=1, at_index=2)
+        print(i)
+
+        i = insert_slice(tensor=tensor, slice=slice, dim=1, at_index=0)
+        print(i)
+
+        i = insert_slice(tensor=tensor, slice=slice, dim=1, at_index=4)
+        print(i)
+
+

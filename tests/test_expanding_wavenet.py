@@ -5,13 +5,13 @@ from torch.autograd import Variable
 import torch
 import numpy as np
 
-model = ExpandingWaveNetModel(layers=5,
+model = ExpandingWaveNetModel(layers=7,
                               blocks=2,
-                              dilation_channels=4,
-                              residual_channels=4,
-                              skip_channels=4,
+                              dilation_channels=2,
+                              residual_channels=2,
+                              skip_channels=2,
                               classes=256,
-                              output_length=32)
+                              output_length=64)
 
 print("model: ", model)
 print("scope: ", model.receptive_field)
@@ -39,7 +39,7 @@ diff = test_output_1 - test_output_2
 dot = torch.dot(diff, diff)
 print("mse: ", dot.data[0])
 
-data = ["../train_samples/piano.wav"]
+data = ["../train_samples/bach_cello_suite_1_sarabande.mp3"]
 
 data_loader = AudioFileLoader(data,
                               classes=model.classes,
@@ -47,28 +47,29 @@ data_loader = AudioFileLoader(data,
                               target_length=model.output_length,
                               dtype=model.dtype,
                               ltype=torch.LongTensor,
-                              sampling_rate=44100)
+                              sampling_rate=11025)
 
 optimizer = WaveNetOptimizer(model,
                              data=data_loader,
                              optimizer=optim.Adam,
-                             validation_segments=4,
-                             examples_per_validation_segment=2,
+                             validation_segments=16,
+                             examples_per_validation_segment=16,
                              report_interval=4,
-                             validation_interval=256,
-                             logging_interval=256,
+                             validation_interval=512,
+                             logging_interval=512,
                              segments_per_chunk=4,
-                             examples_per_segment=8)
+                             examples_per_segment=32)
 
-optimizer.log_normalized_cross_correlation()
+#optimizer.log_normalized_cross_correlation()
 
 print('start training...')
 tic = time.time()
 optimizer.train(learning_rate=0.001,
                 minibatch_size=4,
-                epochs=100,
+                epochs=300,
                 segments_per_chunk=4,
-                examples_per_segment=8)
+                examples_per_segment=32,
+                split_threshold=0.16)
 toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))
 

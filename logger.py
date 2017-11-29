@@ -42,7 +42,7 @@ class Logger(object):
         summary = tf.Summary(value=img_summaries)
         self.writer.add_summary(summary, step)
 
-    def histo_summary(self, tag, values, step, bins=1000):
+    def histo_summary(self, tag, values, step, bins=200):
         """Log a histogram of the tensor of values."""
 
         # Create a histogram using numpy

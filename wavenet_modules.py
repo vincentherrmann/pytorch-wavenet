@@ -310,44 +310,60 @@ class Conv1dExtendable(nn.Conv1d):
         self.init_ncc()
         self.input_tied_modules = [] # modules whose input is sensitive to the output size of this module
         self.output_tied_modules = [] # modules whose output size has to be compatible this this modules output
+        self.current_ncc = None
 
     def init_ncc(self):
+        self.t0_weight = self.weight.clone()
+
         w = self.weight.view(self.weight.size(0), -1)  # size: (G, F*J)
-        mean = torch.mean(w, dim=1).unsqueeze(1).expand_as(w)
-        self.t0_factor = w - mean
-        self.t0_norm = torch.norm(w, p=2, dim=1)
+        mean = torch.mean(w, dim=1).expand_as(w)
         self.start_ncc = Variable(torch.zeros(self.out_channels))
         self.start_ncc = self.normalized_cross_correlation()
 
     def normalized_cross_correlation(self):
+        w_0 = self.t0_weight.view(self.weight.size(0), -1)  # size: (G, F*J)
+        mean_0 = torch.mean(w_0, dim=1).expand_as(w_0)
+        t0_factor = w_0 - mean_0
+        t0_norm = torch.norm(w_0, p=2, dim=1)
+
         w = self.weight.view(self.weight.size(0), -1)
         t_norm = torch.norm(w, p=2, dim=1)
 
         # If there is only one input channel, no sensible ncc can be calculated, return instead the ratio of the norms
         if self.in_channels == 1 & sum(self.kernel_size) == 1:
-            ncc = w.squeeze() / torch.norm(self.t0_norm, 2)
+            ncc = w.squeeze() / torch.norm(t0_norm, 2).squeeze()
             ncc = ncc - self.start_ncc
+            self.current_ncc = ncc
             return ncc
-        mean = torch.mean(w, dim=1).unsqueeze(1).expand_as(w)
+
+        mean = torch.mean(w, dim=1).expand_as(w)
         t_factor = w - mean
-        h_product = self.t0_factor * t_factor
+        h_product = t0_factor * t_factor
         covariance = torch.sum(h_product, dim=1) #/ (w.size(1)-1)
 
         #t_sd = torch.std(w, dim=1)
         #normalization_factor = 1 / (self.t0_sd * t_sd)
 
-        denominator = self.t0_norm * t_norm
+        denominator = t0_norm * t_norm + 0.05 # add a relatively small constant to avoid uncontrolled expansion for small weights
 
         ncc = covariance / denominator
         ncc = ncc - self.start_ncc
+        self.current_ncc = ncc
+
         return ncc
 
     def split_feature(self, feature_number):
-        self.split_output_channel(channel_number=feature_number)
+        '''
+        Use this method as interface!
+
+        :param feature_number:
+        :return:
+        '''
+        self._split_output_channel(channel_number=feature_number)
         for dep in self.input_tied_modules:
-            dep.split_input_channel(channel_number=feature_number)
+            dep._split_input_channel(channel_number=feature_number)
         for dep in self.output_tied_modules:
-            dep.split_output_channel(channel_number=feature_number)
+            dep._split_output_channel(channel_number=feature_number)
 
     def split_features(self, threshold):
         ncc = self.normalized_cross_correlation()
@@ -356,7 +372,7 @@ class Conv1dExtendable(nn.Conv1d):
                 print("ncc value for feature ", i, ": ", ncc_value)
                 self.split_feature(i)
 
-    def split_output_channel(self, channel_number):
+    def _split_output_channel(self, channel_number):
         '''
         Split one output channel (a feature) in two, but retain the same summed value
 
@@ -368,26 +384,27 @@ class Conv1dExtendable(nn.Conv1d):
 
         original_weight = self.weight.data
         split_positions = 2 * torch.rand(self.in_channels, self.kernel_size[0])
-
-        new_weight = torch.zeros(self.out_channels, self.in_channels, self.kernel_size[0])
-        if channel_number > 0:
-            new_weight[0:channel_number, :, :] = original_weight[0:channel_number, :, :]
-        new_weight[channel_number, :, :] = original_weight[channel_number, :, :] * split_positions
-        new_weight[channel_number + 1, :, :] = original_weight[channel_number, :, :] * (2 - split_positions)
-        if channel_number + 2 < self.out_channels:
-            new_weight[channel_number + 2:, :, :] = original_weight[channel_number + 1:, :, :]
+        slice = original_weight[channel_number, :, :]
+        original_weight[channel_number, :, :] = slice * split_positions
+        slice = slice * (2 - split_positions)
+        new_weight = insert_slice(original_weight, slice, dim=0, at_index=channel_number+1)
 
         if self.bias is not None:
             original_bias = self.bias.data
-            new_bias = torch.zeros(self.out_channels)
-            new_bias[0:channel_number+1] = original_bias[0:channel_number+1]
-            new_bias[channel_number+1:] = original_bias[channel_number:]
+            new_bias = insert_slice(original_bias, original_bias[channel_number:channel_number+1], dim=0, at_index=channel_number+1)
             self.bias = Parameter(new_bias)
 
         self.weight = Parameter(new_weight)
-        self.init_ncc()
 
-    def split_input_channel(self, channel_number):
+        # update persistent values
+        self.t0_weight[channel_number, :, :] = self.weight[channel_number, :, :]
+        self.t0_weight = insert_slice(self.t0_weight, self.weight[channel_number + 1, :, :], dim=0, at_index=channel_number + 1)
+        self.start_ncc[channel_number] = torch.zeros(1)
+        self.start_ncc = insert_slice(self.start_ncc, torch.zeros(1), dim=0, at_index=channel_number + 1)
+        ncc = self.normalized_cross_correlation()
+        self.start_ncc[channel_number:channel_number + 2] = ncc[channel_number:channel_number + 2]
+
+    def _split_input_channel(self, channel_number):
 
         if channel_number > self.in_channels:
             print("cannot split in channel ", channel_number)
@@ -396,17 +413,46 @@ class Conv1dExtendable(nn.Conv1d):
         self.in_channels += 1
         original_weight = self.weight.data
         duplicated_slice = original_weight[:, channel_number, :] * 0.5
+        original_weight[: ,channel_number, :] = duplicated_slice
+        new_weight = insert_slice(original_weight, duplicated_slice, dim=1, at_index=channel_number+1)
 
-        new_weight = torch.zeros(self.out_channels, self.in_channels, self.kernel_size[0])
-        if channel_number > 0:
-            new_weight[:, 0:channel_number, :] = original_weight[:, 0:channel_number, :]
-        new_weight[:, channel_number, :] = duplicated_slice
-        new_weight[:, channel_number+1, :] = duplicated_slice
-        if channel_number+2 < self.in_channels:
-            new_weight[:, channel_number+2:, :] = original_weight[:, channel_number+1:, :]
         self.weight = Parameter(new_weight)
-        self.init_ncc()
 
+        # update persistent values
+        self.t0_weight[:, channel_number, :] = self.weight[:, channel_number, :]
+        self.t0_weight = insert_slice(self.t0_weight, self.weight[:, channel_number + 1, :], dim=1,
+                                      at_index=channel_number + 1)
+        # self.start_ncc[channel_number] = torch.zeros(1)
+        # self.start_ncc = insert_slice(self.start_ncc, torch.zeros(1), dim=1, at_index=channel_number + 1)
+        # ncc = self.normalized_cross_correlation()
+        # self.start_ncc[channel_number:channel_number + 2] = ncc[channel_number:channel_number + 2]
+
+def insert_slice(tensor, slice, dim=0, at_index=0):
+    '''
+    insert a slice at a given position into a tensor
+
+    :param tensor: The tensor in which the slice will be inserted
+    :param slice: The slice. Should have the same size as the tensor, except the insertion dimension, which should be 1 or missing
+    :param dim: The dimension in which the slice gets inserted
+    :param at_index: The index at which the slice gets inserted
+    :return: The new tensor with the inserted slice
+    '''
+
+    if len(slice.size()) < len(tensor.size()):
+        slice = slice.unsqueeze(dim)
+
+    if at_index > 0:
+        s1 = tensor.narrow(dim, 0, at_index)
+        result = torch.cat((s1, slice), dim)
+    else:
+        result = slice
+
+    s2_length = tensor.size(dim) - at_index
+    if s2_length > 0:
+        s2 = tensor.narrow(dim, at_index, s2_length)
+        result = torch.cat((result, s2), dim)
+
+    return result
 
 
 def constant_pad_1d(input,

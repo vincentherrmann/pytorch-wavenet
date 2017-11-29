@@ -64,6 +64,7 @@ class WaveNetOptimizer:
         self.loss_positions = []
         self.validation_results = []
         self.validation_result_positions = []
+        self.last_logged_validation = 0
         self.avg_loss = 0
         self.avg_time = 0
         self.current_epoch = -1
@@ -123,6 +124,15 @@ class WaveNetOptimizer:
         # loss
         self.logger.scalar_summary("loss", self.avg_loss, self.i)
 
+        # validation loss
+        validation_position = self.validation_result_positions[-1]
+        if validation_position > self.last_logged_validation:
+            self.logger.scalar_summary("validation loss", self.validation_results[-1], validation_position)
+            self.last_logged_validation = validation_position
+
+        # parameter count
+        self.logger.scalar_summary("parameter count", self.model.parameter_count(), self.i)
+
         # parameter histograms
         for tag, value, in self.model.named_parameters():
             tag = tag.replace('.', '/')
@@ -145,18 +155,37 @@ class WaveNetOptimizer:
                 print(ncc)
 
     def split_important_features(self, threshold):
-        splitted = False
+
+
         for name, module in self.model.named_modules():
             if module is self.model.end_conv:
                 #print("Can't split feature in end conv")
                 continue
             if type(module) is Conv1dExtendable:
                 ncc = module.normalized_cross_correlation()
+
+        splitted = False
+
+        for name, module in self.model.named_modules():
+            if module is self.model.end_conv:
+                #print("Can't split feature in end conv")
+                continue
+            if type(module) is Conv1dExtendable:
+                if len(module.output_tied_modules) > 0:
+                    all_nccs = [module.current_ncc] + [m.current_ncc for m in module.output_tied_modules]
+                    ncc_tensor = torch.abs(torch.stack(all_nccs))
+                    ncc = torch.mean(ncc_tensor, dim=0)
+                else:
+                    ncc = module.current_ncc
+
                 for feature_number, value in enumerate(ncc):
                     if abs(value.data[0]) > threshold:
                         print("in ", name, ", split feature number ", feature_number)
                         module.split_feature(feature_number=feature_number)
+                        all_modules = [module] + module.output_tied_modules
+                        [m.normalized_cross_correlation() for m in all_modules]
                         splitted = True
+
         if splitted:
             self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.learning_rate)
 
@@ -181,7 +210,8 @@ class WaveNetOptimizer:
               minibatch_size=8,
               epochs=100,
               segments_per_chunk=16,
-              examples_per_segment=32):
+              examples_per_segment=32,
+              split_threshold=0.2):
 
         '''
         Train a Wavenet model
@@ -235,11 +265,16 @@ class WaveNetOptimizer:
             self.i += 1
 
             # train feedback
-            if self.i % self.report_interval == 0:
-                print("loss: ", loss)
-
+            # if self.i % self.report_interval == 0:
+                #print("loss: ", loss)
                 #if self.report_callback != None:
                 #    self.report_callback(self)
+
+            # run on validation set
+            if self.i % self.validation_interval == 0:
+                self.validate_model(self.i)
+                # print("average step time: ", self.step_times[-1])
+                # print("validation loss: ", avg_loss)
 
             if self.i % self.logging_interval == 0:
                 self.avg_loss /= self.logging_interval
@@ -252,17 +287,12 @@ class WaveNetOptimizer:
 
                 print("log to tensorBoard")
                 self.log_to_tensor_board()
-                self.split_important_features(threshold=0.2)
+                self.split_important_features(threshold=split_threshold)
                 #self.log_normalized_cross_correlation()
 
                 self.avg_loss = 0
                 self.avg_time = 0
 
-            # run on validation set
-            if self.i % self.validation_interval == 0:
-                self.validate_model(self.i)
-                print("average step time: ", self.step_times[-1])
-                # print("validation loss: ", avg_loss)
 
             # snapshot
             if self.i % self.snapshot_interval == 0:
