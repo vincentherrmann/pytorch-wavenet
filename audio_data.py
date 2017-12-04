@@ -8,6 +8,7 @@ import numpy as np
 import librosa as lr
 import bisect
 
+
 class WavenetDataset(torch.utils.data.Dataset):
     def __init__(self,
                  dataset_file,
@@ -17,7 +18,9 @@ class WavenetDataset(torch.utils.data.Dataset):
                  sampling_rate=16000,
                  mono=True,
                  normalize=False,
-                 dtype=np.uint8):
+                 dtype=np.uint8,
+                 input_type=torch.FloatTensor,
+                 target_type=torch.IntTensor):
 
         self.dataset_file = dataset_file
         self._item_length = item_length
@@ -26,7 +29,7 @@ class WavenetDataset(torch.utils.data.Dataset):
             assert file_location is not None, "no location for dataset files specified"
             self.mono = mono
             self.normalize = normalize
-            self.classes = classes
+
             self.sampling_rate = sampling_rate
             self.dtype = dtype
             self.create_dataset(file_location, dataset_file)
@@ -35,10 +38,12 @@ class WavenetDataset(torch.utils.data.Dataset):
             # TODO Can these parameters be stored, too?
             self.mono = None
             self.normalize = None
-            self.classes = None
+            self.classes = classes
             self.sampling_rate = None
             self.dtype = None
 
+        self.input_type = input_type
+        self.target_type = target_type
         self.data = np.load(self.dataset_file, mmap_mode='r')
         self.start_samples = [0]
         self._length = 0
@@ -82,7 +87,7 @@ class WavenetDataset(torch.utils.data.Dataset):
             file_name = 'arr_' + str(file_index)
             this_file = np.load(self.dataset_file, mmap_mode='r')[file_name]
             sample = this_file[position_in_file:position_in_file + self._item_length + 1]
-            return sample[:self._item_length], sample[1:]
+            #return sample[:self._item_length], sample[1:]
         else:
             # load from two files
             file1 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index)]
@@ -90,35 +95,19 @@ class WavenetDataset(torch.utils.data.Dataset):
             sample1 = file1[position_in_file:]
             sample2 = file2[:end_position_in_next_file]
             sample = np.concatenate((sample1, sample2))
-            return sample[:self._item_length], sample[1:]
+            #return sample[:self._item_length], sample[1:]
+
+        example = torch.from_numpy(sample[:self._item_length]).type(self.input_type).unsqueeze(0)
+        example = 2. * example / self.classes - 1.
+        target = torch.from_numpy(sample[1:]).type(self.target_type).unsqueeze(0)
+        return example, target
 
     def __len__(self):
         return self._length
 
 
-def create_wavenet_dataset(in_location,
-                           out_location,
-                           classes=256,
-                           sampling_rate=16000,
-                           mono=True,
-                           normalize=False,
-                           dtype=np.uint8):
-    files = list_all_audio_files(in_location)
-    processed_files = []
-    for file in files:
-        file_data, _ = lr.load(path=file,
-                               sr=sampling_rate,
-                               mono=mono)
-        if normalize:
-            file_data = lr.util.normalize(file_data)
-        quantized_data = quantize_data(file_data, classes).astype(dtype)
-        processed_files.append(quantized_data)
-
-    np.savez(out_location, *processed_files)
-
-
 def quantize_data(data, classes):
-    mu_x = mu_law_enconding(data, classes)
+    mu_x = mu_law_encoding(data, classes)
     bins = np.linspace(-1, 1, classes)
     quantized = np.digitize(mu_x, bins) - 1
     return quantized
@@ -133,7 +122,7 @@ def list_all_audio_files(location):
     return audio_files
 
 
-def mu_law_enconding(data, mu):
+def mu_law_encoding(data, mu):
     mu_x = np.sign(data) * np.log(1 + mu * np.abs(data)) / np.log(mu + 1)
     return mu_x
 
