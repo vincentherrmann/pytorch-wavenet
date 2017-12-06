@@ -65,24 +65,4 @@ class TestQuantizeData(TestCase):
         assert False
 
 
-class TestCreateWavenetDataset(TestCase):
-    def setUp(self):
-        self.in_path = '../train_samples'
-        self.out_path = '../train_samples/test_dataset.npz'
-
-    def test_create_wavenet_dataset(self):
-        in_path = '../train_samples'
-        out_path = '../train_samples/test_dataset.npz'
-        create_wavenet_dataset(in_location=in_path, out_location=out_path)
-        assert True
-
-    def test_load_dataset(self):
-        out_path = '../train_samples/test_dataset.npz'
-        file = np.load(out_path)
-        first_track = file['arr_0']
-        assert first_track.dtype == np.uint8
-        assert len(first_track) > 10000
-        assert len(first_track) < 10000000
-
-
 
