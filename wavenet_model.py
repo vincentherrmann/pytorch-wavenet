@@ -231,7 +231,7 @@ class WaveNetModel(nn.Module):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate)
 
-            if sampled_generation:
+            if sampled_generation and temperature > 0:
                 # sample from softmax distribution
                 x = x.squeeze() / temperature
                 prob = F.softmax(x)
@@ -254,7 +254,7 @@ class WaveNetModel(nn.Module):
 
             # progress feedback
             if (i + num_given_samples) % progress_dist == 0:
-                if progress_callback != None:
+                if progress_callback is not None:
                     progress_callback(i + num_given_samples, total_samples)
 
         return generated

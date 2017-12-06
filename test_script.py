@@ -1,38 +1,32 @@
-from time import time
+import time
 import torch
 import numpy as np
 from torch.autograd import Variable
-from wavenet_training import Model, Optimizer, WavenetData, ConvDilated
+from wavenet_model import WaveNetModel
+from audio_data import WavenetDataset
+from wavenet_training import WavenetOptimizer
 from scipy.io import wavfile
-import visdom
 
-model = Model(num_time_samples=10000,
-              num_blocks=4,
-              num_layers=10,
-              num_hidden=32,
-              num_classes=64)
+model = WaveNetModel(layers=10,
+                     blocks=4)
+
+in_path = '../train_samples'
+out_path = '../train_samples/test_dataset.npz'
+data = WavenetDataset(dataset_file='train_samples/test_dataset.npz',
+                      item_length=model.receptive_field,
+                      file_location='../train_samples')
+
 # torch.save(model, 'untrained_model')
 print('model: ', model)
-print('scope: ', model.scope)
+print('receptive field: ', model.receptive_field)
 
-optimizer = Optimizer(model,
-                      stop_threshold=0.1)
-
-data = WavenetData('sine.wav',
-                   input_length=model.scope,
-                   target_length=model.last_block_scope,
-                   num_classes=model.num_classes)
-start_tensor = data.get_minibatch([12345])[0].squeeze()
-
-
-def hook(losses):
-    print("loss: ", losses[-1])
-
-
-optimizer.hook = hook
+optimizer = WavenetOptimizer(model=model,
+                             dataset=data,
+                             lr=0.001)
 
 print('start training...')
-# tic = time.time()
-optimizer.train(data)
-# toc = time.time()
+tic = time.time()
+optimizer.train(batch_size=11,
+                epochs=1)
+toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))

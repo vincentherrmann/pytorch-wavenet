@@ -72,6 +72,7 @@ class WavenetDataset(torch.utils.data.Dataset):
             start_samples.append(start_samples[-1] + len(self.data['arr_' + str(i)]))
         self._length = math.floor((start_samples[-1]-1) / self._item_length)
         self.start_samples = start_samples
+        self.start_samples[0] = -1
 
     def set_item_length(self, l):
         self._item_length = l
