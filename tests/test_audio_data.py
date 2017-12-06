@@ -43,7 +43,6 @@ class TestWavenetDataset(TestCase):
         toc = time.time()
 
         print("time it takes to calculate "  + str(num_batches) + " minibatches: " + str(toc-tic) + " s")
-
         assert False
 
 
