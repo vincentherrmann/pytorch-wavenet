@@ -1,3 +1,5 @@
+import os
+import os.path
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -105,7 +107,7 @@ class WaveNetModel(nn.Module):
                                                  bias=False))
 
                 receptive_field += additional_scope
-                print("receptive field: ", receptive_field)
+                #print("receptive field: ", receptive_field)
                 additional_scope *= 2
                 init_dilation = new_dilation
                 new_dilation *= 2
@@ -117,7 +119,7 @@ class WaveNetModel(nn.Module):
 
         # self.output_length = 2 ** (layers - 1)
         self.output_length = output_length
-        self.receptive_field = receptive_field + self.output_length
+        self.receptive_field = receptive_field # + self.output_length
 
     def wavenet(self, input, dilation_func):
 
@@ -151,7 +153,8 @@ class WaveNetModel(nn.Module):
             # parametrized skip connection
             s = x
             if x.size(2) != 1:
-                s = dilate(x, 1, init_dilation=dilation)
+                 s = dilate(x, 1, init_dilation=dilation)
+            #s = dilate(x, 1, init_dilation=dilation)
             s = self.skip_convs[i](s)
             try:
                 skip = skip[:, :, -s.size(2):]
@@ -190,16 +193,14 @@ class WaveNetModel(nn.Module):
         x = x[:, :, -l:]
         x = x.transpose(1, 2).contiguous()
         x = x.view(n * l, c)
-
+        #x = [-self.output_length, c]
         return x
 
     def generate_fast(self,
                       num_samples,
                       first_samples=None,
-                      sampled_generation=False,
                       temperature=1.,
                       progress_callback=None):
-
         self.eval()
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
@@ -231,7 +232,7 @@ class WaveNetModel(nn.Module):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate)
 
-            if sampled_generation and temperature > 0:
+            if temperature > 0:
                 # sample from softmax distribution
                 x = x.squeeze() / temperature
                 prob = F.softmax(x)
@@ -263,3 +264,10 @@ class WaveNetModel(nn.Module):
         par = list(self.parameters())
         s = sum([np.prod(list(d.size())) for d in par])
         return s
+
+
+def load_latest_model_from(location):
+    files = [location + "/" + f for f in os.listdir(location)]
+    newest_file = max(files, key=os.path.getctime)
+    print("load model " + newest_file)
+    return torch.load(newest_file)

@@ -10,22 +10,24 @@ class TestWavenetDataset(TestCase):
         in_path = '../train_samples'
         out_path = '../train_samples/test_dataset.npz'
         dataset = WavenetDataset(dataset_file=out_path,
-                                 item_length=64,
+                                 item_length=1000,
+                                 target_length=64,
                                  file_location=in_path)
         item0 = dataset[len(dataset)-3]
         item1 = dataset[len(dataset)-2]
         item2 = dataset[len(dataset)-1]
 
-        assert item0[0][34] == item0[1][33]
-        assert item1[0][34] == item1[1][33]
-        assert item2[0][34] == item2[1][33]
+        assert item0[0][0, -33] == 2. * item0[1][0, -34] / dataset.classes - 1.
+        assert item1[0][0, -33] == 2. * item1[1][0, -34] / dataset.classes - 1.
+        assert item2[0][0, -33] == 2. * item2[1][0, -34] / dataset.classes - 1.
 
-        assert item0[1][-1] == item1[0][0]
-        assert item1[1][-1] == item2[0][0]
+        assert 2. * item0[1][0, -1] / dataset.classes - 1. == item1[0][0, -dataset.target_length]
+        assert 2. * item1[1][0, -1] / dataset.classes - 1. == item2[0][0, -dataset.target_length]
 
     def test_minibatch_performance(self):
         dataset = WavenetDataset(dataset_file='../train_samples/test_dataset.npz',
-                                           item_length=64)
+                                 item_length=1000,
+                                 target_length=64)
         dataloader = torch.utils.data.DataLoader(dataset=dataset,
                                                  batch_size=32,
                                                  shuffle=True,

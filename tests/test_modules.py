@@ -1,8 +1,7 @@
 import torch
 from torch.autograd import Variable
 from unittest import TestCase
-from wavenet_training import dilate, Conv1dExtendable
-from wavenet_modules import *
+from wavenet_modules import dilate
 
 
 class Test_Dilation(TestCase):
@@ -11,22 +10,22 @@ class Test_Dilation(TestCase):
 
         dilated = dilate(input, 1)
         assert dilated.size() == (1, 1, 13)
-        assert dilated[0, 0, 4] == 4
+        assert dilated.data[0, 0, 4] == 4
         print(dilated)
 
         dilated = dilate(input, 2)
         assert dilated.size() == (2, 1, 7)
-        assert dilated[1, 0, 2] == 4
+        assert dilated.data[1, 0, 2] == 4
         print(dilated)
 
-        dilated = dilate(dilated, 4)
+        dilated = dilate(dilated, 4, init_dilation=2)
         assert dilated.size() == (4, 1, 4)
-        assert dilated[3, 0, 1] == 4
+        assert dilated.data[3, 0, 1] == 4
         print(dilated)
 
-        dilated = dilate(dilated, 1)
+        dilated = dilate(dilated, 1, init_dilation=4)
         assert dilated.size() == (1, 1, 16)
-        assert dilated[0, 0, 7] == 4
+        assert dilated.data[0, 0, 7] == 4
         print(dilated)
 
     def test_dilate_multichannel(self):

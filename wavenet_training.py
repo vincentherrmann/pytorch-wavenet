@@ -23,17 +23,24 @@ class WavenetOptimizer:
                  dataset,
                  optimizer=optim.Adam,
                  lr=0.001,
-                 tensorboard_logger=None):
+                 tensorboard_logger=None,
+                 snapshot_path=None,
+                 snapshot_interval=1000,
+                 validate_interval=50):
         self.model = model
         self.dataset = dataset
         self.lr = lr
         self.optimizer_type = optimizer
         self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr)
         self.tensorboard_logger = tensorboard_logger
+        self.snapshot_path = snapshot_path
+        self.snapshot_interval = snapshot_interval
+        self.validate_interval = validate_interval
 
     def train(self,
               batch_size=32,
               epochs=10):
+        self.model.train()
         dataloader = torch.utils.data.DataLoader(self.dataset,
                                                  batch_size=batch_size,
                                                  shuffle=True,
@@ -43,18 +50,43 @@ class WavenetOptimizer:
             print("epoch", current_epoch)
             for (x, target) in iter(dataloader):
                 x = Variable(x)
-                target = Variable(target)
+                target = Variable(target.view(-1))
 
                 output = self.model(x)
-                loss = F.cross_entropy(output.squeeze(), target)
+                loss = F.cross_entropy(output.squeeze(), target.squeeze())
                 loss.backward()
                 loss = loss.data[0]
+                self.optimizer.step()
 
                 if self.tensorboard_logger is None:
-                    if step % 50 == 0:
+                    if step % 10 == 0:
                         print("loss at step " + str(step) + ": " + str(loss))
 
                 step += 1
+                if step % self.snapshot_interval == 0:
+                    if self.snapshot_path is None:
+                        continue
+                    time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())
+                    torch.save(self.model, self.snapshot_path + '/snapshot_' + time_string)
+
+                if step % self.validate_interval == 0:
+                    self.validate(dataloader)
+
+    def validate(self, dataloader):
+        self.model.eval()
+        self.dataset.train = False
+        total_loss = 0
+        for (x, target) in iter(dataloader):
+            x = Variable(x)
+            target = Variable(target.view(-1))
+
+            output = self.model(x)
+            loss = F.cross_entropy(output.squeeze(), target.squeeze())
+            total_loss += loss.data[0]
+        print("validate model with " + str(len(dataloader.dataset)) + " samples")
+        print("average loss: ", total_loss / len(dataloader))
+        self.dataset.train = True
+        self.model.train()
 
 
 class WaveNetOptimizerOld:

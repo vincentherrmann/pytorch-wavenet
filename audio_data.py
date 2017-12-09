@@ -13,6 +13,7 @@ class WavenetDataset(torch.utils.data.Dataset):
     def __init__(self,
                  dataset_file,
                  item_length,
+                 target_length,
                  file_location=None,
                  classes=256,
                  sampling_rate=16000,
@@ -20,10 +21,15 @@ class WavenetDataset(torch.utils.data.Dataset):
                  normalize=False,
                  dtype=np.uint8,
                  input_type=torch.FloatTensor,
-                 target_type=torch.IntTensor):
+                 target_type=torch.LongTensor,
+                 train=True,
+                 test_stride=100):
 
         self.dataset_file = dataset_file
         self._item_length = item_length
+        self._test_stride = test_stride
+        self.target_length = target_length
+        self.classes = classes
 
         if not os.path.isfile(dataset_file):
             assert file_location is not None, "no location for dataset files specified"
@@ -38,7 +44,7 @@ class WavenetDataset(torch.utils.data.Dataset):
             # TODO Can these parameters be stored, too?
             self.mono = None
             self.normalize = None
-            self.classes = classes
+
             self.sampling_rate = None
             self.dtype = None
 
@@ -48,6 +54,8 @@ class WavenetDataset(torch.utils.data.Dataset):
         self.start_samples = [0]
         self._length = 0
         self.calculate_length()
+        self.train = train
+         # assign every *test_stride*th item to the test set
 
     def create_dataset(self, location, out_file):
         print("create dataset from audio files at", location)
@@ -70,17 +78,25 @@ class WavenetDataset(torch.utils.data.Dataset):
         start_samples = [0]
         for i in range(len(self.data.keys())):
             start_samples.append(start_samples[-1] + len(self.data['arr_' + str(i)]))
-        self._length = math.floor((start_samples[-1]-1) / self._item_length)
+        available_length = start_samples[-1] - (self._item_length - (self.target_length - 1)) - 1
+        self._length = math.floor(available_length / self.target_length)
         self.start_samples = start_samples
-        self.start_samples[0] = -1
 
     def set_item_length(self, l):
         self._item_length = l
         self.calculate_length()
 
     def __getitem__(self, idx):
-        sample_index = idx * self._item_length
+        if self._test_stride < 2:
+            sample_index = idx * self.target_length
+        elif self.train:
+            sample_index = idx * self.target_length + math.floor(idx / (self._test_stride-1))
+        else:
+            sample_index = self._test_stride * (idx+1) - 1
+
         file_index = bisect.bisect_left(self.start_samples, sample_index) - 1
+        if file_index < 0:
+            file_index = 0
         position_in_file = sample_index - self.start_samples[file_index]
         end_position_in_next_file = sample_index + self._item_length + 1 - self.start_samples[file_index + 1]
 
@@ -100,11 +116,15 @@ class WavenetDataset(torch.utils.data.Dataset):
 
         example = torch.from_numpy(sample[:self._item_length]).type(self.input_type).unsqueeze(0)
         example = 2. * example / self.classes - 1.
-        target = torch.from_numpy(sample[1:]).type(self.target_type).unsqueeze(0)
+        target = torch.from_numpy(sample[-self.target_length:]).type(self.target_type).unsqueeze(0)
         return example, target
 
     def __len__(self):
-        return self._length
+        test_length = math.floor(self._length / self._test_stride)
+        if self.train:
+            return self._length - test_length
+        else:
+            return test_length
 
 
 def quantize_data(data, classes):
@@ -120,6 +140,8 @@ def list_all_audio_files(location):
         for filename in [f for f in filenames if f.endswith((".mp3", ".wav", ".aif", "aiff"))]:
             audio_files.append(os.path.join(dirpath, filename))
 
+    if len(audio_files) == 0:
+        print("found no audio files in " + location)
     return audio_files
 
 
