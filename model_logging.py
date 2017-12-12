@@ -1,17 +1,71 @@
 import tensorflow as tf
 import numpy as np
 import scipy.misc
+import threading
 
 try:
     from StringIO import StringIO  # Python 2.7
 except ImportError:
     from io import BytesIO  # Python 3.x
 
+
+class Logger:
+    def __init__(self,
+                 log_interval=50,
+                 validation_interval=200,
+                 trainer=None):
+        self.trainer = trainer
+        self.log_interval = log_interval
+        self.validation_interval = validation_interval
+        self.accumulated_loss = 0
+
+    def log(self, current_step, current_loss):
+        self.accumulated_loss += current_loss
+        if current_step % self.log_interval == 0:
+            self.log_loss(current_step)
+            self.accumulated_loss = 0
+        if current_step % self.validation_interval == 0:
+            self.validate(current_step)
+
+    def log_loss(self, current_step):
+        avg_loss = self.accumulated_loss / self.log_interval
+        print("loss at step " + str(current_step) + ": " + str(avg_loss))
+
+    def validate(self, current_step):
+        avg_loss, avg_accuracy = self.trainer.validate()
+        print("validation loss: " + str(avg_loss))
+        print("validation accuracy: " + str(avg_accuracy * 100) + "%")
+
+
 # Code referenced from https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514
-class Logger(object):
-    def __init__(self, log_dir):
-        """Create a summary writer logging to log_dir."""
+class TensorboardLogger(Logger):
+    def __init__(self,
+                 log_interval=50,
+                 validation_interval=200,
+                 trainer=None,
+                 log_dir='logs'):
+        super().__init__(log_interval, validation_interval, trainer)
         self.writer = tf.summary.FileWriter(log_dir)
+
+    def log_loss(self, current_step):
+        # loss
+        avg_loss = self.accumulated_loss / self.log_interval
+        self.scalar_summary('loss', avg_loss, current_step)
+
+        # parameter histograms
+        for tag, value, in self.trainer.model.named_parameters():
+            tag = tag.replace('.', '/')
+            self.histo_summary(tag, value.data.cpu().numpy(), current_step)
+            if value.grad is not None:
+                self.histo_summary(tag + '/grad', value.grad.data.cpu().numpy(), current_step)
+
+    def validate(self, current_step):
+        avg_loss, avg_accuracy = self.trainer.validate()
+        self.scalar_summary('validation loss', avg_loss, current_step)
+        self.scalar_summary('validation accuracy', avg_accuracy, current_step)
+
+    def generate_audio(self):
+        pass
 
     def scalar_summary(self, tag, value, step):
         """Log a scalar variable."""
@@ -68,6 +122,12 @@ class Logger(object):
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
         self.writer.add_summary(summary, step)
         self.writer.flush()
+
+    def audio_summary(self, tag, sample, step, sr=16000):
+        # TODO: audio summary is not yet working (or is it?)
+        audio_summary = tf.summary.audio(tag, sample, sample_rate=sr, max_outputs=16)
+        summary = tf.Summary(value=audio_summary)
+        self.writer.add_summary(summary, step)
 
     def tensor_summary(self, tag, tensor, step):
         tf_tensor = tf.Variable(tensor).to_proto()

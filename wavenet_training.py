@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 import torch.nn.functional as F
 from torch.autograd import Variable
-from logger import Logger
+from model_logging import Logger
 from wavenet_modules import *
 
 
@@ -17,38 +17,42 @@ def print_last_validation_result(opt):
     print("validation loss: ", opt.validation_results[-1])
 
 
-class WavenetOptimizer:
+class WavenetTrainer:
     def __init__(self,
                  model,
                  dataset,
                  optimizer=optim.Adam,
                  lr=0.001,
-                 tensorboard_logger=None,
+                 weight_decay=0,
+                 logger=Logger(),
                  snapshot_path=None,
-                 snapshot_interval=1000,
-                 validate_interval=50):
+                 snapshot_name='snapshot',
+                 snapshot_interval=1000):
         self.model = model
         self.dataset = dataset
+        self.dataloader = None
         self.lr = lr
+        self.weight_decay = weight_decay
         self.optimizer_type = optimizer
-        self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr)
-        self.tensorboard_logger = tensorboard_logger
+        self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        self.logger = logger
+        self.logger.trainer = self
         self.snapshot_path = snapshot_path
+        self.snapshot_name = snapshot_name
         self.snapshot_interval = snapshot_interval
-        self.validate_interval = validate_interval
 
     def train(self,
               batch_size=32,
               epochs=10):
         self.model.train()
-        dataloader = torch.utils.data.DataLoader(self.dataset,
-                                                 batch_size=batch_size,
-                                                 shuffle=True,
-                                                 num_workers=8)
+        self.dataloader = torch.utils.data.DataLoader(self.dataset,
+                                                      batch_size=batch_size,
+                                                      shuffle=True,
+                                                      num_workers=8)
         step = 0
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
-            for (x, target) in iter(dataloader):
+            for (x, target) in iter(self.dataloader):
                 x = Variable(x)
                 target = Variable(target.view(-1))
 
@@ -57,36 +61,74 @@ class WavenetOptimizer:
                 loss.backward()
                 loss = loss.data[0]
                 self.optimizer.step()
-
-                if self.tensorboard_logger is None:
-                    if step % 10 == 0:
-                        print("loss at step " + str(step) + ": " + str(loss))
-
                 step += 1
+
+                self.logger.log(step, loss)
+
                 if step % self.snapshot_interval == 0:
                     if self.snapshot_path is None:
                         continue
                     time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())
-                    torch.save(self.model, self.snapshot_path + '/snapshot_' + time_string)
+                    torch.save(self.model, self.snapshot_path + '/' + self.snapshot_name + '_' + time_string)
 
-                if step % self.validate_interval == 0:
-                    self.validate(dataloader)
-
-    def validate(self, dataloader):
+    def validate(self):
         self.model.eval()
         self.dataset.train = False
         total_loss = 0
-        for (x, target) in iter(dataloader):
+        accurate_classifications = 0
+        for (x, target) in iter(self.dataloader):
             x = Variable(x)
             target = Variable(target.view(-1))
 
             output = self.model(x)
             loss = F.cross_entropy(output.squeeze(), target.squeeze())
             total_loss += loss.data[0]
-        print("validate model with " + str(len(dataloader.dataset)) + " samples")
-        print("average loss: ", total_loss / len(dataloader))
+
+            predictions = torch.max(output, 1)[1].view(-1)
+            correct_pred = torch.eq(target, predictions)
+            accurate_classifications += torch.sum(correct_pred).data[0]
+        # print("validate model with " + str(len(self.dataloader.dataset)) + " samples")
+        # print("average loss: ", total_loss / len(self.dataloader))
+        avg_loss = total_loss / len(self.dataloader)
+        avg_accuracy = accurate_classifications / (len(self.dataset)*self.dataset.target_length)
         self.dataset.train = True
         self.model.train()
+        return avg_loss, avg_accuracy
+
+    def generate_audio(self,
+                       model_path,
+                       length=8000,
+                       temperatures=[0., 1.]):
+        model = torch.load(model_path)
+        samples = []
+        for temp in temperatures:
+            samples.append(model.generate_fast(length, temperature=temp))
+
+
+class WaveNetLogger:
+    def __init__(self, model, log_dir='./logs'):
+        self.model = model
+        self.logger = Logger(log_dir)
+
+    def log(self, current_step):
+        # loss
+        self.logger.scalar_summary("loss", self.avg_loss, current_step)
+
+        # validation loss
+        validation_position = self.validation_result_positions[-1]
+        if validation_position > self.last_logged_validation:
+            self.logger.scalar_summary("validation loss", self.validation_results[-1], validation_position)
+            self.last_logged_validation = validation_position
+
+        # parameter count
+        self.logger.scalar_summary("parameter count", self.model.parameter_count(), current_step)
+
+        # parameter histograms
+        for tag, value, in self.model.named_parameters():
+            tag = tag.replace('.', '/')
+            self.logger.histo_summary(tag, value.data.cpu().numpy(), current_step)
+            if value.grad is not None:
+                self.logger.histo_summary(tag + '/grad', value.grad.data.cpu().numpy(), current_step)
 
 
 class WaveNetOptimizerOld:

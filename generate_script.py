@@ -10,13 +10,14 @@ from IPython import display
 import torch
 import numpy as np
 
-model = load_latest_model_from('snapshots')
+# model = load_latest_model_from('snapshots')
+model = torch.load('snapshots/snapshot_2017-12-10_10-30-14')
 
 print("generate")
 tic = time.time()
-generated = model.generate_fast(num_samples=8000,
+generated = model.generate_fast(num_samples=4000,
                                 first_samples=None,
-                                temperature=5.)
+                                temperature=1.)
 toc = time.time()
 print("generating took " + str(toc-tic) + " s")
 
