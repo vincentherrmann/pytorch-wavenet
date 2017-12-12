@@ -61,4 +61,3 @@ class Test_Tensor_Inserting:
         i = insert_slice(tensor=tensor, slice=slice, dim=1, at_index=4)
         print(i)
 
-
