@@ -5,21 +5,32 @@ from wavenet_training import *
 from model_logging import *
 from scipy.io import wavfile
 
+dtype = torch.FloatTensor
+ltype = torch.LongTensor
+
+use_cuda = torch.cuda.is_available()
+if use_cuda:
+    dtype = torch.cuda.FloatTensor
+    ltype = torch.cuda.LongTensor
+
 model = WaveNetModel(layers=8,
                      blocks=4,
                      dilation_channels=16,
                      residual_channels=16,
                      skip_channels=16,
-                     output_length=8)
+                     output_length=8,
+                     dtype=dtype)
 
-model = load_latest_model_from('snapshots')
+#model = load_latest_model_from('snapshots')
 #model = torch.load('snapshots/snapshot_2017-12-10_09-48-19')
 
 data = WavenetDataset(dataset_file='train_samples/saber/dataset.npz',
                       item_length=model.receptive_field + model.output_length - 1,
                       target_length=model.output_length,
                       file_location='train_samples/saber',
-                      test_stride=20)
+                      test_stride=20,
+                      input_type=dtype,
+                      target_type=ltype)
 
 # torch.save(model, 'untrained_model')
 print('the dataset has ' + str(len(data)) + ' items')
