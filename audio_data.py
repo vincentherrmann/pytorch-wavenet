@@ -97,6 +97,8 @@ class WavenetDataset(torch.utils.data.Dataset):
         file_index = bisect.bisect_left(self.start_samples, sample_index) - 1
         if file_index < 0:
             file_index = 0
+        if file_index + 1 >= len(self.start_samples):
+            print("error: sample index " + str(sample_index) + " is to high. Results in file_index " + str(file_index))
         position_in_file = sample_index - self.start_samples[file_index]
         end_position_in_next_file = sample_index + self._item_length + 1 - self.start_samples[file_index + 1]
 
