@@ -13,11 +13,18 @@ class Logger:
     def __init__(self,
                  log_interval=50,
                  validation_interval=200,
-                 trainer=None):
+                 generate_interval=500,
+                 trainer=None,
+                 generate_function=None):
         self.trainer = trainer
         self.log_interval = log_interval
         self.validation_interval = validation_interval
+        self.generate_interval = generate_interval
         self.accumulated_loss = 0
+        self.generate_function = generate_function
+        if self.generate_function is not None:
+            self.generate_thread = threading.Thread(target=self.generate_function)
+            self.generate_function.daemon = True
 
     def log(self, current_step, current_loss):
         self.accumulated_loss += current_loss
@@ -26,6 +33,8 @@ class Logger:
             self.accumulated_loss = 0
         if current_step % self.validation_interval == 0:
             self.validate(current_step)
+        if current_step % self.generate_interval == 0:
+            self.generate(current_step)
 
     def log_loss(self, current_step):
         avg_loss = self.accumulated_loss / self.log_interval
@@ -36,15 +45,29 @@ class Logger:
         print("validation loss: " + str(avg_loss))
         print("validation accuracy: " + str(avg_accuracy * 100) + "%")
 
+    def generate(self, current_step):
+        if self.generate_function is None:
+            return
+
+        if self.generate_thread.is_alive():
+            print("Last generate is still running, skipping this one")
+        else:
+            self.generate_thread = threading.Thread(target=self.generate_function,
+                                                    args=[current_step])
+            self.generate_thread.daemon = True
+            self.generate_thread.start()
+
 
 # Code referenced from https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514
 class TensorboardLogger(Logger):
     def __init__(self,
                  log_interval=50,
                  validation_interval=200,
+                 generate_interval=500,
                  trainer=None,
+                 generate_function=None,
                  log_dir='logs'):
-        super().__init__(log_interval, validation_interval, trainer)
+        super().__init__(log_interval, validation_interval, generate_interval, trainer, generate_function)
         self.writer = tf.summary.FileWriter(log_dir)
 
     def log_loss(self, current_step):
@@ -64,8 +87,10 @@ class TensorboardLogger(Logger):
         self.scalar_summary('validation loss', avg_loss, current_step)
         self.scalar_summary('validation accuracy', avg_accuracy, current_step)
 
-    def generate_audio(self):
-        pass
+    def log_audio(self, step):
+        samples = self.generate_function()
+        tf_samples = tf.convert_to_tensor(samples)
+        self.audio_summary('audio sample', tf_samples, step, sr=16000)
 
     def scalar_summary(self, tag, value, step):
         """Log a scalar variable."""
@@ -95,6 +120,14 @@ class TensorboardLogger(Logger):
         summary = tf.Summary(value=img_summaries)
         self.writer.add_summary(summary, step)
 
+    def audio_summary(self, tag, sample, step, sr=16000):
+        with tf.Session() as sess:
+            audio_summary = tf.summary.audio(tag, sample, sample_rate=sr, max_outputs=4)
+            summary = sess.run(audio_summary)
+            self.writer.add_summary(summary, step)
+            self.writer.flush()
+
+
     def histo_summary(self, tag, values, step, bins=200):
         """Log a histogram of the tensor of values."""
 
@@ -122,12 +155,6 @@ class TensorboardLogger(Logger):
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
         self.writer.add_summary(summary, step)
         self.writer.flush()
-
-    def audio_summary(self, tag, sample, step, sr=16000):
-        # TODO: audio summary is not yet working (or is it?)
-        audio_summary = tf.summary.audio(tag, sample, sample_rate=sr, max_outputs=16)
-        summary = tf.Summary(value=audio_summary)
-        self.writer.add_summary(summary, step)
 
     def tensor_summary(self, tag, tensor, step):
         tf_tensor = tf.Variable(tensor).to_proto()

@@ -6,50 +6,6 @@ from torch.nn import Parameter
 from torch.autograd import Variable, Function
 import numpy as np
 
-# class DilatedConv(nn.Module):
-#     def __init__(self,
-#                  in_channels,
-#                  out_channels,
-#                  kernel_size=2,
-#                  dilation=2,
-#                  init_dilation=1):
-#         super(DilatedConv, self).__init__()
-#
-#         self.kernel_size = kernel_size
-#         self.dilation = dilation
-#         self.init_dilation = init_dilation
-#
-#         self.dil_conv = nn.Conv1d(in_channels=in_channels,
-#                                   out_channels=out_channels,
-#                                   kernel_size=kernel_size,
-#                                   bias=False)
-#
-#         self.queue = DilatedQueue(max_length=(kernel_size - 1) * dilation + 1,
-#                                   num_channels=in_channels,
-#                                   dilation=dilation)
-#
-#     def forward(self, input):
-#         r = dilate(input,
-#                    dilation=self.dilation,
-#                    init_dilation=self.init_dilation)
-#
-#         # zero padding for convolution
-#         l = r.size(2)
-#         if l < self.kernel_size:
-#             r = constant_pad_1d(r, self.kernel_size - l, dimension=2, pad_start=True)
-#
-#         r = self.dil_conv(r)
-#
-#         return r
-#
-#     def generate(self, new_sample):
-#         self.queue.enqueue(new_sample)
-#         input = self.queue.dequeue(num_deq=self.kernel_size,
-#                                    dilation=self.dilation)
-#
-#         r = input.unsqueeze(0)
-#         return r
-
 
 def dilate(x, dilation, init_dilation=1, pad_start=True):
     """

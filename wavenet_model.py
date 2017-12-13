@@ -189,6 +189,45 @@ class WaveNetModel(nn.Module):
         #x = [-self.output_length, c]
         return x
 
+    def generate(self,
+                 num_samples,
+                 first_samples=None,
+                 temperature=1.):
+        self.eval()
+        if first_samples is None:
+            first_samples = self.dtype(1).zero_()
+        generated = Variable(first_samples, volatile=True)
+
+        num_pad = self.receptive_field - generated.size(0)
+        if num_pad > 0:
+            generated = constant_pad_1d(generated, self.scope, pad_start=True)
+            print("pad zero")
+
+        for i in range(num_samples):
+            input = generated[-self.receptive_field:].view(1, 1, -1)
+            x = self.wavenet(input,
+                             dilation_func=self.wavenet_dilate)[-1, :].squeeze()
+
+            if temperature > 0:
+                x = x / temperature
+                prob = F.softmax(x, dim=0)
+                np_prob = prob.data.numpy()
+                x = np.random.choice(self.classes, p=np_prob)
+                x = np.array([x])
+
+                soft_o = F.softmax(o)
+                np_o = soft_o.data.numpy()
+                s = np.random.choice(self.num_classes, p=np_o)
+                s = Variable(torch.FloatTensor([s]))
+                s = (s / self.num_classes) * 2. - 1
+            else:
+                max = torch.max(o, 0)[1].float()
+                s = (max / self.num_classes) * 2. - 1  # new sample
+
+            generated = torch.cat((generated, s), 0)
+        self.train()
+        return generated.data.tolist()
+
     def generate_fast(self,
                       num_samples,
                       first_samples=None,
@@ -228,7 +267,7 @@ class WaveNetModel(nn.Module):
             if temperature > 0:
                 # sample from softmax distribution
                 x = x.squeeze() / temperature
-                prob = F.softmax(x)
+                prob = F.softmax(x, dim=0)
                 np_prob = prob.data.numpy()
                 x = np.random.choice(self.classes, p=np_prob)
                 x = np.array([x])
@@ -239,9 +278,9 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             x = (x / self.classes) * 2. - 1
-            x = mu_law_expansion(x, self.classes)
+            o = mu_law_expansion(x, self.classes)
 
-            generated = np.append(generated, x)
+            generated = np.append(generated, o)
 
             # set new input
             input = Variable(self.dtype([[x]]), volatile=True)
@@ -251,6 +290,7 @@ class WaveNetModel(nn.Module):
                 if progress_callback is not None:
                     progress_callback(i + num_given_samples, total_samples)
 
+        self.train()
         return generated
 
     def parameter_count(self):
