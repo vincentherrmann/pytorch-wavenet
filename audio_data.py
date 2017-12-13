@@ -114,9 +114,9 @@ class WavenetDataset(torch.utils.data.Dataset):
             sample = np.concatenate((sample1, sample2))
             #return sample[:self._item_length], sample[1:]
 
-        example = torch.from_numpy(sample[:self._item_length]).type(self.input_type).unsqueeze(0)
+        example = torch.from_numpy(sample[:self._item_length]).type(torch.FloatTensor).unsqueeze(0)
         example = 2. * example / self.classes - 1.
-        target = torch.from_numpy(sample[-self.target_length:]).type(self.target_type).unsqueeze(0)
+        target = torch.from_numpy(sample[-self.target_length:]).type(torch.LongTensor).unsqueeze(0)
         return example, target
 
     def __len__(self):

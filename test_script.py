@@ -10,6 +10,7 @@ ltype = torch.LongTensor
 
 use_cuda = torch.cuda.is_available()
 if use_cuda:
+    print('use gpu')
     dtype = torch.cuda.FloatTensor
     ltype = torch.cuda.LongTensor
 
@@ -28,9 +29,7 @@ data = WavenetDataset(dataset_file='train_samples/saber/dataset.npz',
                       item_length=model.receptive_field + model.output_length - 1,
                       target_length=model.output_length,
                       file_location='train_samples/saber',
-                      test_stride=20,
-                      input_type=dtype,
-                      target_type=ltype)
+                      test_stride=20)
 
 # torch.save(model, 'untrained_model')
 print('the dataset has ' + str(len(data)) + ' items')
