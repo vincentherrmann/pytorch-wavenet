@@ -211,12 +211,12 @@ class WaveNetModel(nn.Module):
             if temperature > 0:
                 x = x / temperature
                 prob = F.softmax(x, dim=0)
-                np_prob = prob.data.cpu().numpy()
+                np_prob = (prob.data.cpu()).numpy()
                 x = np.random.choice(self.classes, p=np_prob)
                 x = np.array([x])
 
                 soft_o = F.softmax(x)
-                np_o = soft_o.data.cpu().numpy()
+                np_o = (soft_o.data.cpu()).numpy()
                 s = np.random.choice(self.num_classes, p=np_o)
                 s = Variable(torch.FloatTensor([s]))
                 s = (s / self.num_classes) * 2. - 1
@@ -268,14 +268,14 @@ class WaveNetModel(nn.Module):
                 # sample from softmax distribution
                 x = x.squeeze() / temperature
                 prob = F.softmax(x, dim=0)
-                np_prob = prob.data.cpu().numpy()
+                np_prob = (prob.data.cpu()).numpy()
                 x = np.random.choice(self.classes, p=np_prob)
                 x = np.array([x])
             else:
                 # convert to sample value
                 x = x.squeeze()
                 x = torch.max(x, 0)[1][0]
-                x = x.data.cpu().numpy()
+                x = (x.data.cpu()).numpy()
 
             x = (x / self.classes) * 2. - 1
             o = mu_law_expansion(x, self.classes)
