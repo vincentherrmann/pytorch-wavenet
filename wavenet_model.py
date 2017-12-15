@@ -211,17 +211,17 @@ class WaveNetModel(nn.Module):
             if temperature > 0:
                 x = x / temperature
                 prob = F.softmax(x, dim=0)
-                np_prob = prob.data.numpy()
+                np_prob = prob.data.cpu().numpy()
                 x = np.random.choice(self.classes, p=np_prob)
                 x = np.array([x])
 
-                soft_o = F.softmax(o)
-                np_o = soft_o.data.numpy()
+                soft_o = F.softmax(x)
+                np_o = soft_o.data.cpu().numpy()
                 s = np.random.choice(self.num_classes, p=np_o)
                 s = Variable(torch.FloatTensor([s]))
                 s = (s / self.num_classes) * 2. - 1
             else:
-                max = torch.max(o, 0)[1].float()
+                max = torch.max(x, 0)[1].float()
                 s = (max / self.num_classes) * 2. - 1  # new sample
 
             generated = torch.cat((generated, s), 0)

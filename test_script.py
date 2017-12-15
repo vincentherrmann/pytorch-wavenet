@@ -55,8 +55,6 @@ def generate_and_log_samples(step):
     logger.audio_summary('temperature 0.5', tf_samples, step, sr=16000)
     print("audio clips generated")
 
-
-
 logger = TensorboardLogger(log_interval=200,
                            validation_interval=200,
                            generate_interval=500,

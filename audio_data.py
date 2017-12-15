@@ -20,8 +20,6 @@ class WavenetDataset(torch.utils.data.Dataset):
                  mono=True,
                  normalize=False,
                  dtype=np.uint8,
-                 input_type=torch.FloatTensor,
-                 target_type=torch.LongTensor,
                  train=True,
                  test_stride=100):
 
@@ -48,8 +46,6 @@ class WavenetDataset(torch.utils.data.Dataset):
             self.sampling_rate = None
             self.dtype = None
 
-        self.input_type = input_type
-        self.target_type = target_type
         self.data = np.load(self.dataset_file, mmap_mode='r')
         self.start_samples = [0]
         self._length = 0
