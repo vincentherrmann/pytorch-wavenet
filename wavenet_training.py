@@ -57,6 +57,7 @@ class WavenetTrainer:
         step = 0
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
+            tic = time.time()
             for (x, target) in iter(self.dataloader):
                 x = Variable(x.type(self.dtype))
                 target = Variable(target.view(-1).type(self.ltype))
@@ -67,6 +68,11 @@ class WavenetTrainer:
                 loss = loss.data[0]
                 self.optimizer.step()
                 step += 1
+
+                # time step duration:
+                if step == 100:
+                    toc = time.time()
+                    print("one training step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
                 if step % self.snapshot_interval == 0:
                     if self.snapshot_path is None:
