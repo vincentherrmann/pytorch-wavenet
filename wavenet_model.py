@@ -1,5 +1,6 @@
 import os
 import os.path
+import time
 from wavenet_modules import *
 from audio_data import *
 
@@ -262,6 +263,7 @@ class WaveNetModel(nn.Module):
 
         # generate new samples
         generated = np.array([])
+        tic = time.time()
         for i in range(num_samples):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate)
@@ -288,6 +290,10 @@ class WaveNetModel(nn.Module):
 
             # set new input
             input = Variable(self.dtype([[x]]), volatile=True)
+
+            if (i+1) == 100:
+                toc = time.time()
+                print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
             # progress feedback
             if (i + num_given_samples) % progress_dist == 0:
