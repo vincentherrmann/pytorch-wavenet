@@ -235,7 +235,8 @@ class WaveNetModel(nn.Module):
                       num_samples,
                       first_samples=None,
                       temperature=1.,
-                      progress_callback=None):
+                      progress_callback=None,
+                      progress_interval=100):
         self.eval()
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
@@ -246,7 +247,6 @@ class WaveNetModel(nn.Module):
 
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
-        progress_dist = total_samples // 100
 
         input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
 
@@ -257,8 +257,8 @@ class WaveNetModel(nn.Module):
             input = Variable(first_samples[i + 1:i + 2], volatile=True).view(1, 1, 1)
 
             # progress feedback
-            if i % progress_dist == 0:
-                if progress_callback != None:
+            if i % progress_interval == 0:
+                if progress_callback is not None:
                     progress_callback(i, total_samples)
 
         # generate new samples
@@ -296,7 +296,7 @@ class WaveNetModel(nn.Module):
                 print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
             # progress feedback
-            if (i + num_given_samples) % progress_dist == 0:
+            if (i + num_given_samples) % progress_interval == 0:
                 if progress_callback is not None:
                     progress_callback(i + num_given_samples, total_samples)
 
@@ -309,8 +309,14 @@ class WaveNetModel(nn.Module):
         return s
 
 
-def load_latest_model_from(location):
+def load_latest_model_from(location, use_cuda=True):
     files = [location + "/" + f for f in os.listdir(location)]
     newest_file = max(files, key=os.path.getctime)
     print("load model " + newest_file)
-    return torch.load(newest_file)
+
+    if use_cuda:
+        torch.load(newest_file)
+    else:
+        model = torch.load(newest_file, map_location=lambda storage, loc: storage)
+
+    return model
