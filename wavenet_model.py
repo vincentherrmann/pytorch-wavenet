@@ -34,7 +34,8 @@ class WaveNetModel(nn.Module):
                  classes=256,
                  output_length=32,
                  kernel_size=2,
-                 dtype=torch.FloatTensor):
+                 dtype=torch.FloatTensor,
+                 bias=False):
 
         super(WaveNetModel, self).__init__()
 
@@ -62,7 +63,7 @@ class WaveNetModel(nn.Module):
         self.start_conv = nn.Conv1d(in_channels=1,
                                     out_channels=residual_channels,
                                     kernel_size=1,
-                                    bias=False)
+                                    bias=bias)
 
         for b in range(blocks):
             additional_scope = kernel_size - 1
@@ -81,24 +82,24 @@ class WaveNetModel(nn.Module):
                 self.filter_convs.append(nn.Conv1d(in_channels=residual_channels,
                                                    out_channels=dilation_channels,
                                                    kernel_size=kernel_size,
-                                                   bias=False))
+                                                   bias=bias))
 
                 self.gate_convs.append(nn.Conv1d(in_channels=residual_channels,
                                                  out_channels=dilation_channels,
                                                  kernel_size=kernel_size,
-                                                 bias=False))
+                                                 bias=bias))
 
                 # 1x1 convolution for residual connection
                 self.residual_convs.append(nn.Conv1d(in_channels=dilation_channels,
                                                      out_channels=residual_channels,
                                                      kernel_size=1,
-                                                     bias=False))
+                                                     bias=bias))
 
                 # 1x1 convolution for skip connection
                 self.skip_convs.append(nn.Conv1d(in_channels=dilation_channels,
                                                  out_channels=skip_channels,
                                                  kernel_size=1,
-                                                 bias=False))
+                                                 bias=bias))
 
                 receptive_field += additional_scope
                 #print("receptive field: ", receptive_field)
@@ -315,7 +316,7 @@ def load_latest_model_from(location, use_cuda=True):
     print("load model " + newest_file)
 
     if use_cuda:
-        torch.load(newest_file)
+        model = torch.load(newest_file)
     else:
         model = torch.load(newest_file, map_location=lambda storage, loc: storage)
 
