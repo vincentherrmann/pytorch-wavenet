@@ -143,7 +143,6 @@ class WaveNetModel(nn.Module):
             gate = self.gate_convs[i](residual)
             gate = F.sigmoid(gate)
             x = filter * gate
-            # x = x[:, self.dilation_channels:, :]
 
             # parametrized skip connection
             s = x
@@ -188,7 +187,6 @@ class WaveNetModel(nn.Module):
         x = x[:, :, -l:]
         x = x.transpose(1, 2).contiguous()
         x = x.view(n * l, c)
-        #x = [-self.output_length, c]
         return x
 
     def generate(self,
@@ -285,9 +283,9 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             x = (x / self.classes) * 2. - 1
-            o = mu_law_expansion(x, self.classes)
+            #o = mu_law_expansion(x, self.classes)
 
-            generated = np.append(generated, o)
+            generated = np.append(generated, x)
 
             # set new input
             input = Variable(self.dtype([[x]]), volatile=True)
@@ -302,7 +300,8 @@ class WaveNetModel(nn.Module):
                     progress_callback(i + num_given_samples, total_samples)
 
         self.train()
-        return generated
+        mu_gen = mu_law_expansion(generated, self.classes)
+        return  mu_gen
 
     def parameter_count(self):
         par = list(self.parameters())
