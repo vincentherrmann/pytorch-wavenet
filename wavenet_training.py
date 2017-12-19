@@ -53,7 +53,7 @@ class WavenetTrainer:
                                                       batch_size=batch_size,
                                                       shuffle=True,
                                                       num_workers=8,
-                                                      pin_memory=True)
+                                                      pin_memory=False)
         step = 0
         for current_epoch in range(epochs):
             print("epoch", current_epoch)

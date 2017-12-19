@@ -60,7 +60,7 @@ class WaveNetModel(nn.Module):
         self.skip_convs = nn.ModuleList()
 
         # 1x1 convolution to create channels
-        self.start_conv = nn.Conv1d(in_channels=1,
+        self.start_conv = nn.Conv1d(in_channels=self.classes,
                                     out_channels=residual_channels,
                                     kernel_size=1,
                                     bias=bias)
@@ -238,7 +238,8 @@ class WaveNetModel(nn.Module):
                       progress_interval=100):
         self.eval()
         if first_samples is None:
-            first_samples = self.dtype(1).zero_()
+            first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
+        first_samples = Variable(first_samples)
 
         # reset queues
         for queue in self.dilated_queues:
@@ -247,13 +248,20 @@ class WaveNetModel(nn.Module):
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
 
-        input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
+        # example = torch.from_numpy(sample).type(torch.LongTensor)
+        # one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
+        # one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
+        input = Variable(torch.FloatTensor(self.classes, 1).zero_())
+        input = input.scatter_(0, first_samples[0:1].view(1, -1), 1.).view(1, self.classes, 1)
+        #input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
 
         # fill queues with given samples
         for i in range(num_given_samples - 1):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate)
-            input = Variable(first_samples[i + 1:i + 2], volatile=True).view(1, 1, 1)
+            input.zero_()
+            input = input.scatter_(0, first_samples[i + 1:i + 2].view(1, -1), 1.).view(1, self.classes, 1)
+            #input = Variable(first_samples[i + 1:i + 2], volatile=True).view(1, 1, 1)
 
             # progress feedback
             if i % progress_interval == 0:
@@ -282,13 +290,16 @@ class WaveNetModel(nn.Module):
                 x = x.cpu()
                 x = x.data.numpy()
 
-            x = (x / self.classes) * 2. - 1
+            o = (x / self.classes) * 2. - 1
             #o = mu_law_expansion(x, self.classes)
 
-            generated = np.append(generated, x)
+            generated = np.append(generated, o)
 
             # set new input
-            input = Variable(self.dtype([[x]]), volatile=True)
+            x = Variable(torch.from_numpy(x).type(torch.LongTensor))
+            input.zero_()
+            input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
+            #input = Variable(self.dtype([[x]]), volatile=True)
 
             if (i+1) == 100:
                 toc = time.time()

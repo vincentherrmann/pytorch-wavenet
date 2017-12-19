@@ -51,6 +51,7 @@ class WavenetDataset(torch.utils.data.Dataset):
         self._length = 0
         self.calculate_length()
         self.train = train
+        print("one hot input")
          # assign every *test_stride*th item to the test set
 
     def create_dataset(self, location, out_file):
@@ -112,10 +113,11 @@ class WavenetDataset(torch.utils.data.Dataset):
             sample = np.concatenate((sample1, sample2))
             #return sample[:self._item_length], sample[1:]
 
-        example = torch.from_numpy(sample[:self._item_length]).type(torch.FloatTensor).unsqueeze(0)
-        example = 2. * example / self.classes - 1.
-        target = torch.from_numpy(sample[-self.target_length:]).type(torch.LongTensor).unsqueeze(0)
-        return example, target
+        example = torch.from_numpy(sample).type(torch.LongTensor)
+        one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
+        one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
+        target = example[-self.target_length:].unsqueeze(0)
+        return one_hot, target
 
     def __len__(self):
         test_length = math.floor(self._length / self._test_stride)

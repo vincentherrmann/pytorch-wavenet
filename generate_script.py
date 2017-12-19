@@ -10,8 +10,16 @@ from IPython import display
 import torch
 import numpy as np
 
+model = WaveNetModel(layers=6,
+                     blocks=4,
+                     dilation_channels=16,
+                     residual_channels=16,
+                     skip_channels=16,
+                     output_length=8,
+                     dtype=torch.FloatTensor)
+
 # model = load_latest_model_from('snapshots')
-model = torch.load('snapshots/snapshot_2017-12-10_10-30-14')
+#model = torch.load('snapshots/snapshot_2017-12-10_10-30-14')
 
 print("generate")
 tic = time.time()
