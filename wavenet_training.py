@@ -24,6 +24,7 @@ class WavenetTrainer:
                  optimizer=optim.Adam,
                  lr=0.001,
                  weight_decay=0,
+                 gradient_clipping=None,
                  logger=Logger(),
                  snapshot_path=None,
                  snapshot_name='snapshot',
@@ -35,6 +36,7 @@ class WavenetTrainer:
         self.dataloader = None
         self.lr = lr
         self.weight_decay = weight_decay
+        self.clip = gradient_clipping
         self.optimizer_type = optimizer
         self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.logger = logger
@@ -47,14 +49,15 @@ class WavenetTrainer:
 
     def train(self,
               batch_size=32,
-              epochs=10):
+              epochs=10,
+              continue_training_at_step=0):
         self.model.train()
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
                                                       num_workers=8,
                                                       pin_memory=False)
-        step = 0
+        step = continue_training_at_step
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
             tic = time.time()
@@ -64,8 +67,13 @@ class WavenetTrainer:
 
                 output = self.model(x)
                 loss = F.cross_entropy(output.squeeze(), target.squeeze())
+                self.optimizer.zero_grad()
                 loss.backward()
                 loss = loss.data[0]
+
+                if self.clip is not None:
+                    torch.nn.utils.clip_grad_norm(self.model.parameters(), self.clip)
+
                 self.optimizer.step()
                 step += 1
 
