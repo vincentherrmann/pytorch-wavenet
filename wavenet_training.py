@@ -47,14 +47,15 @@ class WavenetTrainer:
 
     def train(self,
               batch_size=32,
-              epochs=10):
+              epochs=10,
+              continue_training_at_step=0):
         self.model.train()
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
                                                       num_workers=8,
                                                       pin_memory=True)
-        step = 0
+        step = continue_training_at_step
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
             tic = time.time()
@@ -64,8 +65,11 @@ class WavenetTrainer:
 
                 output = self.model(x)
                 loss = F.cross_entropy(output.squeeze(), target.squeeze())
+
+                self.optimizer.zero_grad()
                 loss.backward()
                 loss = loss.data[0]
+                
                 self.optimizer.step()
                 step += 1
 
