@@ -261,8 +261,8 @@ class WaveNetModel(nn.Module):
         # example = torch.from_numpy(sample).type(torch.LongTensor)
         # one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
         # one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
-        input = Variable(torch.FloatTensor(self.classes, 1).zero_())
-        input = input.scatter_(0, first_samples[0:1].view(1, -1), 1.).view(1, self.classes, 1)
+        input = Variable(torch.FloatTensor(1, self.classes, 1).zero_())
+        input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
         #input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
 
         # fill queues with given samples
@@ -270,7 +270,7 @@ class WaveNetModel(nn.Module):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate)
             input.zero_()
-            input = input.scatter_(0, first_samples[i + 1:i + 2].view(1, -1), 1.).view(1, self.classes, 1)
+            input = input.scatter_(1, first_samples[i + 1:i + 2].view(1, -1, 1), 1.).view(1, self.classes, 1)
             #input = Variable(first_samples[i + 1:i + 2], volatile=True).view(1, 1, 1)
 
             # progress feedback

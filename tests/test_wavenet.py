@@ -30,7 +30,7 @@ torch.save(model.state_dict(), "../model_parameters/violin_10-2-128-164")
 
 print('generate...')
 tic = time.time()
-generated = model.generate(start_data=start_tensor, num_generate=100)
+generated = model.generate(start_data=start_tensor, num_samples=100)
 toc = time.time()
 print('Generating took {} seconds.'.format(toc - tic))
 

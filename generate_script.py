@@ -18,13 +18,28 @@ model = WaveNetModel(layers=6,
                      output_length=8,
                      dtype=torch.FloatTensor)
 
-# model = load_latest_model_from('snapshots')
+model = load_latest_model_from('snapshots', use_cuda=False)
+model.cpu()
+model.dtype = torch.FloatTensor
+for q in model.dilated_queues:
+    q.dtype = torch.FloatTensor
+
 #model = torch.load('snapshots/snapshot_2017-12-10_10-30-14')
+
+data = WavenetDataset(dataset_file='train_samples/saber/dataset.npz',
+                      item_length=model.receptive_field + model.output_length - 1,
+                      target_length=model.output_length,
+                      file_location='train_samples/saber',
+                      test_stride=20)
+print('the dataset has ' + str(len(data)) + ' items')
+
+start_data = data[10000][0]
+start_data = torch.max(start_data, 0)[1]
 
 print("generate")
 tic = time.time()
 generated = model.generate_fast(num_samples=4000,
-                                first_samples=None,
+                                first_samples=start_data,
                                 temperature=1.)
 toc = time.time()
 print("generating took " + str(toc-tic) + " s")
