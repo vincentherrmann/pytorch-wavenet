@@ -19,13 +19,9 @@ profiling/latest_trace.json
 __pycache__/
 .idea/workspace.xml
 .ipynb_checkpoints/demo-checkpoint.ipynb
-.idea/workspace.xml
 .DS_Store
 __pycache__/wavenet_training.cpython-35.pyc
 __pycache__/wavenet_modules.cpython-35.pyc
-.ipynb_checkpoints/demo-checkpoint.ipynb
-profiling.ipynb
-demo.ipynb
 tests/.DS_Store
 train_samples/.DS_Store
-.DS_Store
+.idea/workspace.xml
