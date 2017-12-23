@@ -1,6 +1,3 @@
-__pycache__/logger.cpython-35.pyc
-__pycache__/visualize.cpython-35.pyc
-
 .ipynb_checkpoints/
 model_parameters/
 foo.py
@@ -14,3 +11,5 @@ train_samples/
 /notebooks/audio_normalizer.maxpat
 /notebooks/SELU.ggb
 /generated_samples/
+/__pycache__/
+/profiling/
