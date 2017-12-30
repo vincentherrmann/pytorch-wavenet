@@ -73,7 +73,6 @@ class WavenetTrainer:
 
                 if self.clip is not None:
                     torch.nn.utils.clip_grad_norm(self.model.parameters(), self.clip)
-
                 self.optimizer.step()
                 step += 1
 
