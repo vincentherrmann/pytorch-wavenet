@@ -2,56 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a903b4e1-0d2d-4841-a5e1-29ba12e8fc60" name="Default" comment="Update">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_11025.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_chaconne/chaconne.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_full.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_allemande.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_courante.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_gigue.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_menuetts.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_prelude.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/bach_cello_suite_1_sarabande.mp3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bach_suite_1/dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bell.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/bell_o.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/clarinet/clarinet_g.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/clarinet/dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/hihat.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/hihat_o.aiff" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/piano.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/piano_o.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Hum 1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Hum 2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Hum 4.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Hum 5.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Saberftn.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/SlowSabr.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 3.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 4.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 5.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Spin 6.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Swing01.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/Swing02.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/sthswng1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/sthswng2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/sthswng3.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/sthtwrl1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/saber/sthtwrl2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/sapiens/dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/sapiens/sapiens.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/sapiens_11025.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/sine/dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/sine/sine.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/test_dataset.npz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/violin.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/violin_o.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/voice.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/train_samples/voice_11025.wav" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/snapshots/chaconne_model_2017-12-28_16-44-12" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -84,8 +35,8 @@
           <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="405">
-                  <caret line="27" column="0" lean-forward="true" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
+                <state relative-caret-position="330">
+                  <caret line="22" column="23" lean-forward="true" selection-start-line="22" selection-start-column="23" selection-end-line="22" selection-end-column="23" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -189,8 +140,8 @@
           <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/.gitignore">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="60">
-                  <caret line="4" column="15" lean-forward="false" selection-start-line="4" selection-start-column="15" selection-end-line="4" selection-end-column="15" />
+                <state relative-caret-position="210">
+                  <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -1341,8 +1292,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="27" column="0" lean-forward="true" selection-start-line="27" selection-start-column="0" selection-end-line="27" selection-end-column="0" />
+        <state relative-caret-position="330">
+          <caret line="22" column="23" lean-forward="true" selection-start-line="22" selection-start-column="23" selection-end-line="22" selection-end-column="23" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
