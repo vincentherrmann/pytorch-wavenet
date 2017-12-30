@@ -23,6 +23,11 @@ class WavenetDataset(torch.utils.data.Dataset):
                  train=True,
                  test_stride=100):
 
+        #           |----receptive_field----|
+        #                                 |--output_length--|
+        # example:  | | | | | | | | | | | | | | | | | | | | |
+        # target:                           | | | | | | | | | |
+
         self.dataset_file = dataset_file
         self._item_length = item_length
         self._test_stride = test_stride
@@ -52,7 +57,7 @@ class WavenetDataset(torch.utils.data.Dataset):
         self.calculate_length()
         self.train = train
         print("one hot input")
-         # assign every *test_stride*th item to the test set
+        # assign every *test_stride*th item to the test set
 
     def create_dataset(self, location, out_file):
         print("create dataset from audio files at", location)
@@ -103,7 +108,6 @@ class WavenetDataset(torch.utils.data.Dataset):
             file_name = 'arr_' + str(file_index)
             this_file = np.load(self.dataset_file, mmap_mode='r')[file_name]
             sample = this_file[position_in_file:position_in_file + self._item_length + 1]
-            #return sample[:self._item_length], sample[1:]
         else:
             # load from two files
             file1 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index)]
@@ -111,7 +115,6 @@ class WavenetDataset(torch.utils.data.Dataset):
             sample1 = file1[position_in_file:]
             sample2 = file2[:end_position_in_next_file]
             sample = np.concatenate((sample1, sample2))
-            #return sample[:self._item_length], sample[1:]
 
         example = torch.from_numpy(sample).type(torch.LongTensor)
         one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()

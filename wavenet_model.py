@@ -53,8 +53,6 @@ class WaveNetModel(nn.Module):
         receptive_field = 1
         init_dilation = 1
 
-        #print("relu network")
-
         self.dilations = []
         self.dilated_queues = []
         # self.main_convs = nn.ModuleList()
@@ -82,11 +80,6 @@ class WaveNetModel(nn.Module):
                                                         dilation=new_dilation,
                                                         dtype=dtype))
 
-                # self.main_convs.append(nn.Conv1d(in_channels=residual_channels,
-                #                                    out_channels=dilation_channels,
-                #                                    kernel_size=kernel_size,
-                #                                    bias=bias))
-
                 # dilated convolutions
                 self.filter_convs.append(nn.Conv1d(in_channels=residual_channels,
                                                    out_channels=dilation_channels,
@@ -111,7 +104,6 @@ class WaveNetModel(nn.Module):
                                                  bias=bias))
 
                 receptive_field += additional_scope
-                #print("receptive field: ", receptive_field)
                 additional_scope *= 2
                 init_dilation = new_dilation
                 new_dilation *= 2
@@ -128,7 +120,7 @@ class WaveNetModel(nn.Module):
 
         # self.output_length = 2 ** (layers - 1)
         self.output_length = output_length
-        self.receptive_field = receptive_field # + self.output_length
+        self.receptive_field = receptive_field
 
     def wavenet(self, input, dilation_func):
 
@@ -157,14 +149,11 @@ class WaveNetModel(nn.Module):
             gate = self.gate_convs[i](residual)
             gate = F.sigmoid(gate)
             x = filter * gate
-            # preativation = self.main_convs[i](residual)
-            # x = F.relu(preativation)
 
             # parametrized skip connection
             s = x
             if x.size(2) != 1:
                  s = dilate(x, 1, init_dilation=dilation)
-            #s = dilate(x, 1, init_dilation=dilation)
             s = self.skip_convs[i](s)
             try:
                 skip = skip[:, :, -s.size(2):]
@@ -266,12 +255,8 @@ class WaveNetModel(nn.Module):
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
 
-        # example = torch.from_numpy(sample).type(torch.LongTensor)
-        # one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
-        # one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
         input = Variable(torch.FloatTensor(1, self.classes, 1).zero_())
         input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
-        #input = Variable(first_samples[0:1], volatile=True).view(1, 1, 1)
 
         # fill queues with given samples
         for i in range(num_given_samples - 1):
@@ -279,7 +264,6 @@ class WaveNetModel(nn.Module):
                              dilation_func=self.queue_dilate)
             input.zero_()
             input = input.scatter_(1, first_samples[i + 1:i + 2].view(1, -1, 1), 1.).view(1, self.classes, 1)
-            #input = Variable(first_samples[i + 1:i + 2], volatile=True).view(1, 1, 1)
 
             # progress feedback
             if i % progress_interval == 0:
@@ -294,9 +278,8 @@ class WaveNetModel(nn.Module):
         for i in range(num_samples):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate).squeeze()
-            #regularizer = torch.abs(Variable(torch.arange(self.classes)) - torch.max(input, 1)[1].type(self.dtype))
 
-            x = x - regularizer
+            x -= regularizer
 
             if temperature > 0:
                 # sample from softmax distribution
@@ -313,7 +296,6 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             o = (x / self.classes) * 2. - 1
-            #o = mu_law_expansion(x, self.classes)
 
             generated = np.append(generated, o)
 
@@ -321,7 +303,6 @@ class WaveNetModel(nn.Module):
             x = Variable(torch.from_numpy(x).type(torch.LongTensor))
             input.zero_()
             input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
-            #input = Variable(self.dtype([[x]]), volatile=True)
 
             if (i+1) == 100:
                 toc = time.time()
