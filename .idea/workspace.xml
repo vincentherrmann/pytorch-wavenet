@@ -2,70 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a903b4e1-0d2d-4841-a5e1-29ba12e8fc60" name="Default" comment="Update">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/generated_samples/chaconne_temp_0,5.mp3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/generated_samples/chaconne_temp_0,8.mp3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/generated_samples/chaconne_temp_1,0.mp3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet_demo-checkpoint.ipynb" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/profiling-checkpoint.ipynb" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo.ipynb" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/bach_10-5-256-32-32-256-2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_bach_11025_sample.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_bach_11025_sample_12_layers.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_bach_11025_sample_from_0.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_hihat_sample_from_0.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_hihat_sample_from_0_sampled.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_piano_sample.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_piano_sample_from_0.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_saber_sample.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_saber_sample_from_0.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_voice_ds_sample.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_voice_ds_sample_from_0.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/generated_voice_sample.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/piano_8-2-128-32-32-64-2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/saber_10-2-128-32-32-32-2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/saber_10-2-128-32-8.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/sapiens_12-3-256-32-32-128-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/generated_samples/sapiens_12-3-256-32-32-128-2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/bach_10-2-128-32-8" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/bach_10-5-256-32-32-256-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/bach_11-2-128-128-4" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/duplicate_bach" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/hihat_7-2-128-64-64-64-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/last_trained_model" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/model_voice_17_03_21_01" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/piano_8-2-128-32-32-64-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/saber_10-2-128-32-32-32-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/saber_10-2-128-32-8" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/saber_11-2-256-128" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sapiens_10-2-128-32-32-32-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sapiens_11-2-128-64" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sapiens_11-2-128-64-3" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sapiens_11-3-128-32-32-64-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sapiens_12-3-256-32-32-128-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/sine_7-2-128-32-32-32-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_model" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_model_voice_11025" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_bach_11025" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_bach_11025_12_layers" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_bach_11025_3_blocks" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_hihat" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_piano" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_saber" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_sapiens_11025" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_sapiens_11025_3_blocks" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_voice" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_voice Kopie" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/trained_state_voice_ds" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/untrained_model" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/violin_10-2-128-164" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/violin_10-2-128-32-32-32-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/violin_7-2-128-32-32-32-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/violin_7-2-128-64-64-64-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/voice_10-2-128-64" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/model_parameters/voice_10-3-128-32-32-32-2" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/WaveNet.iml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/Dilation-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet2Generate-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet2Train-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WaveNet_demo-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WavenetGenerate-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/WavenetTrain-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/demo-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/librosaTests-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/profiling-checkpoint.ipynb" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.ipynb_checkpoints/tests-checkpoint.ipynb" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wavenet_modules.py" afterPath="$PROJECT_DIR$/wavenet_modules.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -97,8 +50,8 @@
           <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="300">
-                  <caret line="20" column="16" lean-forward="true" selection-start-line="20" selection-start-column="16" selection-end-line="20" selection-end-column="16" />
+                <state relative-caret-position="585">
+                  <caret line="39" column="20" lean-forward="false" selection-start-line="39" selection-start-column="20" selection-end-line="39" selection-end-column="20" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -203,7 +156,7 @@
             <entry file="file://$PROJECT_DIR$/.gitignore">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="195">
-                  <caret line="13" column="0" lean-forward="true" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
+                  <caret line="13" column="0" lean-forward="false" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -285,8 +238,8 @@
         <option value="$PROJECT_DIR$/model_logging.py" />
         <option value="$PROJECT_DIR$/Dilation.ipynb" />
         <option value="$PROJECT_DIR$/tests/test_modules.py" />
-        <option value="$PROJECT_DIR$/wavenet_modules.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/wavenet_modules.py" />
       </list>
     </option>
   </component>
@@ -363,7 +316,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value=".ipynb_checkpoints" />
+              <option name="myItemId" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -1006,9 +959,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1440" y="-540" width="2560" height="1440" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14100039" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14100039" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49389523" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27901787" sideWeight="0.30366287" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49704608" order="1" side_tool="false" content_ui="tabs" />
@@ -1368,21 +1321,21 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
+    <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="16" lean-forward="true" selection-start-line="20" selection-start-column="16" selection-end-line="20" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="75">
+          <caret line="9" column="11" lean-forward="false" selection-start-line="9" selection-start-column="11" selection-end-line="9" selection-end-column="11" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/.gitignore">
+    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="13" column="0" lean-forward="true" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-          <folding />
+        <state relative-caret-position="585">
+          <caret line="39" column="20" lean-forward="false" selection-start-line="39" selection-start-column="20" selection-end-line="39" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
