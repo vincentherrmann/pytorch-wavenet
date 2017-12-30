@@ -2,6 +2,7 @@
 #__pycache__/
 #.idea
 _generated_samples/
+_train_samples/
 logs/
 notebooks/
 profiling/
