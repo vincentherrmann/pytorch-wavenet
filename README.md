@@ -8,7 +8,12 @@ This is an implementation of the WaveNet architecture, as described in the [orig
 - Fast generation, as introduced [here](https://arxiv.org/abs/1611.09482)
 
 ## Requirements
-numpy, librosa, tensorflow for TensorBoard logging
+- python 3
+- pytorch 0.3
+- numpy
+- librosa
+- jupyter
+- tensorflow for TensorBoard logging
 
 ## Demo
 For an introduction on how to use this model, take a look at the [WaveNet demo notebook](https://github.com/vincentherrmann/pytorch-wavenet/blob/master/WaveNet_demo.ipynb). 
