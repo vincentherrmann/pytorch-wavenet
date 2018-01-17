@@ -26,8 +26,8 @@ def dilate(x, dilation, init_dilation=1, pad_start=True):
         l = new_l
         x = constant_pad_1d(x, new_l, dimension=2, pad_start=pad_start)
 
-    l_old = int(round(l / dilation_factor))
-    n_old = int(round(n * dilation_factor))
+    # l_old = int(round(l / dilation_factor))
+    # n_old = int(round(n * dilation_factor))
     l = math.ceil(l * init_dilation / dilation)
     n = math.ceil(n * dilation / init_dilation)
 

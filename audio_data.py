@@ -102,20 +102,36 @@ class WavenetDataset(torch.utils.data.Dataset):
         if file_index + 1 >= len(self.start_samples):
             print("error: sample index " + str(sample_index) + " is to high. Results in file_index " + str(file_index))
         position_in_file = sample_index - self.start_samples[file_index]
-        end_position_in_next_file = sample_index + self._item_length + 1 - self.start_samples[file_index + 1]
+        # end_position_in_next_file = sample_index + self._item_length + 1 - self.start_samples[file_index + 1]
+        #
+        # if end_position_in_next_file < 0:
+        #     file_name = 'arr_' + str(file_index)
+        #     this_file = np.load(self.dataset_file, mmap_mode='r')[file_name]
+        #     sample = this_file[position_in_file:position_in_file + self._item_length + 1]
+        # else:
+        #     # load from two files
+        #     # TODO implement loading from more than two files (for really short files)
+        #     file1 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index)]
+        #     file2 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index + 1)]
+        #     sample1 = file1[position_in_file:]
+        #     sample2 = file2[:end_position_in_next_file]
+        #     sample = np.concatenate((sample1, sample2))
 
-        if end_position_in_next_file < 0:
+        def load_sample(file_index, position_in_file, item_length):
             file_name = 'arr_' + str(file_index)
             this_file = np.load(self.dataset_file, mmap_mode='r')[file_name]
-            sample = this_file[position_in_file:position_in_file + self._item_length + 1]
-        else:
-            # load from two files
-            file1 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index)]
-            file2 = np.load(self.dataset_file, mmap_mode='r')['arr_' + str(file_index + 1)]
-            sample1 = file1[position_in_file:]
-            sample2 = file2[:end_position_in_next_file]
-            sample = np.concatenate((sample1, sample2))
+            remaining_length = position_in_file + item_length + 1 - len(this_file)
+            if remaining_length < 0:
+                sample = this_file[position_in_file:position_in_file + item_length + 1]
+            else:
+                this_sample = this_file[position_in_file:]
+                next_sample = load_sample(file_index+1,
+                                          position_in_file=0,
+                                          item_length=remaining_length)
+                sample = np.concatenate((this_sample, next_sample))
+            return sample
 
+        sample = load_sample(file_index, position_in_file, self._item_length)
         example = torch.from_numpy(sample).type(torch.LongTensor)
         one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
         one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)

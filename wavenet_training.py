@@ -58,6 +58,8 @@ class WavenetTrainer:
                                                       num_workers=8,
                                                       pin_memory=False)
         step = continue_training_at_step
+        num_step_track = 10
+        step_times = np.zeros(num_step_track)
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
             tic = time.time()
@@ -77,9 +79,14 @@ class WavenetTrainer:
                 step += 1
 
                 # time step duration:
-                if step == 100:
+                if step <= num_step_track:
                     toc = time.time()
-                    print("one training step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
+                    step_times[step-1] = toc - tic
+                    tic = time.time()
+                    if step == num_step_track:
+                        mean = np.mean(step_times)
+                        std = np.std(step_times)
+                        print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
 
                 if step % self.snapshot_interval == 0:
                     if self.snapshot_path is None:
