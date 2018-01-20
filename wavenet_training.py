@@ -30,7 +30,9 @@ class WavenetTrainer:
                  snapshot_name='snapshot',
                  snapshot_interval=1000,
                  dtype=torch.FloatTensor,
-                 ltype=torch.LongTensor):
+                 ltype=torch.LongTensor,
+                 num_workers=8,
+                 pin_memory=False):
         self.model = model
         self.dataset = dataset
         self.dataloader = None
@@ -46,6 +48,8 @@ class WavenetTrainer:
         self.snapshot_interval = snapshot_interval
         self.dtype = dtype
         self.ltype = ltype
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
 
     def train(self,
               batch_size=32,
@@ -55,8 +59,8 @@ class WavenetTrainer:
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
-                                                      num_workers=8,
-                                                      pin_memory=False)
+                                                      num_workers=self.num_workers,
+                                                      pin_memory=self.pin_memory)
         step = continue_training_at_step
         num_step_track = 10
         step_times = np.zeros(num_step_track)

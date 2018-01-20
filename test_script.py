@@ -73,17 +73,18 @@ def generate_and_log_samples(step):
     logger.audio_summary('temperature 0.5', tf_samples, step, sr=16000)
     print("audio clips generated")
 
-logger = TensorboardLogger(log_interval=200,
-                           validation_interval=200,
-                           generate_interval=500,
-                           generate_function=generate_and_log_samples,
-                           log_dir="logs")
+logger = Logger(log_interval=1)
+# logger = TensorboardLogger(log_interval=200,
+#                            validation_interval=200,
+#                            generate_interval=500,
+#                            generate_function=generate_and_log_samples,
+#                            log_dir="logs")
 
 trainer = WavenetTrainer(model=model,
                            dataset=data,
                            lr=0.0001,
                            weight_decay=0.1,
-                           #logger=logger,
+                           logger=logger,
                            snapshot_path='snapshots',
                            snapshot_name='saber_model',
                            snapshot_interval=500)
