@@ -29,11 +29,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_training.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="915">
-                  <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+                <state relative-caret-position="90">
+                  <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="35" />
                   <folding />
                 </state>
               </provider>
@@ -42,18 +42,18 @@
           <file leaf-file-name="dataloader.py" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/utils/data/dataloader.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="541">
-                  <caret line="244" column="33" lean-forward="true" selection-start-line="244" selection-start-column="33" selection-end-line="244" selection-end-column="33" />
+                <state relative-caret-position="3540">
+                  <caret line="244" column="33" lean-forward="false" selection-start-line="244" selection-start-column="33" selection-end-line="244" selection-end-column="33" />
                   <folding />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="train_script.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="train_script.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/train_script.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="260">
-                  <caret line="19" column="14" lean-forward="true" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="14" />
+                <state relative-caret-position="-499">
+                  <caret line="19" column="14" lean-forward="false" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="14" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -74,7 +74,7 @@
           <file leaf-file-name="test_script.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/test_script.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-134">
+                <state relative-caret-position="345">
                   <caret line="23" column="38" lean-forward="false" selection-start-line="23" selection-start-column="38" selection-end-line="23" selection-end-column="38" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
@@ -86,8 +86,8 @@
           <file leaf-file-name="audio_data.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/audio_data.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="185">
-                  <caret line="121" column="18" lean-forward="false" selection-start-line="121" selection-start-column="18" selection-end-line="121" selection-end-column="18" />
+                <state relative-caret-position="1800">
+                  <caret line="120" column="23" lean-forward="false" selection-start-line="120" selection-start-column="18" selection-end-line="120" selection-end-column="23" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -98,12 +98,12 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf>
-          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="true">
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/wavenet_model.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="313">
-                  <caret line="139" column="18" lean-forward="true" selection-start-line="139" selection-start-column="18" selection-end-line="139" selection-end-column="18" />
+                  <caret line="139" column="18" lean-forward="false" selection-start-line="139" selection-start-column="18" selection-end-line="139" selection-end-column="18" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -127,9 +127,21 @@
             <entry file="file://$PROJECT_DIR$/tests/test_waveNetModel.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="225">
-                  <caret line="15" column="45" lean-forward="true" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
+                  <caret line="15" column="45" lean-forward="false" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
                   <folding>
                     <element signature="e#0#29#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="audio_data.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/audio_data.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="1545">
+                  <caret line="103" column="72" lean-forward="false" selection-start-line="103" selection-start-column="72" selection-end-line="103" selection-end-column="72" />
+                  <folding>
+                    <element signature="e#0#9#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -164,6 +176,7 @@
       <find>2</find>
       <find>dilation</find>
       <find>variab</find>
+      <find>torch</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -187,19 +200,21 @@
         <option value="$PROJECT_DIR$/Dilation.ipynb" />
         <option value="$PROJECT_DIR$/tests/test_modules.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
-        <option value="$PROJECT_DIR$/audio_data.py" />
         <option value="$PROJECT_DIR$/train_script.py" />
         <option value="$PROJECT_DIR$/wavenet_training.py" />
         <option value="$PROJECT_DIR$/wavenet_model.py" />
         <option value="$PROJECT_DIR$/test_script.py" />
         <option value="$PROJECT_DIR$/wavenet_modules.py" />
         <option value="$PROJECT_DIR$/tests/test_waveNetModel.py" />
+        <option value="$PROJECT_DIR$/audio_data.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="width" value="1440" />
-    <option name="height" value="900" />
+    <option name="x" value="1440" />
+    <option name="y" value="-540" />
+    <option name="width" value="2560" />
+    <option name="height" value="1440" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -218,6 +233,7 @@
     </navigator>
     <panes>
       <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -246,7 +262,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -883,27 +898,27 @@
     </history-entry>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <frame x="1440" y="-540" width="2560" height="1440" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20648344" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.058290664" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49389523" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27901787" sideWeight="0.30366287" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.3296131" sideWeight="0.49704608" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328125" sideWeight="0.49704608" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33556548" sideWeight="0.47026387" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.11461205" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.49704608" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23507462" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="3113" y="-440" width="787" height="1240" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33556548" sideWeight="0.47026387" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23507462" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -966,7 +981,7 @@
         </line-breakpoint>
         <line-breakpoint suspend="NONE" type="python-line">
           <url>file://$PROJECT_DIR$/audio_data.py</url>
-          <line>136</line>
+          <line>122</line>
           <log-expression expression="str(example.size()) + &quot; &quot; + str(one_hot.size())" language="Python" />
           <option name="timeStamp" value="514" />
         </line-breakpoint>
@@ -1159,7 +1174,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15060">
           <caret line="1013" column="0" lean-forward="false" selection-start-line="1013" selection-start-column="0" selection-end-line="1013" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1181,8 +1195,8 @@
     </entry>
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/utils/data/dataloader.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="541">
-          <caret line="244" column="33" lean-forward="true" selection-start-line="244" selection-start-column="33" selection-end-line="244" selection-end-column="33" />
+        <state relative-caret-position="3540">
+          <caret line="244" column="33" lean-forward="false" selection-start-line="244" selection-start-column="33" selection-end-line="244" selection-end-column="33" />
           <folding />
         </state>
       </provider>
@@ -1229,13 +1243,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="235">
           <caret line="278" column="0" lean-forward="false" selection-start-line="278" selection-start-column="0" selection-end-line="278" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test_script.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-134">
+        <state relative-caret-position="345">
           <caret line="23" column="38" lean-forward="false" selection-start-line="23" selection-start-column="38" selection-end-line="23" selection-end-column="38" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
@@ -1247,14 +1260,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="465">
           <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="74" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="915">
-          <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -1272,9 +1277,29 @@
     <entry file="file://$PROJECT_DIR$/tests/test_waveNetModel.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
-          <caret line="15" column="45" lean-forward="true" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
+          <caret line="15" column="45" lean-forward="false" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
           <folding>
             <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_script.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-499">
+          <caret line="19" column="14" lean-forward="false" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/audio_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1800">
+          <caret line="120" column="23" lean-forward="false" selection-start-line="120" selection-start-column="18" selection-end-line="120" selection-end-column="23" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1289,23 +1314,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/audio_data.py">
+    <entry file="file://$PROJECT_DIR$/wavenet_training.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="185">
-          <caret line="121" column="18" lean-forward="false" selection-start-line="121" selection-start-column="18" selection-end-line="121" selection-end-column="18" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_script.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="260">
-          <caret line="19" column="14" lean-forward="true" selection-start-line="19" selection-start-column="14" selection-end-line="19" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="90">
+          <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="35" />
+          <folding />
         </state>
       </provider>
     </entry>
