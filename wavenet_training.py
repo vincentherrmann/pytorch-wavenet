@@ -29,6 +29,7 @@ class WavenetTrainer:
                  snapshot_path=None,
                  snapshot_name='snapshot',
                  snapshot_interval=1000,
+                 snapshot_callback=None,
                  dtype=torch.FloatTensor,
                  ltype=torch.LongTensor,
                  num_workers=8,
@@ -46,6 +47,7 @@ class WavenetTrainer:
         self.snapshot_path = snapshot_path
         self.snapshot_name = snapshot_name
         self.snapshot_interval = snapshot_interval
+        self.snapshot_callback = snapshot_callback
         self.dtype = dtype
         self.ltype = ltype
         self.num_workers = num_workers
@@ -97,6 +99,8 @@ class WavenetTrainer:
                         continue
                     time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())
                     torch.save(self.model, self.snapshot_path + '/' + self.snapshot_name + '_' + time_string)
+                    if self.snapshot_callback is not None:
+                        self.snapshot_callback()
 
                 self.logger.log(step, loss)
 
