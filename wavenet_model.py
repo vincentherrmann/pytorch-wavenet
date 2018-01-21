@@ -346,7 +346,7 @@ class WaveNetModel(nn.Module):
 
     def cpu(self, type=torch.FloatTensor):
         self.dtype = type
-        for q in self.dilated_queues:
+        for _, q in self.dilated_queues.items():
             q.dtype = self.dtype
         super().cpu()
 
@@ -516,6 +516,10 @@ class WaveNetModelWithContext(WaveNetModel):
         self.train()
         mu_gen = mu_law_expansion(generated, self.classes)
         return mu_gen
+
+    def cpu(self, type=torch.FloatTensor):
+        self.context_stack.cpu()
+        super().cpu()
 
 
 
