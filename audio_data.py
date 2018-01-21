@@ -118,11 +118,22 @@ class WavenetDataset(torch.utils.data.Dataset):
             return sample
 
         sample = load_sample(file_index, position_in_file, self._item_length)
-        example = torch.from_numpy(sample).type(torch.LongTensor)
-        one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
-        one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
-        target = example[-self.target_length:].unsqueeze(0)
-        return one_hot, target
+
+        # ONE_HOT:
+        # example = torch.from_numpy(sample).type(torch.LongTensor)
+        # one_hot = torch.FloatTensor(self.classes, self._item_length).zero_()
+        # one_hot.scatter_(0, example[:self._item_length].unsqueeze(0), 1.)
+        # target = example[-self.target_length:].unsqueeze(0)
+        # return one_hot, target
+
+        example = torch.from_numpy(sample[:self._item_length]).type(torch.FloatTensor).unsqueeze(0)
+        example = 2. * example / self.classes - 1.
+        target = torch.from_numpy(sample[-self.target_length:]).type(torch.LongTensor).unsqueeze(0)
+        return example, target
+
+
+
+
 
     def __len__(self):
         test_length = math.floor(self._length / self._test_stride)

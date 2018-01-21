@@ -25,7 +25,7 @@ def prog_callback(step, total_steps):
 
 
 generated = model.generate_fast(num_samples=16000,
-                                 first_samples=start_data,
+                                 first_samples=None,#start_data,
                                  progress_callback=prog_callback,
                                  progress_interval=100,
                                  temperature=1.0,
