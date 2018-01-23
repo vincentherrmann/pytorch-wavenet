@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import scipy.misc
 import threading
+from matplotlib import pyplot as plt
+from IPython import display
 
 try:
     from StringIO import StringIO  # Python 2.7
@@ -56,6 +58,50 @@ class Logger:
                                                     args=[current_step])
             self.generate_thread.daemon = True
             self.generate_thread.start()
+
+
+class JupyterLogger(Logger):
+    def __init__(self,
+                 log_interval=50,
+                 validation_interval=200,
+                 generate_interval=500,
+                 trainer=None,
+                 generate_function=None):
+        super().__init__(log_interval, validation_interval, generate_interval, trainer, generate_function)
+        self.loss_steps = []
+        self.loss_values = []
+        self.validation_steps = []
+        self.validation_losses = []
+        self.validation_accuracies = []
+
+    def log_loss(self, current_step):
+        avg_loss = self.accumulated_loss / self.log_interval
+        self.loss_steps.append(current_step)
+        self.loss_values.append(avg_loss)
+        self.draw()
+
+    def validate(self, current_step):
+        avg_loss, avg_accuracy = self.trainer.validate()
+        self.validation_steps.append(current_step)
+        self.validation_losses.append(avg_loss)
+        self.validation_accuracies.append(avg_accuracy)
+        self.draw()
+
+    def draw(self):
+        display.clear_output(wait=True)
+
+        plt.plot(self.loss_steps, self.loss_values)
+        plt.ylabel("train loss")
+        plt.show()
+
+        plt.plot(self.validation_steps, self.validation_losses)
+        plt.ylabel("validation loss")
+        plt.show()
+
+        plt.plot(self.validation_steps, self.validation_accuracies)
+        plt.ylabel("validation accuracy")
+        plt.show()
+
 
 
 # Code referenced from https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514
