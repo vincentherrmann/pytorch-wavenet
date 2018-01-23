@@ -24,6 +24,8 @@ class WaveNetModel(nn.Module):
         - Input: :math:`(N, C_{in}, L_{in})`
         - Output: :math:`()`
         L should be the length of the receptive field
+
+    Input should be mu-law encoded and between -1. and 1.
     """
     def __init__(self,
                  layers=10,
@@ -319,19 +321,15 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             o = (x / self.classes) * 2. - 1
-            o = mu_law_expansion(o, self.classes)
+            # o = mu_law_expansion(o, self.classes)
             generated = np.append(generated, o)
 
             # set new input
-            input = Variable(self.dtype([[x]]), volatile=True)
+            input = Variable(self.dtype([[o]]), volatile=True)
             # ONE HOT
             # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
             # input.zero_()
             # input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
-
-            if (i+1) == 100:
-                toc = time.time()
-                print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
             if (i+1) == 100:
                 toc = time.time()
@@ -437,8 +435,9 @@ class WaveNetModelWithContext(WaveNetModel):
         self.context_stack.eval()
         self.eval()
         if first_samples is None:
-            first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
-        first_samples = Variable(first_samples)
+            first_samples = self.dtype(1).zero_()
+            #ONE HOT: first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
+        first_samples = Variable(first_samples, volatile=True)
 
         # reset queues
         for _, queue in self.context_stack.dilated_queues.items():
@@ -449,9 +448,10 @@ class WaveNetModelWithContext(WaveNetModel):
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
 
+        input = first_samples[0:1].view(1, 1, 1)
         # create one hot input encoding
-        input = Variable(torch.FloatTensor(1, self.classes, 1).zero_())
-        input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
+        # input = Variable(torch.FloatTensor(1, self.classes, 1).zero_())
+        # input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
 
         # fill queues with given samples
         for i in range(num_given_samples - 1):
@@ -464,8 +464,10 @@ class WaveNetModelWithContext(WaveNetModel):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
                              activation_input=activation_input)
-            input.zero_()
-            input = input.scatter_(1, first_samples[i + 1:i + 2].view(1, -1, 1), 1.).view(1, self.classes, 1)
+            input = first_samples[i + 1:i + 2].view(1, 1, 1)
+            # ONE HOT
+            # input.zero_()
+            # input = input.scatter_(1, first_samples[i + 1:i + 2].view(1, -1, 1), 1.).view(1, self.classes, 1)
 
             # progress feedback
             if i % progress_interval == 0:
@@ -508,9 +510,11 @@ class WaveNetModelWithContext(WaveNetModel):
             generated = np.append(generated, o)
 
             # set new input
-            x = Variable(torch.from_numpy(x).type(torch.LongTensor))
-            input.zero_()
-            input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
+            input = Variable(self.dtype([[o]]), volatile=True)
+            # ONE HOT
+            # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
+            # input.zero_()
+            # input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
 
             if (i + 1) == 100:
                 toc = time.time()
