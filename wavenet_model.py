@@ -296,16 +296,12 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             o = (x / self.classes) * 2. - 1
-            generated = np.append(generated, x)
+            generated = np.append(generated, o)
 
             # set new input
             x = Variable(torch.from_numpy(x).type(torch.LongTensor))
             input.zero_()
             input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
-
-            if (i+1) == 100:
-                toc = time.time()
-                print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
             if (i+1) == 100:
                 toc = time.time()
