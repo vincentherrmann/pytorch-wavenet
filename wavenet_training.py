@@ -116,11 +116,16 @@ class WavenetTrainer:
         self.dataset.train = False
         total_loss = 0
         accurate_classifications = 0
-        for (x, target) in iter(self.dataloader):
-            x = Variable(x.type(self.dtype))
-            target = Variable(target.view(-1).type(self.ltype))
+        for batch in iter(self.dataloader):
+            if self.process_batch is None:
+                x, target = batch
+                x = Variable(x.type(self.dtype))
+                target = Variable(target.type(self.ltype))
+            else:
+                x, target = self.process_batch(batch, self.dtype, self.ltype)
 
             output = self.model(x)
+            target = target.view(-1)
             loss = F.cross_entropy(output.squeeze(), target.squeeze())
             total_loss += loss.data[0]
 
