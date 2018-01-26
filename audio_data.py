@@ -59,7 +59,7 @@ class WavenetDataset(torch.utils.data.Dataset):
         self._length = 0
         self.calculate_length()
         self.train = train
-        print("one hot input")
+        # print("one hot input")
         # assign every *test_stride*th item to the test set
 
     def create_dataset(self, location, out_file):

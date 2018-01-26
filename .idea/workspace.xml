@@ -17,11 +17,11 @@
     <splitter split-orientation="horizontal" split-proportion="0.4347064">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="321">
-                  <caret line="459" column="49" lean-forward="true" selection-start-line="459" selection-start-column="49" selection-end-line="459" selection-end-column="49" />
+                <state relative-caret-position="531">
+                  <caret line="455" column="69" lean-forward="true" selection-start-line="455" selection-start-column="69" selection-end-line="455" selection-end-column="69" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -52,8 +52,8 @@
           <file leaf-file-name="variable.py" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/variable.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="525">
-                  <caret line="166" column="0" lean-forward="false" selection-start-line="166" selection-start-column="0" selection-end-line="166" selection-end-column="0" />
+                <state relative-caret-position="255">
+                  <caret line="86" column="0" lean-forward="false" selection-start-line="86" selection-start-column="0" selection-end-line="86" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -84,8 +84,8 @@
           <file leaf-file-name="test_script.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/test_script.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="285">
-                  <caret line="63" column="49" lean-forward="false" selection-start-line="63" selection-start-column="49" selection-end-line="63" selection-end-column="49" />
+                <state relative-caret-position="1410">
+                  <caret line="94" column="34" lean-forward="true" selection-start-line="112" selection-start-column="25" selection-end-line="112" selection-end-column="57" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -93,7 +93,7 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="npyio.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="npyio.py" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/numpy/lib/npyio.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="255">
@@ -120,7 +120,7 @@
                   <caret line="46" column="54" lean-forward="false" selection-start-line="46" selection-start-column="54" selection-end-line="46" selection-end-column="54" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
-                    <marker date="1516985764378" expanded="true" signature="6526:11406" ph="..." />
+                    <marker date="1516988028469" expanded="true" signature="6528:11408" ph="..." />
                   </folding>
                 </state>
               </provider>
@@ -157,8 +157,8 @@
           <file leaf-file-name="audio_data.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/audio_data.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="347">
-                  <caret line="273" column="33" lean-forward="true" selection-start-line="273" selection-start-column="33" selection-end-line="273" selection-end-column="33" />
+                <state relative-caret-position="186">
+                  <caret line="57" column="28" lean-forward="true" selection-start-line="57" selection-start-column="28" selection-end-line="57" selection-end-column="28" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -217,6 +217,8 @@
       <find>&quot;condi</find>
       <find>context_que</find>
       <find>ex</find>
+      <find>one</find>
+      <find>filter</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -245,9 +247,9 @@
         <option value="$PROJECT_DIR$/tests/test_audio_data.py" />
         <option value="$PROJECT_DIR$/demo.ipynb" />
         <option value="$PROJECT_DIR$/wavenet_training.py" />
+        <option value="$PROJECT_DIR$/test_script.py" />
         <option value="$PROJECT_DIR$/audio_data.py" />
         <option value="$PROJECT_DIR$/wavenet_model.py" />
-        <option value="$PROJECT_DIR$/test_script.py" />
       </list>
     </option>
   </component>
@@ -944,7 +946,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1440" y="-540" width="2560" height="1440" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.10122095" sideWeight="0.5" order="1" side_tool="false" content_ui="combo" x="2556" y="-271" width="328" height="901" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296131" sideWeight="0.49389523" order="10" side_tool="false" content_ui="tabs" />
@@ -955,7 +957,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.11461205" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.49704608" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.40848213" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.40848213" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -1028,11 +1030,6 @@
           <url>file://$PROJECT_DIR$/tests/test_audio_data.py</url>
           <line>59</line>
           <option name="timeStamp" value="528" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/wavenet_training.py</url>
-          <line>83</line>
-          <option name="timeStamp" value="548" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
@@ -1308,30 +1305,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/variable.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="525">
-          <caret line="166" column="0" lean-forward="false" selection-start-line="166" selection-start-column="0" selection-end-line="166" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
           <caret line="98" column="0" lean-forward="false" selection-start-line="98" selection-start-column="0" selection-end-line="98" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/audio_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="46" column="54" lean-forward="false" selection-start-line="46" selection-start-column="54" selection-end-line="46" selection-end-column="54" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <marker date="1516985764378" expanded="true" signature="6526:11406" ph="..." />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1343,12 +1321,39 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_model.py">
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="321">
-          <caret line="459" column="49" lean-forward="true" selection-start-line="459" selection-start-column="49" selection-end-line="459" selection-end-column="49" />
+        <state relative-caret-position="3287">
+          <caret line="1587" column="39" lean-forward="false" selection-start-line="1587" selection-start-column="39" selection-end-line="1587" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/numpy/lib/npyio.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="431" column="0" lean-forward="false" selection-start-line="431" selection-start-column="0" selection-end-line="431" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/audio_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="46" column="54" lean-forward="false" selection-start-line="46" selection-start-column="54" selection-end-line="46" selection-end-column="54" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
+            <marker date="1516988028469" expanded="true" signature="6528:11408" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test_script.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1410">
+          <caret line="94" column="34" lean-forward="true" selection-start-line="112" selection-start-column="25" selection-end-line="112" selection-end-column="57" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1363,29 +1368,21 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3287">
-          <caret line="1587" column="39" lean-forward="false" selection-start-line="1587" selection-start-column="39" selection-end-line="1587" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test_script.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="63" column="49" lean-forward="false" selection-start-line="63" selection-start-column="49" selection-end-line="63" selection-end-column="49" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/numpy/lib/npyio.py">
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/variable.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
-          <caret line="431" column="0" lean-forward="false" selection-start-line="431" selection-start-column="0" selection-end-line="431" selection-end-column="0" />
+          <caret line="86" column="0" lean-forward="false" selection-start-line="86" selection-start-column="0" selection-end-line="86" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wavenet_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="531">
+          <caret line="455" column="69" lean-forward="true" selection-start-line="455" selection-start-column="69" selection-end-line="455" selection-end-column="69" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

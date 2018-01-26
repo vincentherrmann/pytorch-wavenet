@@ -448,8 +448,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
         filter_cond_rep = filter_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
         gate_cond_rep = gate_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
 
-        filter_conditioning = torch.zeros_like(filter_cond_rep)
-        gate_conditioning = torch.zeros_like(gate_cond_rep)
+        filter_conditioning = Variable(torch.zeros(filter_cond_rep.size()).type(self.dtype))
+        gate_conditioning = Variable(torch.zeros(gate_cond_rep.size()).type(self.dtype))
         l = filter.size(2)
         for i, o in enumerate(offset):
             if o != 0:
