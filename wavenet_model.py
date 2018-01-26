@@ -440,28 +440,22 @@ class WaveNetModelWithConditioning(WaveNetModel):
         offset = input['offset']
         dilation = input['x'].size(0) // conditioning.size(0)
 
-        filter_conditioning = self.filter_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
-        gate_conditioning = self.gate_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
+        filter_cond = self.filter_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
+        gate_cond = self.gate_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
 
         # upsample conditioning by repeating the values (could also be done with a transposed convolution)
-        n, c, l = filter_conditioning.shape
-        filter_cond_rep = filter_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
-        gate_cond_rep = gate_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+        n, c, l = filter_cond.shape
+        filter_cond_rep = filter_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+        gate_cond_rep = gate_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
 
-        filter_conditioning = Variable(torch.zeros(filter_cond_rep.size()).type(self.dtype))
-        gate_conditioning = Variable(torch.zeros(gate_cond_rep.size()).type(self.dtype))
-        l = filter.size(2)
-        for i, o in enumerate(offset):
-            if o != 0:
-                filter_conditioning[i, :, :-o] = filter_cond_rep[i, :, o:]
-                gate_conditioning[i, :, :-o] = gate_cond_rep[i, :, o:]
-            else:
-                filter_conditioning = filter_cond_rep
-                gate_conditioning = gate_cond_rep
+        l = self.receptive_field + self.output_length - 1
+        filter_conditioning = torch.cat([filter_cond_rep[i:i+1, :, o:o+l] for i, o in enumerate(offset)])
+        gate_conditioning = torch.cat([gate_cond_rep[i:i+1, :, o:o+l] for i, o in enumerate(offset)])
         filter_conditioning = dilation_func(filter_conditioning, dilation, init_dilation=1,
                                             queue='filter_conditioning_' + str(layer_index))
         gate_conditioning = dilation_func(gate_conditioning, dilation, init_dilation=1,
                                           queue='gate_conditioning_' + str(layer_index))
+        l = filter.size(2)
         filter_conditioning = filter_conditioning[:, :, :l]
         gate_conditioning = gate_conditioning[:, :, :l]
 

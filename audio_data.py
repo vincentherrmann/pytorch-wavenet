@@ -234,7 +234,7 @@ class WavenetDatasetWithRandomConditioning(WavenetDataset):
 
         if remaining_length < 0:
             sample = audio_file[position_in_file:position_in_file + item_length + 1]
-            conditioning = conditioning_file[:, c_position_in_file:c_position_in_file + c_item_length]
+            conditioning = conditioning_file[:, c_position_in_file:c_position_in_file + c_item_length + 1]
         else:
             this_sample = audio_file[position_in_file:]
             this_conditioning = conditioning_file[c_position_in_file:]
