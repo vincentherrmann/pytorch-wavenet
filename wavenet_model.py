@@ -357,6 +357,121 @@ class WaveNetModel(nn.Module):
         super().cpu()
 
 
+class WaveNetModelWithConditioning(WaveNetModel):
+    def __init__(self, *args, **kwargs):
+        try:
+            conditioning_channels = kwargs.pop('conditioning_channels')
+        except KeyError:
+            conditioning_channels = [16]
+
+        try:
+            conditioning_period = kwargs.pop('conditioning_period')
+        except KeyError:
+            conditioning_period = [128]
+
+        try:
+            conditioning_kernel = kwargs.pop('conditioning_kernel')
+        except KeyError:
+            conditioning_kernel = 256
+
+        super().__init__(*args, **kwargs)
+
+        self.conditioning_channels = conditioning_channels
+        self.conditioning_period = conditioning_period
+        self.conditioning_kernel = conditioning_kernel
+
+        self.conditioning_layers = nn.ModuleList()
+        for i in range(len(self.conditioning_channels)-1):
+            self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
+                                                      out_channels=self.conditioning_channels[i+1],
+                                                      kernel_size=1,
+                                                      bias=True))
+
+        self.filter_conditioning_convs = nn.ModuleList()
+        self.gate_conditioning_convs = nn.ModuleList()
+        for l in range(len(self.skip_convs)):
+            self.filter_conditioning_convs.append(nn.Conv1d(in_channels=self.conditioning_channels[-1],
+                                                            out_channels=self.dilation_channels,
+                                                            kernel_size=1,
+                                                            bias=True))
+
+            self.gate_conditioning_convs.append(nn.Conv1d(in_channels=self.conditioning_channels[-1],
+                                                          out_channels=self.dilation_channels,
+                                                          kernel_size=1,
+                                                          bias=True))
+
+            this_dilation = self.dilations[l][0]
+            queue_name = 'filter_conditioning_' + str(l)
+            self.dilated_queues[queue_name] = DilatedQueue(max_length=(self.kernel_size - 1) * this_dilation + 1,
+                                                           num_channels=self.residual_channels,
+                                                           dilation=this_dilation,
+                                                           dtype=self.dtype)
+            queue_name = 'gate_conditioning_' + str(l)
+            self.dilated_queues[queue_name] = DilatedQueue(max_length=(self.kernel_size - 1) * this_dilation + 1,
+                                                           num_channels=self.residual_channels,
+                                                           dilation=this_dilation,
+                                                           dtype=self.dtype)
+
+    def forward(self, input):
+        input, conditioning, offset = input
+        for l in range(len(self.conditioning_layers)):
+            conditioning = self.conditioning_layers[l](conditioning)
+
+        activation_input = {'x': None, 'conditioning': conditioning, 'offset': offset}
+        input = input[:, :, -(self.receptive_field + self.output_length - 1):]
+        x = self.wavenet(input,
+                         dilation_func=self.wavenet_dilate,
+                         activation_input=activation_input)
+
+        # reshape output
+        [n, c, l] = x.size()
+        l = self.output_length
+        x = x[:, :, -l:]
+        x = x.transpose(1, 2).contiguous()
+        x = x.view(n * l, c)
+        return x
+
+    def activation_unit(self, input, layer_index, dilation_func):
+        # gated activation unit with conditioning
+        filter = self.filter_convs[layer_index](input['x'])
+        gate = self.gate_convs[layer_index](input['x'])
+
+        conditioning = input['conditioning']
+        offset = input['offset']
+        dilation = input['x'].size(0) // conditioning.size(0)
+
+        filter_conditioning = self.filter_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
+        gate_conditioning = self.gate_conditioning_convs[layer_index](conditioning)#.unsqueeze(3)
+
+        # upsample conditioning by repeating the values (could also be done with a transposed convolution)
+        n, c, l = filter_conditioning.shape
+        filter_cond_rep = filter_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+        gate_cond_rep = gate_conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+
+        filter_conditioning = torch.zeros_like(filter_cond_rep)
+        gate_conditioning = torch.zeros_like(gate_cond_rep)
+        l = filter.size(2)
+        for i, o in enumerate(offset):
+            if o != 0:
+                filter_conditioning[i, :, :-o] = filter_cond_rep[i, :, o:]
+                gate_conditioning[i, :, :-o] = gate_cond_rep[i, :, o:]
+            else:
+                filter_conditioning = filter_cond_rep
+                gate_conditioning = gate_cond_rep
+        filter_conditioning = dilation_func(filter_conditioning, dilation, init_dilation=1,
+                                            queue='filter_conditioning_' + str(layer_index))
+        gate_conditioning = dilation_func(gate_conditioning, dilation, init_dilation=1,
+                                          queue='gate_conditioning_' + str(layer_index))
+        filter_conditioning = filter_conditioning[:, :, :l]
+        gate_conditioning = gate_conditioning[:, :, :l]
+
+        filter = F.tanh(filter + filter_conditioning)
+        gate = F.sigmoid(gate + gate_conditioning)
+
+        x = filter * gate
+        return x
+
+
 class WaveNetModelWithContext(WaveNetModel):
     def __init__(self, *args, **kwargs):
         try:
@@ -366,7 +481,6 @@ class WaveNetModelWithContext(WaveNetModel):
         super().__init__(*args, **kwargs)
         self.context_stack = context_stack
 
-        self.context_queues = []
         self.filter_context_convs = nn.ModuleList()
         self.gate_context_convs = nn.ModuleList()
 

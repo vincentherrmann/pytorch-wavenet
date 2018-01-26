@@ -7,8 +7,8 @@ import torch.utils.data
 
 class TestWavenetDataset(TestCase):
     def test_dataset_creation(self):
-        in_path = '../train_samples'
-        out_path = '../train_samples/test_dataset.npz'
+        in_path = '../_train_samples/bach_chaconne'
+        out_path = '../_train_samples/bach_chaconne/test_dataset.npz'
         dataset = WavenetDataset(dataset_file=out_path,
                                  item_length=1000,
                                  target_length=64,
@@ -47,6 +47,17 @@ class TestWavenetDataset(TestCase):
         print("time it takes to calculate "  + str(num_batches) + " minibatches: " + str(toc-tic) + " s")
         assert False
 
+class TestWavenetDatasetWithRandomConditioning(TestCase):
+    def test_dataset_creation(self):
+        in_path = '../_train_samples/sapiens'
+        out_path = '../_train_samples/sapiens/test_dataset.npz'
+        dataset = WavenetDatasetWithRandomConditioning(dataset_file=out_path,
+                                 item_length=1000,
+                                 target_length=64,
+                                 file_location=in_path)
+        item0 = dataset[len(dataset) - 3]
+        item1 = dataset[len(dataset) - 2]
+        item2 = dataset[len(dataset) - 1]
 
 
 

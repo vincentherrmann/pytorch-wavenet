@@ -33,7 +33,8 @@ class WavenetTrainer:
                  dtype=torch.FloatTensor,
                  ltype=torch.LongTensor,
                  num_workers=8,
-                 pin_memory=False):
+                 pin_memory=False,
+                 process_batch=None):
         self.model = model
         self.dataset = dataset
         self.dataloader = None
@@ -52,6 +53,7 @@ class WavenetTrainer:
         self.ltype = ltype
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.process_batch = process_batch
 
     def train(self,
               batch_size=32,
@@ -69,11 +71,16 @@ class WavenetTrainer:
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
             tic = time.time()
-            for (x, target) in iter(self.dataloader):
-                x = Variable(x.type(self.dtype))
-                target = Variable(target.view(-1).type(self.ltype))
+            for batch in iter(self.dataloader):
+                if self.process_batch is None:
+                    x, target = batch
+                    x = Variable(x.type(self.dtype))
+                    target = Variable(target.type(self.ltype))
+                else:
+                    x, target = self.process_batch(batch, self.dtype, self.ltype)
 
                 output = self.model(x)
+                target = target.view(-1)
                 loss = F.cross_entropy(output.squeeze(), target.squeeze())
                 self.optimizer.zero_grad()
                 loss.backward()
