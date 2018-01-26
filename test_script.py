@@ -104,8 +104,8 @@ logger = Logger(log_interval=1)
 
 trainer = WavenetTrainer(model=model,
                          dataset=data,
-                         lr=0.0001,
-                         weight_decay=0.1,
+                         lr=0.003,
+                         weight_decay=0,
                          logger=logger,
                          snapshot_path='snapshots',
                          snapshot_name='saber_model',

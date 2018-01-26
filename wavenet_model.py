@@ -451,13 +451,13 @@ class WaveNetModelWithConditioning(WaveNetModel):
         l = self.receptive_field + self.output_length - 1
         filter_conditioning = torch.cat([filter_cond_rep[i:i+1, :, o:o+l] for i, o in enumerate(offset)])
         gate_conditioning = torch.cat([gate_cond_rep[i:i+1, :, o:o+l] for i, o in enumerate(offset)])
-        filter_conditioning = dilation_func(filter_conditioning, dilation, init_dilation=1,
+        filter_cond_dilated = dilation_func(filter_conditioning, dilation, init_dilation=1,
                                             queue='filter_conditioning_' + str(layer_index))
-        gate_conditioning = dilation_func(gate_conditioning, dilation, init_dilation=1,
+        gate_cond_dilated = dilation_func(gate_conditioning, dilation, init_dilation=1,
                                           queue='gate_conditioning_' + str(layer_index))
         l = filter.size(2)
-        filter_conditioning = filter_conditioning[:, :, :l]
-        gate_conditioning = gate_conditioning[:, :, :l]
+        filter_conditioning = filter_cond_dilated[:, :, :l]
+        gate_conditioning = gate_cond_dilated[:, :, :l]
 
         filter = F.tanh(filter + filter_conditioning)
         gate = F.sigmoid(gate + gate_conditioning)
