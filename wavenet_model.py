@@ -270,7 +270,7 @@ class WaveNetModel(nn.Module):
         first_samples = Variable(first_samples, volatile=True)
 
         # reset queues
-        for queue in self.dilated_queues:
+        for _, queue in self.dilated_queues.items():
             queue.reset()
 
         num_given_samples = first_samples.size(0)
@@ -297,14 +297,14 @@ class WaveNetModel(nn.Module):
 
         # generate new samples
         generated = np.array([])
-        regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
-        regularizer = regularizer.squeeze() * regularize
+        # regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
+        # regularizer = regularizer.squeeze() * regularize
         tic = time.time()
         for i in range(num_samples):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate).squeeze()
 
-            x -= regularizer
+            # x -= regularizer
 
             if temperature > 0:
                 # sample from softmax distribution
@@ -321,7 +321,6 @@ class WaveNetModel(nn.Module):
                 x = x.data.numpy()
 
             o = (x / self.classes) * 2. - 1
-            # o = mu_law_expansion(o, self.classes)
             generated = np.append(generated, o)
 
             # set new input
@@ -464,6 +463,124 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
         x = filter * gate
         return x
+
+    def generate_fast(self,
+                      num_samples,
+                      first_samples=None,
+                      temperature=1.,
+                      regularize=0.,
+                      progress_callback=None,
+                      progress_interval=100,
+                      conditioning=None,
+                      offset=0):
+        self.eval()
+        if first_samples is None:
+            first_samples = self.dtype(1).zero_()
+            #ONE HOT: first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
+
+        first_samples = Variable(first_samples, volatile=True)
+
+        # reset queues
+        for _, queue in self.dilated_queues.items():
+            queue.reset()
+
+        num_given_samples = first_samples.size(0)
+        total_samples = num_given_samples + num_samples
+        conditioning_length = total_samples // self.conditioning_period + 1
+
+        if conditioning is None:
+            conditioning = Variable(self.dtype(self.conditioning_channels, conditioning_length).zero_())
+        elif conditioning.size(1) < conditioning_length:
+            remaining_length = conditioning_length - conditioning.size(1)
+            end = conditioning[:, -1].contiguous().view(-1, 1).repeat(1, remaining_length)
+            conditioning = torch.cat((conditioning, end), dim=1)
+
+
+        input = first_samples[0:1].view(1, 1, 1)
+        # ONE HOT
+        # input = Variable(torch.FloatTensor(1, self.classes, 1).zero_(), volatile=True)
+        # input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
+
+        original_conditioning_period = self.conditioning_period
+        # set conditional period to 1 for fast generation, because the values are created sample for sample
+        self.conditioning_period = 1
+
+        # fill queues with given samples
+        for i in range(num_given_samples - 1):
+            cond_index = (i + offset) // original_conditioning_period
+            cond = conditioning[:, cond_index].view(1, -1, 1)
+            activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
+            x = self.wavenet(input,
+                             dilation_func=self.queue_dilate,
+                             activation_input=activation_input)
+            input = first_samples[i+1:i+2].view(1, 1, 1)
+            # ONE HOT
+            # input.zero_()
+            # input = input.scatter_(1, first_samples[i + 1:i + 2].view(1, -1, 1), 1.).view(1, self.classes, 1)
+
+            # progress feedback
+            if i % progress_interval == 0:
+                if progress_callback is not None:
+                    progress_callback(i, total_samples)
+
+        # generate new samples
+        generated = np.array([])
+        # regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
+        # regularizer = regularizer.squeeze() * regularize
+        tic = time.time()
+        for i in range(num_samples):
+            cond_index = (num_given_samples + i + offset) // original_conditioning_period
+            cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
+            activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
+            x = self.wavenet(input,
+                             dilation_func=self.queue_dilate,
+                             activation_input=activation_input).squeeze()
+
+            # x -= regularizer
+
+            if temperature > 0:
+                # sample from softmax distribution
+                x /= temperature
+                prob = F.softmax(x, dim=0)
+                prob = prob.cpu()
+                np_prob = prob.data.numpy()
+                x = np.random.choice(self.classes, p=np_prob)
+                x = np.array([x])
+            else:
+                # convert to sample value
+                x = torch.max(x, 0)[1][0]
+                x = x.cpu()
+                x = x.data.numpy()
+
+            o = (x / self.classes) * 2. - 1
+            generated = np.append(generated, o)
+
+            # set new input
+            input = Variable(self.dtype([[o]]), volatile=True)
+            # ONE HOT
+            # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
+            # input.zero_()
+            # input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
+
+            if (i+1) == 100:
+                toc = time.time()
+                print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
+
+            # progress feedback
+            if (i + num_given_samples) % progress_interval == 0:
+                if progress_callback is not None:
+                    progress_callback(i + num_given_samples, total_samples)
+
+        self.train()
+        self.conditioning_period = original_conditioning_period
+        mu_gen = mu_law_expansion(generated, self.classes)
+        return mu_gen
+
+    def conditional_network(self, conditioning):
+        for l in range(len(self.conditioning_layers)):
+            conditioning = self.conditioning_layers[l](conditioning)
+        return conditioning
+
 
 
 class WaveNetModelWithContext(WaveNetModel):
