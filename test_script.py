@@ -55,10 +55,10 @@ model = WaveNetModelWithConditioning(layers=10,
 #model = load_latest_model_from('snapshots')
 #model = torch.load('snapshots/snapshot_2017-12-10_09-48-19')
 
-data = WavenetDatasetWithRandomConditioning(dataset_file='train_samples/bach_chaconne/conditioning_dataset.npz',
+data = WavenetDatasetWithRandomConditioning(dataset_file='_train_samples/c_jam/conditioning_dataset.npz',
                                             item_length=model.receptive_field + model.output_length - 1,
                                             target_length=model.output_length,
-                                            file_location='train_samples/bach_chaconne',
+                                            file_location='_train_samples/c_jam',
                                             test_stride=500,
                                             conditioning_period=model.conditioning_period,
                                             conditioning_breadth=5,
