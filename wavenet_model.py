@@ -486,7 +486,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
-        conditioning_length = total_samples // self.conditioning_period + 1
+        conditioning_length = total_samples // self.conditioning_period + 2
 
         if conditioning is None:
             conditioning = Variable(self.dtype(self.conditioning_channels, conditioning_length).zero_())
@@ -508,7 +508,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
         # fill queues with given samples
         for i in range(num_given_samples - 1):
             cond_index = (i + offset) // original_conditioning_period
-            cond = conditioning[:, cond_index].view(1, -1, 1)
+            cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
             activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
