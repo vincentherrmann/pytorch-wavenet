@@ -112,26 +112,30 @@ class TensorboardLogger(Logger):
                  generate_interval=500,
                  trainer=None,
                  generate_function=None,
-                 log_dir='logs'):
+                 log_dir='logs',
+                 log_histograms=True):
         super().__init__(log_interval, validation_interval, generate_interval, trainer, generate_function)
         self.writer = tf.summary.FileWriter(log_dir)
+        self.log_histograms = log_histograms
 
     def log_loss(self, current_step):
         # loss
         avg_loss = self.accumulated_loss / self.log_interval
         self.scalar_summary('loss', avg_loss, current_step)
 
+    def validate(self, current_step):
+        avg_loss, avg_accuracy = self.trainer.validate()
+        self.scalar_summary('validation loss', avg_loss, current_step)
+        self.scalar_summary('validation accuracy', avg_accuracy, current_step)
+
         # parameter histograms
+        if not self.log_histograms:
+            return
         for tag, value, in self.trainer.model.named_parameters():
             tag = tag.replace('.', '/')
             self.histo_summary(tag, value.data.cpu().numpy(), current_step)
             if value.grad is not None:
                 self.histo_summary(tag + '/grad', value.grad.data.cpu().numpy(), current_step)
-
-    def validate(self, current_step):
-        avg_loss, avg_accuracy = self.trainer.validate()
-        self.scalar_summary('validation loss', avg_loss, current_step)
-        self.scalar_summary('validation accuracy', avg_accuracy, current_step)
 
     def log_audio(self, step):
         samples = self.generate_function()
