@@ -33,7 +33,7 @@ class WaveNetModel(nn.Module):
                  dilation_channels=32,
                  residual_channels=32,
                  skip_channels=256,
-                 end_channels=256,
+                 end_channels=[256],
                  classes=256,
                  in_classes=None,
                  output_length=32,
@@ -67,6 +67,7 @@ class WaveNetModel(nn.Module):
         self.dilated_queues = {}
         self.residual_convs = nn.ModuleList()
         self.skip_convs = nn.ModuleList()
+        self.end_layers = nn.ModuleList()
 
         # 1x1 convolution to create channels
         self.start_conv = nn.Conv1d(in_channels=1, #self.in_classes,
@@ -105,15 +106,18 @@ class WaveNetModel(nn.Module):
                 init_dilation = new_dilation
                 new_dilation *= self.dilation_factor
 
-        self.end_conv_1 = nn.Conv1d(in_channels=skip_channels,
-                                  out_channels=end_channels,
-                                  kernel_size=1,
-                                  bias=True)
+        in_channels = skip_channels
+        for end_channel in end_channels:
+            self.end_layers.append(nn.Conv1d(in_channels=in_channels,
+                                             out_channels=end_channel,
+                                             kernel_size=1,
+                                             bias=True))
+            in_channels = end_channel
 
-        self.end_conv_2 = nn.Conv1d(in_channels=end_channels,
-                                    out_channels=self.classes,
-                                    kernel_size=1,
-                                    bias=True)
+        self.end_layers.append(nn.Conv1d(in_channels=in_channels,
+                                         out_channels=self.classes,
+                                         kernel_size=1,
+                                         bias=True))
 
         # self.output_length = 2 ** (layers - 1)
         self.output_length = output_length
@@ -158,9 +162,9 @@ class WaveNetModel(nn.Module):
             x = self.residual_convs[i](x)
             x = x + residual[:, :, (self.kernel_size - 1):]
 
-        x = F.relu(skip)
-        x = F.relu(self.end_conv_1(x))
-        x = self.end_conv_2(x)
+        x = skip
+        for this_layer in self.end_layers:
+            x = this_layer(F.relu(x))
 
         return x
 

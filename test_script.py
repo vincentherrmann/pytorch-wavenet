@@ -19,7 +19,7 @@ model = WaveNetModelWithConditioning(layers=10,
                                      dilation_channels=16,
                                      residual_channels=16,
                                      skip_channels=128,
-                                     end_channels=256,
+                                     end_channels=[128, 256],
                                      classes=256,
                                      output_length=8,
                                      dtype=dtype,
@@ -55,14 +55,23 @@ model = WaveNetModelWithConditioning(layers=10,
 #model = load_latest_model_from('snapshots')
 #model = torch.load('snapshots/snapshot_2017-12-10_09-48-19')
 
-data = WavenetDatasetWithRandomConditioning(dataset_file='_train_samples/c_jam/conditioning_dataset.npz',
-                                            item_length=model.receptive_field + model.output_length - 1,
-                                            target_length=model.output_length,
-                                            file_location='_train_samples/c_jam',
-                                            test_stride=500,
-                                            conditioning_period=model.conditioning_period,
-                                            conditioning_breadth=5,
-                                            conditioning_channels=model.conditioning_channels[0])
+# data = WavenetDatasetWithRandomConditioning(dataset_file='_train_samples/c_jam/conditioning_dataset.npz',
+#                                             item_length=model.receptive_field + model.output_length - 1,
+#                                             target_length=model.output_length,
+#                                             file_location='_train_samples/c_jam',
+#                                             test_stride=500,
+#                                             conditioning_period=model.conditioning_period,
+#                                             conditioning_breadth=5,
+#                                             conditioning_channels=model.conditioning_channels[0])
+
+data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/c_jam/conditioning_dataset.npz',
+                                          item_length=model.receptive_field + model.output_length - 1,
+                                          target_length=model.output_length,
+                                          file_location='_train_samples/c_jam',
+                                          test_stride=500,
+                                          conditioning_period=model.conditioning_period,
+                                          conditioning_breadth=1000,
+                                          conditioning_channels=model.conditioning_channels[0])
 
 # data = WavenetDataset(dataset_file='_train_samples/saber/dataset.npz',
 #                       item_length=model.receptive_field + model.output_length - 1,

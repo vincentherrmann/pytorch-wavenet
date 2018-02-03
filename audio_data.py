@@ -271,6 +271,32 @@ class WavenetDatasetWithRandomConditioning(WavenetDataset):
         return (example, conditioning, offset), target
 
 
+class WavenetDatasetWithSineConditioning(WavenetDatasetWithRandomConditioning):
+    # conditioning_breadth is here the length of the sequence in seconds that will have unique conditioning
+    def process_file(self, path, index):
+        super_dict = WavenetDataset.process_file(self, path, index)
+
+        # zero pad file data to make it compatible with the conditioning period
+        file_data = list(super_dict.values())[0]
+        file_length = len(file_data)
+        pad_length = file_length % self.conditioning_period
+        file_data = np.pad(file_data, (0, pad_length), 'constant')
+        super_dict[list(super_dict.keys())[0]] = file_data
+
+        # Create sine curves with
+        conditioning_period = file_length / (self.sampling_rate * self.conditioning_breadth)
+        conditioning_length = file_length // self.conditioning_period
+
+        conditioning_values = np.zeros([self.conditioning_channels, conditioning_length])
+        x = np.linspace(0, np.pi * conditioning_period, conditioning_length)
+        for c in range(self.conditioning_channels):
+            conditioning_values[c, :] = np.cos(x * (c + 1))
+
+        conditioning_values.astype('float')
+        conditioning_dict = {"conditioning_" + str(index): conditioning_values}
+        return {**super_dict, **conditioning_dict}
+
+
 def quantize_data(data, classes):
     mu_x = mu_law_encoding(data, classes)
     bins = np.linspace(-1, 1, classes)
