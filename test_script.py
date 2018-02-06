@@ -73,6 +73,7 @@ data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/c_jam/con
                                           conditioning_breadth=1000,
                                           conditioning_channels=model.conditioning_channels[0])
 
+
 # data = WavenetDataset(dataset_file='_train_samples/saber/dataset.npz',
 #                       item_length=model.receptive_field + model.output_length - 1,
 #                       target_length=model.output_length,
@@ -103,7 +104,8 @@ def generate_and_log_samples(step):
     logger.audio_summary('temperature 0.5', tf_samples, step, sr=16000)
     print("audio clips generated")
 
-logger = Logger(log_interval=1)
+logger = Logger(log_interval=1,
+                validation_interval=5)
 # logger = TensorboardLogger(log_interval=200,
 #                            validation_interval=200,
 #                            generate_interval=500,
@@ -125,7 +127,7 @@ trainer = WavenetTrainer(model=model,
 
 print('start training...')
 tic = time.time()
-trainer.train(batch_size=7,
+trainer.train(batch_size=8,
               epochs=20)
 toc = time.time()
 print('Training took {} seconds.'.format(toc - tic))

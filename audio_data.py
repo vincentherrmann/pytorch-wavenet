@@ -128,9 +128,11 @@ class WavenetDataset(torch.utils.data.Dataset):
         if self._test_stride < 2:
             sample_index = idx * self.target_length
         elif self.train:
-            sample_index = idx * self.target_length + math.floor(idx / (self._test_stride-1))
+            sample_index = idx * self.target_length + math.floor(idx / (self._test_stride-1)) * self.target_length
+            # print("train sample index: ", sample_index)
         else:
-            sample_index = self._test_stride * (idx+1) - 1
+            sample_index = self.target_length * (self._test_stride * (idx+1) - 1)
+            # print("test sample index: ", sample_index)
 
         file_index = bisect.bisect_left(self.start_samples, sample_index) - 1
         if file_index < 0:
