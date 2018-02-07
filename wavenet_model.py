@@ -418,6 +418,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
     def forward(self, input):
         input, conditioning, offset = input
         for l in range(len(self.conditioning_layers)):
+            if l != len(self.conditioning_layers) - 1:
+                conditioning = F.relu(conditioning)
             conditioning = self.conditioning_layers[l](conditioning)
 
         activation_input = {'x': None, 'conditioning': conditioning, 'offset': offset}
@@ -582,8 +584,10 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
     def conditional_network(self, conditioning):
         for l in range(len(self.conditioning_layers)):
+            if l != len(self.conditioning_layers) - 1:
+                conditioning = F.relu(conditioning)
             conditioning = self.conditioning_layers[l](conditioning)
-        return conditioning
+
 
 
 

@@ -245,6 +245,8 @@ class WavenetDatasetWithRandomConditioning(WavenetDataset):
                                                                  item_length=remaining_length)
             sample = np.concatenate((this_sample, next_sample))
             conditioning = np.concatenate((this_conditioning, next_conditioning), axis=1)
+        if conditioning.shape[1] != c_item_length + 1:
+            print("conditioning has the wrong length!")
         return sample, conditioning, conditioning_offset
 
     def __getitem__(self, idx):
@@ -287,7 +289,7 @@ class WavenetDatasetWithSineConditioning(WavenetDatasetWithRandomConditioning):
 
         # Create sine curves with
         conditioning_period = file_length / (self.sampling_rate * self.conditioning_breadth)
-        conditioning_length = file_length // self.conditioning_period
+        conditioning_length = file_length // self.conditioning_period + 3
 
         conditioning_values = np.zeros([self.conditioning_channels, conditioning_length])
         x = np.linspace(0, np.pi * conditioning_period, conditioning_length)
