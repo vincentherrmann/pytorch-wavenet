@@ -142,6 +142,22 @@ class WavenetDataset(torch.utils.data.Dataset):
         position_in_file = sample_index - self.start_samples[file_index]
         return file_index, position_in_file
 
+    def get_segment(self, position=0, file_index=0, duration=None):
+        """
+        Get a segment from a file
+        :param position: position in the file in seconds
+        :param file_index: index of the file
+        :param duration: the duration of the segment in seconds (plus the receptive field). If 'None', then only one receptive field is returned.
+        :return: the specified segment (without labels)
+        """
+        position_in_file = (position // self.sampling_rate) - self.start_samples[file_index]
+        if duration is None:
+            item_length = self._item_length
+        else:
+            item_length = int(duration * self.sampling_rate)
+        segment = self.load_sample(file_index, position_in_file, item_length)
+        return segment
+
     def __getitem__(self, idx):
         file_index, position_in_file = self.get_position(idx)
         sample = self.load_sample(file_index, position_in_file, self._item_length)
@@ -248,6 +264,22 @@ class WavenetDatasetWithRandomConditioning(WavenetDataset):
         if conditioning.shape[1] != c_item_length + 1:
             print("conditioning has the wrong length!")
         return sample, conditioning, conditioning_offset
+
+    def get_segment(self, position=0, file_index=0, duration=None):
+        """
+        Get a segment from a file
+        :param position: position in the file in seconds
+        :param file_index: index of the file
+        :param duration: the duration of the segment in seconds (plus the receptive field). If 'None', then only one receptive field is returned.
+        :return: the specified segment (without labels)
+        """
+        position_in_file = (position // self.sampling_rate) - self.start_samples[file_index]
+        if duration is None:
+            item_length = self._item_length
+        else:
+            item_length = int(duration * self.sampling_rate)
+        sample, conditioning, offset = self.load_sample(file_index, position_in_file, item_length)
+        return sample, conditioning, offset
 
     def __getitem__(self, idx):
         file_index, position_in_file = self.get_position(idx)

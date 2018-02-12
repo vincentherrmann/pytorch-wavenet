@@ -417,10 +417,11 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
     def forward(self, input):
         input, conditioning, offset = input
-        for l in range(len(self.conditioning_layers)):
-            if l != len(self.conditioning_layers) - 1:
-                conditioning = F.relu(conditioning)
-            conditioning = self.conditioning_layers[l](conditioning)
+        conditioning = self.conditional_network(conditioning)
+        # for l in range(len(self.conditioning_layers)):
+        #     if l != len(self.conditioning_layers) - 1:
+        #         conditioning = F.relu(conditioning)
+        #     conditioning = self.conditioning_layers[l](conditioning)
 
         activation_input = {'x': None, 'conditioning': conditioning, 'offset': offset}
         input = input[:, :, -(self.receptive_field + self.output_length - 1):]
@@ -515,6 +516,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
         for i in range(num_given_samples - 1):
             cond_index = (i + offset) // original_conditioning_period
             cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
+            cond = self.conditional_network(cond)
             activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
@@ -537,6 +539,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
         for i in range(num_samples):
             cond_index = (num_given_samples + i + offset) // original_conditioning_period
             cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
+            cond = self.conditional_network(cond)
             activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
@@ -587,6 +590,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
             if l != len(self.conditioning_layers) - 1:
                 conditioning = F.relu(conditioning)
             conditioning = self.conditioning_layers[l](conditioning)
+        return conditioning
 
 
 

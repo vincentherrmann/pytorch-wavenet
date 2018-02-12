@@ -64,13 +64,13 @@ model = WaveNetModelWithConditioning(layers=10,
 #                                             conditioning_breadth=5,
 #                                             conditioning_channels=model.conditioning_channels[0])
 
-data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/c_jam/conditioning_dataset.npz',
+data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/alla_turca/conditioning_dataset.npz',
                                           item_length=model.receptive_field + model.output_length - 1,
                                           target_length=model.output_length,
-                                          file_location='_train_samples/c_jam',
+                                          file_location='_train_samples/alla_turca',
                                           test_stride=500,
                                           conditioning_period=model.conditioning_period,
-                                          conditioning_breadth=1000,
+                                          conditioning_breadth=500,
                                           conditioning_channels=model.conditioning_channels[0])
 
 
@@ -106,6 +106,26 @@ def generate_and_log_samples(step):
 
 logger = Logger(log_interval=1,
                 validation_interval=5)
+
+# dataloader = torch.utils.data.DataLoader(data,
+#                                          batch_size=32,
+#                                          shuffle=True,
+#                                          num_workers=0,
+#                                          pin_memory=False)
+#
+# batch_num = 0
+# for batch in iter(dataloader):
+#     batch_num += 1
+#     if batch_num % 100 == 0:
+#         print("loaded batch number: ", batch_num)
+#
+# data.train = True
+# batch_num = 0
+# for batch in iter(dataloader):
+#     batch_num += 1
+#     if batch_num % 100 == 0:
+#         print("loaded batch number: ", batch_num)
+
 # logger = TensorboardLogger(log_interval=200,
 #                            validation_interval=200,
 #                            generate_interval=500,
@@ -122,6 +142,7 @@ trainer = WavenetTrainer(model=model,
                          snapshot_name='saber_model',
                          snapshot_interval=500,
                          process_batch=data.process_batch)
+
 
 #model.generate_fast(1000)
 
