@@ -20,7 +20,7 @@ model = WaveNetModelWithConditioning(layers=10,
                                      residual_channels=16,
                                      skip_channels=128,
                                      end_channels=[128, 256],
-                                     classes=256,
+                                     classes=24,
                                      output_length=8,
                                      dtype=dtype,
                                      conditioning_channels=[16, 16],
@@ -141,7 +141,8 @@ trainer = WavenetTrainer(model=model,
                          snapshot_path='snapshots',
                          snapshot_name='saber_model',
                          snapshot_interval=500,
-                         process_batch=data.process_batch)
+                         process_batch=data.process_batch,
+                         loss_fun=mixture_loss)
 
 
 #model.generate_fast(1000)

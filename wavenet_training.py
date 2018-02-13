@@ -34,7 +34,8 @@ class WavenetTrainer:
                  ltype=torch.LongTensor,
                  num_workers=8,
                  pin_memory=False,
-                 process_batch=None):
+                 process_batch=None,
+                 loss_fun=F.cross_entropy):
         self.model = model
         self.dataset = dataset
         self.dataloader = None
@@ -54,6 +55,7 @@ class WavenetTrainer:
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.process_batch = process_batch
+        self.loss_fun = loss_fun
 
     def train(self,
               batch_size=32,
@@ -81,7 +83,7 @@ class WavenetTrainer:
 
                 output = self.model(x)
                 target = target.view(-1)
-                loss = F.cross_entropy(output.squeeze(), target.squeeze())
+                loss = self.loss_fun(output.squeeze(), target.squeeze())
                 self.optimizer.zero_grad()
                 loss.backward()
                 loss = loss.data[0]
@@ -113,6 +115,7 @@ class WavenetTrainer:
 
     def validate(self):
         self.model.eval()
+        dataset_state = self.dataset.train  # remember the current state
         self.dataset.train = False
         total_loss = 0
         accurate_classifications = 0
@@ -126,7 +129,7 @@ class WavenetTrainer:
 
             output = self.model(x)
             target = target.view(-1)
-            loss = F.cross_entropy(output.squeeze(), target.squeeze())
+            loss = self.loss_fun(output.squeeze(), target.squeeze())
             total_loss += loss.data[0]
 
             predictions = torch.max(output, 1)[1].view(-1)
@@ -136,9 +139,16 @@ class WavenetTrainer:
         # print("average loss: ", total_loss / len(self.dataloader))
         avg_loss = total_loss / len(self.dataloader)
         avg_accuracy = accurate_classifications / (len(self.dataset)*self.dataset.target_length)
-        self.dataset.train = True
+        self.dataset.train = dataset_state
         self.model.train()
         return avg_loss, avg_accuracy
+
+
+def mixture_loss(input, target):
+    target = target.float()
+    target = (target / 256.) * 2. - 1.
+    loss = discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True)
+    return loss
 
 
 def generate_audio(model,

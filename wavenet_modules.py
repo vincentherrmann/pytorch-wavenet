@@ -125,3 +125,120 @@ def constant_pad_1d(input,
                     value=0,
                     pad_start=False):
     return ConstantPad1d(target_size, dimension, value, pad_start)(input)
+
+
+def log_sum_exp(x):
+    """ numerically stable log_sum_exp implementation that prevents overflow """
+    # TF ordering
+    axis  = len(x.size()) - 1
+    m, _  = torch.max(x, dim=axis)
+    m2, _ = torch.max(x, dim=axis, keepdim=True)
+    return m + torch.log(torch.sum(torch.exp(x - m2), dim=axis))
+
+
+def log_prob_from_logits(x):
+    """ numerically stable log_softmax implementation that prevents overflow """
+    # TF ordering
+    axis = len(x.size()) - 1
+    m, _ = torch.max(x, dim=axis, keepdim=True)
+    return x - m - torch.log(torch.sum(torch.exp(x - m), dim=axis, keepdim=True))
+
+
+def to_one_hot(tensor, n, fill_with=1.):
+    # we perform one hot encore with respect to the last axis
+    one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
+    if tensor.is_cuda:
+        one_hot = one_hot.cuda()
+    one_hot.scatter_(len(tensor.size()), tensor.unsqueeze(-1), fill_with)
+    return Variable(one_hot)
+
+
+def discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True):
+    """
+
+    :param input: (minibatch, P)
+    :param target: (minibatch), should be scaled to [-1, 1]
+    :param bin_count:
+    :return:
+    """
+
+    target.unsqueeze_(1)
+    nr_mix = input.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
+
+    # parameters of the mixtures
+    weights = input[:, :nr_mix]
+    means = input[:, nr_mix:2*nr_mix]
+    log_scales = torch.clamp(input[:, 2*nr_mix:], min=-7.)  # clamp for numerical stability
+
+    # calculate the probabilities for each distribution (see equation (2) in the PixelCNN++ paper)
+    distances_to_target = target - means
+    inv_scales = torch.exp(-log_scales)
+    pos_in = inv_scales * (distances_to_target + 1. / float(bin_count))
+    neg_in = inv_scales * (distances_to_target - 1. / float(bin_count))
+    pos_cdf = F.sigmoid(pos_in)
+    neg_cdf = F.sigmoid(neg_in)
+    cdf_delta = pos_cdf - neg_cdf # the regular probability
+
+    # consider edge cases
+    mid_in = inv_scales * distances_to_target
+    log_pdf_mid = mid_in - log_scales - 2. * F.softplus(mid_in)  # edge case 1; very low probabilities
+    log_one_minus_cdf_neg = -F.softplus(neg_in)  # edge case 2; target = 1
+    log_cdf_pos = pos_in - F.softplus(pos_in)  # edge case 3; target = -1
+
+
+    # compose conditions
+    condition_1 = (cdf_delta > 1e-5).float()  # probability large enough
+    out_1 = condition_1 * torch.log(torch.clamp(cdf_delta, min=1e-12)) \
+            + (1. - condition_1) * (log_pdf_mid - np.log((bin_count - 1) / 2.))
+    condition_2 = (target > 0.999).float()
+    out_2 = condition_2 * log_one_minus_cdf_neg \
+            + (1. - condition_2) * out_1
+    condition_3 = (target < -0.999).float()
+    out_3 = condition_3 * log_cdf_pos \
+            + (1. - condition_3) * out_2 # (N, C, M)
+
+    # weigh the log probabilities and add them together
+    log_probabilities = out_3 + log_prob_from_logits(weights)
+    combined_log_probabilities = log_sum_exp(log_probabilities)
+    if reduce:
+        return -torch.sum(combined_log_probabilities)
+    else:
+        return -combined_log_probabilities
+
+
+def sample_from_discretized_mix_logistic(parameters):
+    """
+
+    :param parameters: (batch, P)
+    :return: (batch)
+    """
+
+    nr_mix = parameters.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
+
+    # parameters of the mixtures
+    weights = parameters[:, :nr_mix]
+    means = parameters[:, nr_mix:2 * nr_mix]
+    log_scales = torch.clamp(parameters[:, 2 * nr_mix:], min=-7.)  # clamp for numerical stability
+
+    # sample mixture indicator from softmax
+    temp = torch.FloatTensor(weights.size())
+    if parameters.is_cuda:
+        temp = temp.cuda()
+    temp.uniform_(1e-5, 1. - 1e-5)
+    temp = weights.data - torch.log(-torch.log(temp))  # weigh the individual distributions
+    _, argmax = temp.max(dim=1)  # select the distribution from which we will sample
+    selection = Variable(argmax, volatile=True).unsqueeze(1)
+
+    means = torch.gather(means, dim=1, index=selection)
+    log_scales = torch.gather(log_scales, dim=1, index=selection)
+
+    u = torch.FloatTensor(means.size())
+    if parameters.is_cuda:
+        u = u.cuda()
+    u.uniform_(1e-5, 1. - 1e-5)
+    u = Variable(u)
+
+    # sample from the logistic distribution using the corresponding quantile function
+    x = means + torch.exp(log_scales) * (torch.log(u) - torch.log(1. - u))
+    x = torch.clamp(torch.clamp(x, min=-1.), max=1.)
+    return x

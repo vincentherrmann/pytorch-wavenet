@@ -17,11 +17,11 @@
     <splitter split-orientation="horizontal" split-proportion="0.4347064">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="wavenet_model.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/wavenet_model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="799">
-                  <caret line="96" column="0" lean-forward="true" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+                <state relative-caret-position="429">
+                  <caret line="253" column="47" lean-forward="true" selection-start-line="253" selection-start-column="47" selection-end-line="253" selection-end-column="47" />
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -29,12 +29,38 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="pydevd.py" pinned="false" current-in-tab="false">
-            <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+          <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="625">
-                  <caret line="1595" column="0" lean-forward="false" selection-start-line="1595" selection-start-column="0" selection-end-line="1595" selection-end-column="0" />
-                  <folding />
+                <state relative-caret-position="330">
+                  <caret line="164" column="21" lean-forward="false" selection-start-line="164" selection-start-column="21" selection-end-line="164" selection-end-column="21" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/wavenet_training.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="565">
+                  <caret line="152" column="0" lean-forward="true" selection-start-line="152" selection-start-column="0" selection-end-line="152" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#0#12#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="test_mix_logistic.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/test_mix_logistic.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="315">
+                  <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#0#29#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -49,64 +75,14 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="module.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/nn/modules/module.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="775">
-                  <caret line="365" column="0" lean-forward="false" selection-start-line="365" selection-start-column="0" selection-end-line="365" selection-end-column="0" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="functional.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/nn/functional.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="600">
-                  <caret line="53" column="0" lean-forward="false" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
           <file leaf-file-name="test_script.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/test_script.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="71">
-                  <caret line="53" column="0" lean-forward="true" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+                <state relative-caret-position="475">
+                  <caret line="138" column="40" lean-forward="true" selection-start-line="138" selection-start-column="40" selection-end-line="138" selection-end-column="40" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="dataloader.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/utils/data/dataloader.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="2547">
-                  <caret line="187" column="0" lean-forward="false" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="functional.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/functional.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="267">
-                  <caret line="63" column="0" lean-forward="false" selection-start-line="63" selection-start-column="0" selection-end-line="63" selection-end-column="0" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="zipfile.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/zipfile.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="267">
-                  <caret line="860" column="0" lean-forward="false" selection-start-line="860" selection-start-column="0" selection-end-line="860" selection-end-column="0" />
-                  <folding />
                 </state>
               </provider>
             </entry>
@@ -165,16 +141,6 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="test_audio_data.py" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/tests/test_audio_data.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="810">
-                  <caret line="59" column="0" lean-forward="false" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
         </leaf>
       </split-second>
     </splitter>
@@ -188,10 +154,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>item_leng</find>
-      <find>libro</find>
-      <find>step</find>
-      <find>wav</find>
       <find>_gene</find>
       <find>classes</find>
       <find>7987</find>
@@ -214,10 +176,14 @@
       <find>filter</find>
       <find>one</find>
       <find>conditioning_bread</find>
-      <find>context_que</find>
       <find>generate_fa</find>
       <find>conditioning_layers</find>
       <find>repeat</find>
+      <find>conditioning_le</find>
+      <find>end_layer</find>
+      <find>context_que</find>
+      <find>tempe</find>
+      <find>logit</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -239,16 +205,17 @@
         <option value="$PROJECT_DIR$/tests/test_modules.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/train_script.py" />
-        <option value="$PROJECT_DIR$/wavenet_modules.py" />
         <option value="$PROJECT_DIR$/tests/test_waveNetModel.py" />
         <option value="$PROJECT_DIR$/tests/test_audio_data.py" />
         <option value="$PROJECT_DIR$/demo.ipynb" />
-        <option value="$PROJECT_DIR$/wavenet_training.py" />
         <option value="$PROJECT_DIR$/model_logging.py" />
-        <option value="$PROJECT_DIR$/test_script.py" />
         <option value="$PROJECT_DIR$/wavenet_model.py" />
         <option value="$PROJECT_DIR$/generate_script.py" />
         <option value="$PROJECT_DIR$/audio_data.py" />
+        <option value="$PROJECT_DIR$/test_mix_logistic.py" />
+        <option value="$PROJECT_DIR$/test_script.py" />
+        <option value="$PROJECT_DIR$/wavenet_training.py" />
+        <option value="$PROJECT_DIR$/wavenet_modules.py" />
       </list>
     </option>
   </component>
@@ -330,24 +297,7 @@
       <recent name="$PROJECT_DIR$/notebooks" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.generate_script">
-    <configuration default="false" name="train_script" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="WaveNet" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/train_script.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="Python.test_script">
     <configuration default="false" name="test_script" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -382,40 +332,61 @@
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
+    <configuration default="false" name="Nosetest TestMixLogistic.test_sample_from_discretized_mix_logistic" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="WaveNet" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tests/test_audio_data.py" />
-      <option name="CLASS_NAME" value="TestWavenetDatasetWithRandomConditioning" />
-      <option name="METHOD_NAME" value="test_dataset_creation" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_mix_logistic.py" />
+      <option name="CLASS_NAME" value="TestMixLogistic" />
+      <option name="METHOD_NAME" value="test_sample_from_discretized_mix_logistic" />
       <option name="FOLDER_NAME" value="" />
       <option name="TEST_TYPE" value="TEST_METHOD" />
       <option name="PATTERN" value="" />
       <option name="USE_PATTERN" value="false" />
-      <option name="PARAMS" value="--nocapture" />
-      <option name="USE_PARAM" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="Nosetest TestWavenetDataset.test_dataset_creation" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
+    <configuration default="false" name="Nosetests in " type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="WaveNet" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tests/test_audio_data.py" />
-      <option name="CLASS_NAME" value="TestWavenetDataset" />
-      <option name="METHOD_NAME" value="test_dataset_creation" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_mix_logistic.py" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PARAMS" value="--pdb" />
+      <option name="USE_PARAM" value="true" />
+      <method />
+    </configuration>
+    <configuration default="false" name="Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="WaveNet" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_mix_logistic.py" />
+      <option name="CLASS_NAME" value="TestMixLogistic" />
+      <option name="METHOD_NAME" value="test_discretized_mix_logistic_loss" />
       <option name="FOLDER_NAME" value="" />
       <option name="TEST_TYPE" value="TEST_METHOD" />
       <option name="PATTERN" value="" />
@@ -559,19 +530,19 @@
       <method />
     </configuration>
     <list size="5">
-      <item index="0" class="java.lang.String" itemvalue="Python.train_script" />
-      <item index="1" class="java.lang.String" itemvalue="Python.test_script" />
-      <item index="2" class="java.lang.String" itemvalue="Python.generate_script" />
-      <item index="3" class="java.lang.String" itemvalue="Python tests.Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" />
-      <item index="4" class="java.lang.String" itemvalue="Python tests.Nosetest TestWavenetDataset.test_dataset_creation" />
+      <item index="0" class="java.lang.String" itemvalue="Python.test_script" />
+      <item index="1" class="java.lang.String" itemvalue="Python.generate_script" />
+      <item index="2" class="java.lang.String" itemvalue="Python tests.Nosetest TestMixLogistic.test_sample_from_discretized_mix_logistic" />
+      <item index="3" class="java.lang.String" itemvalue="Python tests.Nosetests in " />
+      <item index="4" class="java.lang.String" itemvalue="Python tests.Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.generate_script" />
-        <item index="1" class="java.lang.String" itemvalue="Python.test_script" />
-        <item index="2" class="java.lang.String" itemvalue="Python tests.Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" />
-        <item index="3" class="java.lang.String" itemvalue="Python tests.Nosetest TestWavenetDataset.test_dataset_creation" />
-        <item index="4" class="java.lang.String" itemvalue="Python.train_script" />
+        <item index="0" class="java.lang.String" itemvalue="Python.test_script" />
+        <item index="1" class="java.lang.String" itemvalue="Python tests.Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" />
+        <item index="2" class="java.lang.String" itemvalue="Python tests.Nosetest TestMixLogistic.test_sample_from_discretized_mix_logistic" />
+        <item index="3" class="java.lang.String" itemvalue="Python tests.Nosetests in " />
+        <item index="4" class="java.lang.String" itemvalue="Python.generate_script" />
       </list>
     </recent_temporary>
   </component>
@@ -926,35 +897,35 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 17m 26s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_discretized_mix_logistic_loss - 2018.02.13 at 10h 35m 03s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 18m 37s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_discretized_mix_logistic_loss - 2018.02.13 at 10h 35m 26s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 18m 52s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_discretized_mix_logistic_loss - 2018.02.13 at 10h 35m 56s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 19m 32s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_discretized_mix_logistic_loss - 2018.02.13 at 10h 37m 45s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_discretized_mix_logistic_loss" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 19m 59s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_sample_from_discretized_mix_logistic - 2018.02.13 at 10h 11m 49s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_sample_from_discretized_mix_logistic" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 23m 08s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetest_TestMixLogistic_test_sample_from_discretized_mix_logistic - 2018.02.13 at 10h 13m 34s.xml">
+      <configuration name="Nosetest TestMixLogistic.test_sample_from_discretized_mix_logistic" configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 26m 02s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetests_in_ - 2018.02.13 at 10h 03m 34s.xml">
+      <configuration name="Nosetests in " configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 27m 22s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetests_in_ - 2018.02.13 at 10h 08m 29s.xml">
+      <configuration name="Nosetests in " configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 31m 39s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetests_in_ - 2018.02.13 at 10h 09m 45s.xml">
+      <configuration name="Nosetests in " configurationId="tests" />
     </history-entry>
-    <history-entry file="Nosetest_TestWavenetDatasetWithRandomConditioning_test_dataset_creation - 2018.01.25 at 09h 32m 24s.xml">
-      <configuration name="Nosetest TestWavenetDatasetWithRandomConditioning.test_dataset_creation" configurationId="tests" />
+    <history-entry file="Nosetests_in_test_mix_logistic - 2018.02.13 at 09h 59m 18s.xml">
+      <configuration name="Nosetests in test_mix_logistic" configurationId="tests" />
     </history-entry>
   </component>
   <component name="ToolWindowManager">
@@ -966,11 +937,11 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.27901787" sideWeight="0.30366287" order="0" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.3296131" sideWeight="0.49704608" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328125" sideWeight="0.49704608" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1904762" sideWeight="0.47026387" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1904762" sideWeight="0.47026387" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.114164904" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.49704608" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.38020834" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.38020834" sideWeight="0.69633716" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -1065,25 +1036,19 @@
           <option name="timeStamp" value="528" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/wavenet_training.py</url>
-          <line>138</line>
-          <option name="timeStamp" value="558" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/test_script.py</url>
-          <line>135</line>
-          <option name="timeStamp" value="564" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/audio_data.py</url>
           <line>264</line>
           <option name="timeStamp" value="566" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_audio_data.py</url>
+          <option name="timeStamp" value="568" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="568" />
+      <option name="time" value="578" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="tests">
@@ -1101,7 +1066,6 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/_functions/basic_ops.py" />
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/multiprocessing/reductions.py" />
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/autograd/_functions/pointwise.py" />
     <entry file="file://$PROJECT_DIR$/tests/test_tensor_queue.py">
@@ -1313,38 +1277,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_audio_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="810">
-          <caret line="59" column="0" lean-forward="false" selection-start-line="59" selection-start-column="0" selection-end-line="59" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test_waveNetModel.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
           <caret line="15" column="45" lean-forward="false" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
           <folding>
             <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-253">
-          <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="313">
-          <caret line="73" column="12" lean-forward="true" selection-start-line="73" selection-start-column="12" selection-end-line="73" selection-end-column="47" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1381,19 +1319,45 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="625">
-          <caret line="1595" column="0" lean-forward="false" selection-start-line="1595" selection-start-column="0" selection-end-line="1595" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/nn/modules/module.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="775">
           <caret line="365" column="0" lean-forward="false" selection-start-line="365" selection-start-column="0" selection-end-line="365" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/generate_script.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="660">
+          <caret line="48" column="39" lean-forward="false" selection-start-line="48" selection-start-column="39" selection-end-line="48" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_audio_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="880">
+          <caret line="1595" column="0" lean-forward="false" selection-start-line="1595" selection-start-column="0" selection-end-line="1595" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test_mix_logistic.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -1407,30 +1371,42 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/generate_script.py">
+    <entry file="file://$PROJECT_DIR$/wavenet_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="660">
-          <caret line="48" column="39" lean-forward="false" selection-start-line="48" selection-start-column="39" selection-end-line="48" selection-end-column="39" />
-          <folding />
+        <state relative-caret-position="429">
+          <caret line="253" column="47" lean-forward="true" selection-start-line="253" selection-start-column="47" selection-end-line="253" selection-end-column="47" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test_script.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="71">
-          <caret line="53" column="0" lean-forward="true" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+        <state relative-caret-position="475">
+          <caret line="138" column="40" lean-forward="true" selection-start-line="138" selection-start-column="40" selection-end-line="138" selection-end-column="40" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_model.py">
+    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="799">
-          <caret line="96" column="0" lean-forward="true" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+        <state relative-caret-position="330">
+          <caret line="164" column="21" lean-forward="false" selection-start-line="164" selection-start-column="21" selection-end-line="164" selection-end-column="21" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wavenet_training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="565">
+          <caret line="152" column="0" lean-forward="true" selection-start-line="152" selection-start-column="0" selection-end-line="152" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
