@@ -29,11 +29,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="539">
-                  <caret line="229" column="28" lean-forward="true" selection-start-line="229" selection-start-column="28" selection-end-line="229" selection-end-column="28" />
+                <state relative-caret-position="299">
+                  <caret line="219" column="21" lean-forward="false" selection-start-line="219" selection-start-column="21" selection-end-line="219" selection-end-column="21" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -41,7 +41,7 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/wavenet_training.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="581">
@@ -154,7 +154,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>_gene</find>
       <find>classes</find>
       <find>7987</find>
       <find>receptiv</find>
@@ -184,6 +183,7 @@
       <find>context_que</find>
       <find>tempe</find>
       <find>logit</find>
+      <find>is_cuda</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -1397,22 +1397,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="539">
-          <caret line="229" column="28" lean-forward="true" selection-start-line="229" selection-start-column="28" selection-end-line="229" selection-end-column="28" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/wavenet_training.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="581">
           <caret line="151" column="0" lean-forward="true" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="299">
+          <caret line="219" column="21" lean-forward="false" selection-start-line="219" selection-start-column="21" selection-end-line="219" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>

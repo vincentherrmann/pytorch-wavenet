@@ -216,6 +216,8 @@ def get_modes_from_discretized_mix_logistic(parameters, bin_count=256):
     nr_mix = parameters.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
     means = parameters[:, nr_mix:2 * nr_mix]
     losses = Variable(torch.FloatTensor(parameters.size(0), nr_mix), volatile=True)
+    if parameters.is_cuda:
+        losses = losses.cuda()
 
     # calculate the loss at each mean position
     for m in range(nr_mix):
