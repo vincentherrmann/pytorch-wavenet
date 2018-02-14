@@ -22,3 +22,10 @@ class TestMixLogistic(TestCase):
         for t in targets:
             loss = discretized_mix_logistic_loss(Variable(parameters), target=Variable(t))
             print(loss)
+
+    def test_get_modes_from_discretized_mix_logistic(self):
+        num_samples = 5
+        num_mix = 2
+        parameters = torch.zeros(num_samples, 3*num_mix).uniform_(-1., 1.)
+        modes = get_modes_from_discretized_mix_logistic(Variable(parameters))
+        pass

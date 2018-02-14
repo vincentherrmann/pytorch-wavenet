@@ -162,7 +162,7 @@ def discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True):
     :return:
     """
 
-    target.unsqueeze_(1)
+    target = target.unsqueeze(1)
     nr_mix = input.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
 
     # parameters of the mixtures
@@ -204,6 +204,31 @@ def discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True):
         return -torch.sum(combined_log_probabilities)
     else:
         return -combined_log_probabilities
+
+
+def get_modes_from_discretized_mix_logistic(parameters, bin_count=256):
+    """
+    get the single bin with the highest probability (or lowest loss) from the distribution
+    :param parameters:
+    :param bin_count:
+    :return:
+    """
+    nr_mix = parameters.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
+    means = parameters[:, nr_mix:2 * nr_mix]
+    losses = Variable(torch.FloatTensor(parameters.size(0), nr_mix), volatile=True)
+
+    # calculate the loss at each mean position
+    for m in range(nr_mix):
+        losses[:, m] = discretized_mix_logistic_loss(parameters,
+                                                     target=means[:, m],
+                                                     bin_count=bin_count,
+                                                     reduce=False)
+
+    # select the one with the lowest loss
+    _, argmin = torch.min(losses, dim=1)
+    selection = argmin.unsqueeze(1)
+    modes = torch.gather(means, dim=1, index=selection)
+    return modes.squeeze()
 
 
 def sample_from_discretized_mix_logistic(parameters):

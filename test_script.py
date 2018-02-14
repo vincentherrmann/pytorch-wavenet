@@ -14,7 +14,7 @@ if use_cuda:
     dtype = torch.cuda.FloatTensor
     ltype = torch.cuda.LongTensor
 
-model = WaveNetModelWithConditioning(layers=10,
+model = WaveNetModelWithConditioning(layers=8,
                                      blocks=3,
                                      dilation_channels=16,
                                      residual_channels=16,
@@ -105,7 +105,7 @@ def generate_and_log_samples(step):
     print("audio clips generated")
 
 logger = Logger(log_interval=1,
-                validation_interval=5)
+                validation_interval=1)
 
 # dataloader = torch.utils.data.DataLoader(data,
 #                                          batch_size=32,
