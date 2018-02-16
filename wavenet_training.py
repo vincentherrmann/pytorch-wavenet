@@ -144,15 +144,11 @@ class WavenetTrainer:
 
 
 def mixture_loss(input, target):
-    target = target.float()
-    target = (target / 256.) * 2. - 1.
     loss = discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True)
     return loss
 
 
 def mixture_accuracy(input, target, bin_count=256):
-    target = target.float()
-    target = (target / 256.) * 2. - 1.
     modes = get_modes_from_discretized_mix_logistic(input, bin_count=bin_count)
     half_bin_size = 1./float(bin_count)
     accurate_predictions = torch.abs(target - modes) < half_bin_size

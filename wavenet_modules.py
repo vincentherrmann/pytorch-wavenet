@@ -233,10 +233,11 @@ def get_modes_from_discretized_mix_logistic(parameters, bin_count=256):
     return modes.squeeze()
 
 
-def sample_from_discretized_mix_logistic(parameters):
+def sample_from_discretized_mix_logistic(parameters, temperature=1.0):
     """
 
     :param parameters: (batch, P)
+    :param temperature: (float)
     :return: (batch)
     """
 
@@ -245,7 +246,8 @@ def sample_from_discretized_mix_logistic(parameters):
     # parameters of the mixtures
     weights = parameters[:, :nr_mix]
     means = parameters[:, nr_mix:2 * nr_mix]
-    log_scales = torch.clamp(parameters[:, 2 * nr_mix:], min=-7.)  # clamp for numerical stability
+    temp_log = math.log(temperature)
+    log_scales = torch.clamp(parameters[:, 2 * nr_mix:] + temp_log, min=-7.)  # clamp for numerical stability
 
     # sample mixture indicator from softmax
     temp = torch.FloatTensor(weights.size())
@@ -269,3 +271,22 @@ def sample_from_discretized_mix_logistic(parameters):
     x = means + torch.exp(log_scales) * (torch.log(u) - torch.log(1. - u))
     x = torch.clamp(torch.clamp(x, min=-1.), max=1.)
     return x
+
+
+def sample_from_softmax(x, temperature=1., bin_count=256):
+    x /= temperature
+    prob = F.softmax(x, dim=0)
+    prob = prob.cpu()
+    np_prob = prob.data.numpy()
+    x = np.random.choice(bin_count, p=np_prob)
+    x = np.array([x])
+    x = (x / bin_count) * 2. - 1
+    return x
+
+
+def sample_from_mixture(x, temperature=1., bin_count=256):
+    x = sample_from_discretized_mix_logistic(x.unsqueeze(0), temperature=temperature)
+    x = x.cpu().data
+    #x = int(((x+1.)*0.5) * bin_count)
+    #x = (x / bin_count) * 2. - 1.
+    return np.array([x])

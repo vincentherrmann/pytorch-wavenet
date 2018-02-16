@@ -1,6 +1,6 @@
 import time
 from wavenet_model import *
-from audio_data import WavenetDataset
+from audio_data import *
 from wavenet_training import *
 from model_logging import *
 from scipy.io import wavfile
@@ -14,17 +14,22 @@ if use_cuda:
     dtype = torch.cuda.FloatTensor
     ltype = torch.cuda.LongTensor
 
-model = WaveNetModelWithConditioning(layers=8,
-                                     blocks=3,
-                                     dilation_channels=16,
-                                     residual_channels=16,
-                                     skip_channels=128,
-                                     end_channels=[128, 256],
-                                     classes=24,
-                                     output_length=8,
-                                     dtype=dtype,
-                                     conditioning_channels=[16, 16],
-                                     conditioning_period=128)
+
+
+
+model = WaveNetModel(layers=8,
+                     blocks=3,
+                     dilation_channels=16,
+                     residual_channels=16,
+                     skip_channels=128,
+                     end_channels=[128, 64],
+                     classes=24,
+                     output_length=8,
+                     dtype=dtype)
+
+data = WavenetMixtureDataset(location='_train_samples/alla_turca',
+                             item_length=model.receptive_field + model.output_length - 1,
+                             target_length=model.output_length)
 
 # context_model = WaveNetModel(layers=6,
 #                              blocks=2,
@@ -64,14 +69,14 @@ model = WaveNetModelWithConditioning(layers=8,
 #                                             conditioning_breadth=5,
 #                                             conditioning_channels=model.conditioning_channels[0])
 
-data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/alla_turca/conditioning_dataset.npz',
-                                          item_length=model.receptive_field + model.output_length - 1,
-                                          target_length=model.output_length,
-                                          file_location='_train_samples/alla_turca',
-                                          test_stride=500,
-                                          conditioning_period=model.conditioning_period,
-                                          conditioning_breadth=500,
-                                          conditioning_channels=model.conditioning_channels[0])
+# data = WavenetDatasetWithSineConditioning(dataset_file='_train_samples/alla_turca/conditioning_dataset.npz',
+#                                           item_length=model.receptive_field + model.output_length - 1,
+#                                           target_length=model.output_length,
+#                                           file_location='_train_samples/alla_turca',
+#                                           test_stride=500,
+#                                           conditioning_period=model.conditioning_period,
+#                                           conditioning_breadth=500,
+#                                           conditioning_channels=model.conditioning_channels[0])
 
 
 # data = WavenetDataset(dataset_file='_train_samples/saber/dataset.npz',
@@ -105,7 +110,7 @@ def generate_and_log_samples(step):
     print("audio clips generated")
 
 logger = Logger(log_interval=1,
-                validation_interval=1)
+                validation_interval=10)
 
 # dataloader = torch.utils.data.DataLoader(data,
 #                                          batch_size=32,
@@ -142,7 +147,9 @@ trainer = WavenetTrainer(model=model,
                          snapshot_name='saber_model',
                          snapshot_interval=500,
                          process_batch=data.process_batch,
-                         loss_fun=mixture_loss)
+                         loss_fun=mixture_loss,
+                         dtype=dtype,
+                         ltype=dtype)
 
 
 #model.generate_fast(1000)

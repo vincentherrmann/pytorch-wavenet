@@ -40,7 +40,8 @@ class WaveNetModel(nn.Module):
                  kernel_size=2,
                  dilation_factor=2,
                  dtype=torch.FloatTensor,
-                 bias=False):
+                 bias=False,
+                 sampling_function=sample_from_softmax):
 
         super(WaveNetModel, self).__init__()
 
@@ -58,6 +59,7 @@ class WaveNetModel(nn.Module):
         self.dilation_factor = dilation_factor
         self.dtype = dtype
         self.use_bias = bias
+        self.sampling_function = sampling_function
 
         # build model
         receptive_field = 1
@@ -311,24 +313,19 @@ class WaveNetModel(nn.Module):
             # x -= regularizer
 
             if temperature > 0:
-                # sample from softmax distribution
-                x /= temperature
-                prob = F.softmax(x, dim=0)
-                prob = prob.cpu()
-                np_prob = prob.data.numpy()
-                x = np.random.choice(self.classes, p=np_prob)
-                x = np.array([x])
+                o = self.sampling_function(x, temperature, self.classes)
+                o = o.astype(np.float32)
             else:
                 # convert to sample value
                 x = torch.max(x, 0)[1][0]
                 x = x.cpu()
                 x = x.data.numpy()
 
-            o = (x / self.classes) * 2. - 1
             generated = np.append(generated, o)
 
             # set new input
-            input = Variable(self.dtype([[o]]), volatile=True)
+            input = Variable(torch.from_numpy(o), volatile=True).view(1, 1, 1)
+            # TODO: check cuda
             # ONE HOT
             # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
             # input.zero_()
@@ -591,8 +588,6 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 conditioning = F.relu(conditioning)
             conditioning = self.conditioning_layers[l](conditioning)
         return conditioning
-
-
 
 
 class WaveNetModelWithContext(WaveNetModel):
