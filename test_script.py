@@ -17,12 +17,12 @@ if use_cuda:
 
 
 
-model = WaveNetModel(layers=8,
+model = WaveNetModel(layers=10,
                      blocks=3,
-                     dilation_channels=16,
-                     residual_channels=16,
-                     skip_channels=128,
-                     end_channels=[128, 64],
+                     dilation_channels=1,
+                     residual_channels=1,
+                     skip_channels=1,
+                     end_channels=[1, 1],
                      classes=24,
                      output_length=8,
                      dtype=dtype)
@@ -149,7 +149,8 @@ trainer = WavenetTrainer(model=model,
                          process_batch=data.process_batch,
                          loss_fun=mixture_loss,
                          dtype=dtype,
-                         ltype=dtype)
+                         ltype=dtype,
+                         num_workers=8)
 
 
 #model.generate_fast(1000)

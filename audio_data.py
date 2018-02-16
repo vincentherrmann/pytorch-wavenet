@@ -10,6 +10,7 @@ import bisect
 import h5py
 import scipy
 import soundfile
+import time
 from torch.autograd import Variable
 from pathlib import Path
 
@@ -50,14 +51,20 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         self.calculate_length()
 
     def load_file(self, file, frames=-1, start=0):
+        print("load " + str(frames) + " frames from file " + file)
+        tic = time.time()
         if self.create_files:
+            print("load with soundfile")
             data, _ = soundfile.read(file, frames, start, dtype='float32')
         else:
+            print("load with librosa")
             data, _ = lr.load(file,
                               sr=self.sampling_rate,
                               mono=self.mono,
                               dtype=np.float32)
             data = data[start:start+frames]
+        toc = time.time()
+        print("loading took " + str(toc-tic) + " seconds")
         return data
 
     def create_dataset(self, files):

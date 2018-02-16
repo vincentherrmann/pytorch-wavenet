@@ -74,17 +74,19 @@ class WavenetTrainer:
             print("epoch", current_epoch)
             tic = time.time()
             for batch in iter(self.dataloader):
+                print("process batch...")
                 if self.process_batch is None:
                     x, target = batch
                     x = Variable(x.type(self.dtype))
                     target = Variable(target.type(self.ltype))
                 else:
                     x, target = self.process_batch(batch, self.dtype, self.ltype)
-
+                print("forward...")
                 output = self.model(x)
                 target = target.view(-1)
                 loss = self.loss_fun(output.squeeze(), target.squeeze())
                 self.optimizer.zero_grad()
+                print("backward...")
                 loss.backward()
                 loss = loss.data[0]
 
