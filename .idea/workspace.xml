@@ -20,8 +20,8 @@
           <file leaf-file-name="wavenet_modules.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="300">
-                  <caret line="173" column="0" lean-forward="false" selection-start-line="173" selection-start-column="0" selection-end-line="173" selection-end-column="0" />
+                <state relative-caret-position="2655">
+                  <caret line="177" column="22" lean-forward="false" selection-start-line="177" selection-start-column="22" selection-end-line="177" selection-end-column="22" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -29,7 +29,11 @@
               </provider>
             </entry>
           </file>
+<<<<<<< HEAD
           <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="true">
+=======
+          <file leaf-file-name="wavenet_training.py" pinned="false" current-in-tab="false">
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
             <entry file="file://$PROJECT_DIR$/wavenet_training.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="489">
@@ -53,11 +57,16 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="test_script.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="test_script.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/test_script.py">
               <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
                 <state relative-caret-position="735">
                   <caret line="99" column="50" lean-forward="true" selection-start-line="99" selection-start-column="50" selection-end-line="99" selection-end-column="50" />
+=======
+                <state relative-caret-position="555">
+                  <caret line="37" column="48" lean-forward="true" selection-start-line="37" selection-start-column="48" selection-end-line="37" selection-end-column="48" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -80,10 +89,16 @@
           <file leaf-file-name="audio_data.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/audio_data.py">
               <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
                 <state relative-caret-position="489">
                   <caret line="80" column="64" lean-forward="false" selection-start-line="80" selection-start-column="64" selection-end-line="80" selection-end-column="64" />
+=======
+                <state relative-caret-position="294">
+                  <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
+                    <marker date="1518801254568" expanded="true" signature="287:5777" ph="..." />
                   </folding>
                 </state>
               </provider>
@@ -99,6 +114,29 @@
               </provider>
             </entry>
           </file>
+<<<<<<< HEAD
+=======
+          <file leaf-file-name="wavfile.py" pinned="false" current-in-tab="false">
+            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/scipy/io/wavfile.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="294">
+                  <caret line="327" column="0" lean-forward="false" selection-start-line="327" selection-start-column="0" selection-end-line="327" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="audio.py" pinned="false" current-in-tab="false">
+            <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/librosa/core/audio.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="294">
+                  <caret line="106" column="0" lean-forward="false" selection-start-line="106" selection-start-column="0" selection-end-line="106" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
           <file leaf-file-name="posixpath.py" pinned="false" current-in-tab="false">
             <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/posixpath.py">
               <provider selected="true" editor-type-id="text-editor">
@@ -140,8 +178,13 @@
           <file leaf-file-name="audio_data.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/audio_data.py">
               <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
                 <state relative-caret-position="705">
                   <caret line="170" column="17" lean-forward="true" selection-start-line="170" selection-start-column="17" selection-end-line="170" selection-end-column="17" />
+=======
+                <state relative-caret-position="240">
+                  <caret line="118" column="30" lean-forward="false" selection-start-line="118" selection-start-column="30" selection-end-line="118" selection-end-column="30" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
                   <folding>
                     <element signature="e#0#9#0" expanded="true" />
                   </folding>
@@ -222,9 +265,15 @@
         <option value="$PROJECT_DIR$/wavenet_model.py" />
         <option value="$PROJECT_DIR$/wavenet_modules.py" />
         <option value="$PROJECT_DIR$/generate_script.py" />
+<<<<<<< HEAD
         <option value="$PROJECT_DIR$/test_script.py" />
         <option value="$PROJECT_DIR$/audio_data.py" />
         <option value="$PROJECT_DIR$/wavenet_training.py" />
+=======
+        <option value="$PROJECT_DIR$/wavenet_training.py" />
+        <option value="$PROJECT_DIR$/audio_data.py" />
+        <option value="$PROJECT_DIR$/test_script.py" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
       </list>
     </option>
   </component>
@@ -1036,7 +1085,11 @@
       <breakpoints>
         <line-breakpoint suspend="NONE" type="python-line">
           <url>file://$PROJECT_DIR$/audio_data.py</url>
+<<<<<<< HEAD
           <line>331</line>
+=======
+          <line>304</line>
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
           <log-expression expression="str(example.size()) + &quot; &quot; + str(one_hot.size())" language="Python" />
           <option name="timeStamp" value="514" />
         </line-breakpoint>
@@ -1047,7 +1100,11 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/audio_data.py</url>
+<<<<<<< HEAD
           <line>428</line>
+=======
+          <line>401</line>
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
           <option name="timeStamp" value="566" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -1063,7 +1120,7 @@
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="604" />
+      <option name="time" value="600" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="tests">
@@ -1141,6 +1198,13 @@
         <state relative-caret-position="180">
           <caret line="12" column="41" lean-forward="true" selection-start-line="12" selection-start-column="41" selection-end-line="12" selection-end-column="41" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_bundle/pydev_monkey_qt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="434">
+          <caret line="70" column="0" lean-forward="false" selection-start-line="70" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
         </state>
       </provider>
     </entry>
@@ -1395,6 +1459,7 @@
         </state>
       </provider>
     </entry>
+<<<<<<< HEAD
     <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_bundle/pydev_monkey_qt.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1050">
@@ -1407,12 +1472,30 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="300">
           <caret line="173" column="0" lean-forward="false" selection-start-line="173" selection-start-column="0" selection-end-line="173" selection-end-column="0" />
+=======
+    <entry file="file://$PROJECT_DIR$/wavenet_training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="85" column="0" lean-forward="false" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
           <folding>
-            <element signature="e#0#11#0" expanded="true" />
+            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/audio_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <marker date="1518801254568" expanded="true" signature="287:5777" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+<<<<<<< HEAD
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.5/site-packages/torch/nn/functional.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="600">
@@ -1425,16 +1508,27 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="489">
           <caret line="80" column="64" lean-forward="false" selection-start-line="80" selection-start-column="64" selection-end-line="80" selection-end-column="64" />
+=======
+    <entry file="file://$PROJECT_DIR$/wavenet_modules.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2655">
+          <caret line="177" column="22" lean-forward="false" selection-start-line="177" selection-start-column="22" selection-end-line="177" selection-end-column="22" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test_script.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="735">
           <caret line="99" column="50" lean-forward="true" selection-start-line="99" selection-start-column="50" selection-end-line="99" selection-end-column="50" />
+=======
+        <state relative-caret-position="555">
+          <caret line="37" column="48" lean-forward="true" selection-start-line="37" selection-start-column="48" selection-end-line="37" selection-end-column="48" />
+>>>>>>> parent of 8c28237... use soundfile for fast .wav reading
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>

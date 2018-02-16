@@ -35,9 +35,8 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         self._length = 0
         self.start_samples = [0]
         self.train = True
-        self.create_files = create_files
 
-        if self.create_files:
+        if create_files:
             if self.dataset_path.exists():
                 self.files = list_all_audio_files(self.dataset_path)
             else:
@@ -51,20 +50,14 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         self.calculate_length()
 
     def load_file(self, file, frames=-1, start=0):
-        print("load " + str(frames) + " frames from file " + file)
-        tic = time.time()
         if self.create_files:
-            print("load with soundfile")
             data, _ = soundfile.read(file, frames, start, dtype='float32')
         else:
-            print("load with librosa")
             data, _ = lr.load(file,
                               sr=self.sampling_rate,
                               mono=self.mono,
                               dtype=np.float32)
             data = data[start:start+frames]
-        toc = time.time()
-        print("loading took " + str(toc-tic) + " seconds")
         return data
 
     def create_dataset(self, files):
@@ -96,22 +89,15 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         self.calculate_length()
 
     def load_sample(self, file_index, position_in_file, item_length):
-        # file_data, _ = lr.load(str(self.files[file_index]),
-        #                sr=self.sampling_rate,
-        #                mono=self.mono,
-        #                dtype=np.float32)
-        file_length = self.start_samples[file_index+1] - self.start_samples[file_index]
-        remaining_length = position_in_file + item_length + 1 - file_length
+        file_data, _ = lr.load(str(self.files[file_index]),
+                       sr=self.sampling_rate,
+                       mono=self.mono,
+                       dtype=np.float32)
+        remaining_length = position_in_file + item_length + 1 - len(file_data)
         if remaining_length < 0:
-            sample = self.load_file(str(self.files[file_index]),
-                                    frames=item_length+1,
-                                    start=position_in_file)
-            # sample = file_data[position_in_file:position_in_file + item_length + 1]
+            sample = file_data[position_in_file:position_in_file + item_length + 1]
         else:
-            this_sample = self.load_file(str(self.files[file_index]),
-                                         frames=item_length-remaining_length,
-                                         start=position_in_file)
-            # this_sample = file_data[position_in_file:]
+            this_sample = file_data[position_in_file:]
             next_sample = self.load_sample(file_index + 1,
                                            position_in_file=0,
                                            item_length=remaining_length)
