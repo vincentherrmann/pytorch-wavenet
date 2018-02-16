@@ -35,6 +35,7 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         self._length = 0
         self.start_samples = [0]
         self.train = True
+        self.create_files = create_files
 
         if create_files:
             if self.dataset_path.exists():
