@@ -16,6 +16,25 @@ def print_last_loss(opt):
 def print_last_validation_result(opt):
     print("validation loss: ", opt.validation_results[-1])
 
+def mixture_loss(input, target, bin_count=256):
+    loss = discretized_mix_logistic_loss(input, target, bin_count=bin_count, reduce=True)
+    return loss
+
+
+def mixture_accuracy(input, target, bin_count=256):
+    modes = get_modes_from_discretized_mix_logistic(input, bin_count=bin_count)
+    half_bin_size = 1./float(bin_count)
+    accurate_predictions = torch.abs(target - modes) < half_bin_size
+    accurate_prediction_count = torch.sum(accurate_predictions.int())
+    return accurate_prediction_count.data[0]
+
+
+def softmax_accuracy(input, target):
+    predictions = torch.max(input, 1)[1].view(-1)
+    correct_pred = torch.eq(target, predictions)
+    correct_predictions = torch.sum(correct_pred).data[0]
+    return correct_predictions
+
 
 class WavenetTrainer:
     def __init__(self,
@@ -35,7 +54,8 @@ class WavenetTrainer:
                  num_workers=8,
                  pin_memory=False,
                  process_batch=None,
-                 loss_fun=F.cross_entropy):
+                 loss_fun=F.cross_entropy,
+                 accuracy_fun=softmax_accuracy):
         self.model = model
         self.dataset = dataset
         self.dataloader = None
@@ -56,6 +76,7 @@ class WavenetTrainer:
         self.pin_memory = pin_memory
         self.process_batch = process_batch
         self.loss_fun = loss_fun
+        self.accuracy_fun = accuracy_fun
 
     def train(self,
               batch_size=32,
@@ -131,7 +152,7 @@ class WavenetTrainer:
             loss = self.loss_fun(output.squeeze(), target.squeeze())
             total_loss += loss.data[0]
 
-            correct_predictions = mixture_accuracy(output, target)
+            correct_predictions = self.accuracy_fun(output, target)
             accurate_classifications += correct_predictions
         # print("validate model with " + str(len(self.dataloader.dataset)) + " samples")
         # print("average loss: ", total_loss / len(self.dataloader))
@@ -141,25 +162,6 @@ class WavenetTrainer:
         self.model.train()
         return avg_loss, avg_accuracy
 
-
-def mixture_loss(input, target):
-    loss = discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True)
-    return loss
-
-
-def mixture_accuracy(input, target, bin_count=256):
-    modes = get_modes_from_discretized_mix_logistic(input, bin_count=bin_count)
-    half_bin_size = 1./float(bin_count)
-    accurate_predictions = torch.abs(target - modes) < half_bin_size
-    accurate_prediction_count = torch.sum(accurate_predictions.int())
-    return accurate_prediction_count.data[0]
-
-
-def softmax_accuracy(input, target):
-    predictions = torch.max(input, 1)[1].view(-1)
-    correct_pred = torch.eq(target, predictions)
-    correct_predictions = torch.sum(correct_pred).data[0]
-    return correct_predictions
 
 def generate_audio(model,
                    length=8000,
