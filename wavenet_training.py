@@ -175,7 +175,11 @@ class DistillationTrainer:
                  process_batch=None,
                  dtype=torch.FloatTensor,
                  ltype=torch.FloatTensor,
-                 logger=Logger()):
+                 logger=Logger(),
+                 snapshot_path=None,
+                 snapshot_name='snapshot',
+                 snapshot_interval=1000,
+                 snapshot_callback=None):
         self.student_model = student_model
         self.teacher_model = teacher_model
         self.dataset = dataset
@@ -189,6 +193,10 @@ class DistillationTrainer:
         self.dtype = dtype
         self.ltype = ltype
         self.logger = logger
+        self.snapshot_path = snapshot_path
+        self.snapshot_name = snapshot_name
+        self.snapshot_interval = snapshot_interval
+        self.snapshot_callback = snapshot_callback
 
     def train(self,
               batch_size=32,
@@ -254,6 +262,14 @@ class DistillationTrainer:
                         mean = np.mean(step_times)
                         std = np.std(step_times)
                         print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
+
+                if step % self.snapshot_interval == 0:
+                    if self.snapshot_path is None:
+                        continue
+                    time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())
+                    torch.save(self.student_model, self.snapshot_path + '/' + self.snapshot_name + '_' + time_string)
+                    if self.snapshot_callback is not None:
+                        self.snapshot_callback()
 
                 self.logger.log(step, loss)
 
