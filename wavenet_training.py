@@ -203,6 +203,8 @@ class DistillationTrainer:
                                                       num_workers=self.num_workers,
                                                       pin_memory=self.pin_memory)
         step = continue_training_at_step
+        num_step_track = 10
+        step_times = np.zeros(num_step_track)
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
             tic = time.time()
@@ -242,6 +244,16 @@ class DistillationTrainer:
 
                 self.optimizer.step()
                 step += 1
+
+                # time step duration:
+                if step <= continue_training_at_step + num_step_track:
+                    toc = time.time()
+                    step_times[step - 1] = toc - tic
+                    tic = time.time()
+                    if step == continue_training_at_step + num_step_track:
+                        mean = np.mean(step_times)
+                        std = np.std(step_times)
+                        print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
 
                 self.logger.log(step, loss)
 
