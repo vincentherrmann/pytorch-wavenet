@@ -248,7 +248,7 @@ class DistillationTrainer:
                 # time step duration:
                 if step <= continue_training_at_step + num_step_track:
                     toc = time.time()
-                    step_times[step - 1] = toc - tic
+                    step_times[step - continue_training_at_step - 1] = toc - tic
                     tic = time.time()
                     if step == continue_training_at_step + num_step_track:
                         mean = np.mean(step_times)
@@ -256,6 +256,9 @@ class DistillationTrainer:
                         print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
 
                 self.logger.log(step, loss)
+
+    def validate(self):
+        return 0, 0
 
 
 def generate_audio(model,
