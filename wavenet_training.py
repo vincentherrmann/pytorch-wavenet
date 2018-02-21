@@ -163,6 +163,89 @@ class WavenetTrainer:
         return avg_loss, avg_accuracy
 
 
+class DistillationTrainer:
+    def __init__(self,
+                 student_model,
+                 teacher_model,
+                 dataset,
+                 optimizer=optim.Adam,
+                 lr=0.001,
+                 pin_memory=False,
+                 num_workers=0,
+                 process_batch=None,
+                 dtype=torch.FloatTensor,
+                 ltype=torch.FloatTensor,
+                 logger=Logger()):
+        self.student_model = student_model
+        self.teacher_model = teacher_model
+        self.dataset = dataset
+        self.dataloader = None
+        self.lr = lr
+        self.optimizer_type = optimizer
+        self.optimizer = self.optimizer_type(params=self.student_model.parameters(), lr=self.lr)
+        self.pin_memory = pin_memory
+        self.num_workers = num_workers
+        self.process_batch = process_batch
+        self.dtype = dtype
+        self.ltype = ltype
+        self.logger = logger
+
+    def train(self,
+              batch_size=32,
+              epochs=10,
+              continue_training_at_step=0,
+              sample_count=16):
+        self.student_model.train()
+        self.teacher_model.eval()
+        self.dataloader = torch.utils.data.DataLoader(self.dataset,
+                                                      batch_size=batch_size,
+                                                      shuffle=True,
+                                                      num_workers=self.num_workers,
+                                                      pin_memory=self.pin_memory)
+        step = continue_training_at_step
+        for current_epoch in range(epochs):
+            print("epoch", current_epoch)
+            tic = time.time()
+            for batch in iter(self.dataloader):
+                if self.process_batch is None:
+                    x, target = batch
+                    x = Variable(x.type(self.dtype))
+                    target = Variable(target.type(self.ltype))
+                else:
+                    x, target = self.process_batch(batch, self.dtype, self.ltype)
+
+                u = torch.FloatTensor(batch_size, 1, self.student_model.output_length)
+                if x.is_cuda:
+                    u = u.cuda()
+                u.uniform_(1e-5, 1. - 1e-5)
+                u = Variable(u, requires_grad=False)
+                z = torch.log(u) - torch.log(1. - u)
+                output, mu, s = self.student_model(x, z)
+
+                teacher_input = torch.cat([x, output], dim=2)
+                target_distribution = self.teacher_model(teacher_input)
+                entropy = torch.sum(s.view(-1))
+
+                # sample from student distribution
+                [n, _, l] = output.size()
+                u = torch.FloatTensor(n*l, sample_count)
+                if output.is_cuda:
+                    u = u.cuda()
+                u.uniform_(1e-5, 1. - 1e-5)
+                u = Variable(u, requires_grad=False)
+                student_samples = mu.view(-1, 1) + torch.exp(s).view(-1, 1) * (torch.log(u) - torch.log(1. - u))  # (n*l, s_c)
+                cross_entropy = discretized_mix_logistic_loss(target_distribution, student_samples)
+                loss = cross_entropy - entropy
+                self.optimizer.zero_grad()
+                loss.backward()
+                loss = loss.data[0]
+
+                self.optimizer.step()
+                step += 1
+
+                self.logger.log(step, loss)
+
+
 def generate_audio(model,
                    length=8000,
                    temperatures=[0., 1.]):

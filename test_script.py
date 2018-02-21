@@ -18,11 +18,11 @@ if use_cuda:
 
 
 model = WaveNetModel(layers=10,
-                     blocks=3,
-                     dilation_channels=1,
-                     residual_channels=1,
-                     skip_channels=1,
-                     end_channels=[1, 1],
+                     blocks=2,
+                     dilation_channels=2,
+                     residual_channels=2,
+                     skip_channels=4,
+                     end_channels=[2, 2],
                      classes=24,
                      output_length=8,
                      dtype=dtype)
@@ -30,6 +30,15 @@ model = WaveNetModel(layers=10,
 data = WavenetMixtureDataset(location='_train_samples/alla_turca',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
+
+# data = WavenetMixtureDatasetWithConditioning(location='_train_samples/alla_turca',
+#                                              item_length=model.receptive_field + model.output_length - 1,
+#                                              target_length=model.output_length,
+#                                              conditioning_period=128,
+#                                              min_conditioning_breadth=8,
+#                                              conditioning_channels=16,
+#                                              conditioning_stretch=0.5)
+# test_data = data[0]
 
 # context_model = WaveNetModel(layers=6,
 #                              blocks=2,

@@ -130,7 +130,7 @@ def constant_pad_1d(input,
 def log_sum_exp(x):
     """ numerically stable log_sum_exp implementation that prevents overflow """
     # TF ordering
-    axis  = len(x.size()) - 1
+    axis  = len(x.size()) - 2
     m, _  = torch.max(x, dim=axis)
     m2, _ = torch.max(x, dim=axis, keepdim=True)
     return m + torch.log(torch.sum(torch.exp(x - m2), dim=axis))
@@ -153,53 +153,102 @@ def to_one_hot(tensor, n, fill_with=1.):
     return Variable(one_hot)
 
 
-def discretized_mix_logistic_loss(input, target, bin_count=256, reduce=True):
+def mix_logistic_log_probability(parameters, samples, bin_size=0., reduce=True):
+    if len(samples.size()) == 1:
+        samples = samples.unsqueeze(1)
+        num_samples = 1
+    else:
+        num_samples = samples.size(1)
+    samples = samples.unsqueeze(1)
+    nr_mix = parameters.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
+
+    # parameters of the mixtures
+    weights = parameters[:, :nr_mix]
+    means = parameters[:, nr_mix:2 * nr_mix]
+    log_scales = torch.clamp(parameters[:, 2 * nr_mix:], min=-7.)  # clamp for numerical stability
+
+    # calculate the probabilities for each distribution (see equation (2) in the PixelCNN++ paper)
+    distances_to_target = samples - means.unsqueeze(2)
+    inv_scales = torch.exp(-log_scales).unsqueeze(2)
+    pos_in = inv_scales * (distances_to_target + bin_size)
+    neg_in = inv_scales * (distances_to_target - bin_size)
+    pos_cdf = F.sigmoid(pos_in)
+    neg_cdf = F.sigmoid(neg_in)
+    cdf_delta = pos_cdf - neg_cdf  # the regular probability
+
+    log_distributions = torch.log(torch.clamp(cdf_delta, min=1e-12))
+    weighted_log_distributions = log_distributions + log_prob_from_logits(weights).unsqueeze(2)
+    log_probabilities = log_sum_exp(weighted_log_distributions)
+    if num_samples == 1:
+        log_probabilities = log_probabilities.squeeze()
+    else:
+        log_probabilities = torch.sum(log_probabilities, dim=2) / num_samples
+    if reduce:
+        return -torch.sum(log_probabilities)
+    else:
+        return -log_probabilities
+
+
+def discretized_mix_logistic_loss(input, target, bin_count=0, reduce=True):
     """
 
     :param input: (minibatch, P)
-    :param target: (minibatch), should be scaled to [-1, 1]
+    :param target: (minibatch, N), second dimension is an optional sample dimension. Should be scaled to [-1, 1]
     :param bin_count:
     :return:
     """
 
-    target = target.unsqueeze(1)
+    if len(target.size()) == 1:
+        target = target.unsqueeze(1)
+        num_samples = 1
+    else:
+        num_samples = target.size(1)
     nr_mix = input.size()[-1] // 3  # number of mixtures, // 3 because we have weights, means and scales
+    target = target.unsqueeze(1)
 
     # parameters of the mixtures
     weights = input[:, :nr_mix]
     means = input[:, nr_mix:2*nr_mix]
-    log_scales = torch.clamp(input[:, 2*nr_mix:], min=-7.)  # clamp for numerical stability
+    log_scales = torch.clamp(input[:, 2*nr_mix:], min=-7.).unsqueeze(2)  # clamp for numerical stability
 
     # calculate the probabilities for each distribution (see equation (2) in the PixelCNN++ paper)
-    distances_to_target = target - means
+    distances_to_target = target - means.unsqueeze(2)
     inv_scales = torch.exp(-log_scales)
-    pos_in = inv_scales * (distances_to_target + 1. / float(bin_count))
-    neg_in = inv_scales * (distances_to_target - 1. / float(bin_count))
-    pos_cdf = F.sigmoid(pos_in)
-    neg_cdf = F.sigmoid(neg_in)
-    cdf_delta = pos_cdf - neg_cdf # the regular probability
 
-    # consider edge cases
     mid_in = inv_scales * distances_to_target
     log_pdf_mid = mid_in - log_scales - 2. * F.softplus(mid_in)  # edge case 1; very low probabilities
-    log_one_minus_cdf_neg = -F.softplus(neg_in)  # edge case 2; target = 1
-    log_cdf_pos = pos_in - F.softplus(pos_in)  # edge case 3; target = -1
 
+    if bin_count <= 1:
+        # if the bin count is 0 or 1, calculate the continuous probability
+        out = log_pdf_mid
+    else:
+        # calculate the log probability as the delta between two CDFs displaced by bin_size
+        pos_in = inv_scales * (distances_to_target + 1/bin_count)
+        neg_in = inv_scales * (distances_to_target - 1/bin_count)
+        pos_cdf = F.sigmoid(pos_in)
+        neg_cdf = F.sigmoid(neg_in)
+        cdf_delta = pos_cdf - neg_cdf  # the regular probability
 
-    # compose conditions
-    condition_1 = (cdf_delta > 1e-5).float()  # probability large enough
-    out_1 = condition_1 * torch.log(torch.clamp(cdf_delta, min=1e-12)) \
-            + (1. - condition_1) * (log_pdf_mid - np.log((bin_count - 1) / 2.))
-    condition_2 = (target > 0.999).float()
-    out_2 = condition_2 * log_one_minus_cdf_neg \
-            + (1. - condition_2) * out_1
-    condition_3 = (target < -0.999).float()
-    out_3 = condition_3 * log_cdf_pos \
-            + (1. - condition_3) * out_2 # (N, C, M)
+        condition = (cdf_delta > 1e-5).float()  # probability large enough
+        out = condition * torch.log(torch.clamp(cdf_delta, min=1e-12)) \
+            + (1. - condition) * (log_pdf_mid - np.log((bin_count - 1) / 2.))
+
+        # consider edge cases
+        log_one_minus_cdf_neg = -F.softplus(neg_in)  # case target == 1
+        log_cdf_pos = pos_in - F.softplus(pos_in)  # case target == -1
+
+        # compose conditions
+        condition = (target > 0.999).float()  # target == 1
+        out = condition * log_one_minus_cdf_neg \
+              + (1. - condition) * out
+        condition = (target < -0.999).float()  # target == -1
+        out = condition * log_cdf_pos \
+              + (1. - condition) * out  # (N, C, M)
 
     # weigh the log probabilities and add them together
-    log_probabilities = out_3 + log_prob_from_logits(weights)
+    log_probabilities = out + log_prob_from_logits(weights).unsqueeze(2)
     combined_log_probabilities = log_sum_exp(log_probabilities)
+    combined_log_probabilities = torch.sum(combined_log_probabilities, dim=1) / num_samples
     if reduce:
         return -torch.sum(combined_log_probabilities)
     else:

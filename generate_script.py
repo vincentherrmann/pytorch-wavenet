@@ -40,7 +40,7 @@ print('the dataset has ' + str(len(data)) + ' items')
 # start_data = torch.max(start_data.data, 0)[1].type(torch.FloatTensor)
 #
 
-start_data = data[15000]
+start_data = data[500]
 #start_data = omit_conditioning(start_data, torch.FloatTensor, torch.LongTensor)
 start_data = data.process_batch(start_data, torch.FloatTensor, torch.LongTensor)
 start_data = start_data[0].data[0,:]
@@ -50,8 +50,8 @@ def prog_callback(step, total_steps):
     print(str(100 * step // total_steps) + "% generated")
 
 
-generated = model.generate_fast(num_samples=32000,
-                                 first_samples=None,#start_data,
+generated = model.generate_fast(num_samples=64000,
+                                 first_samples=start_data,
                                  progress_callback=prog_callback,
                                  progress_interval=100,
                                  temperature=1.0,

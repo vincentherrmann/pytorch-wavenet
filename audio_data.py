@@ -163,6 +163,99 @@ class WavenetMixtureDataset(torch.utils.data.Dataset):
         return example, target
 
 
+class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
+    def __init__(self, *args, **kwargs):
+        try:
+            conditioning_period = kwargs.pop('conditioning_period')
+        except KeyError:
+            conditioning_period = 128
+
+        try:
+            min_conditioning_breadth = kwargs.pop('min_conditioning_breadth')
+        except KeyError:
+            min_conditioning_breadth = 8 # in seconds!
+
+        try:
+            conditioning_channels = kwargs.pop('conditioning_channels')
+        except KeyError:
+            conditioning_channels = 16
+
+        try:
+            conditioning_stretch = kwargs.pop('conditioning_stretch')
+        except KeyError:
+            conditioning_stretch = 0.4
+
+        self.conditioning_period = conditioning_period
+        self.min_conditioning_breadth = min_conditioning_breadth
+        self.conditioning_channels = conditioning_channels
+        self.conditioning_stretch = conditioning_stretch
+
+        print("Conditioning captures time scales ranging from " + str(self.min_conditioning_breadth) + " to " \
+              + str(self.min_conditioning_breadth * 2**((self.conditioning_channels-1) * self.conditioning_stretch)) + " seconds")
+
+        super().__init__(*args, **kwargs)
+
+    def conditioning(self, file_index, position_in_file, item_length):
+        offset = position_in_file % self.conditioning_period
+        conditioning_count = (item_length + offset) // self.conditioning_period + 1
+
+        sample_to_phase = (2*math.pi) / (self.sampling_rate * self.min_conditioning_breadth)
+        phase_start = (position_in_file - offset) * sample_to_phase
+        phase_length = conditioning_count * self.conditioning_period * sample_to_phase
+        x = np.linspace(phase_start, phase_start + phase_length, num=conditioning_count)
+        conditioning = np.zeros((self.conditioning_channels, conditioning_count))
+
+        for c in range(self.conditioning_channels):
+            conditioning[c, :] = np.cos(x / (2**(c * 0.4)))
+
+        return conditioning, offset
+
+    def load_sample(self, file_index, position_in_file, item_length):
+        file_length = self.start_samples[file_index + 1] - self.start_samples[file_index]
+        remaining_length = position_in_file + item_length + 1 - file_length
+        if remaining_length < 0:
+            sample = self.load_file(str(self.files[file_index]),
+                                    frames=item_length + 1,
+                                    start=position_in_file)
+            conditioning, offset = self.conditioning(file_index, position_in_file, item_length)
+        else:
+            this_length = item_length - remaining_length
+            this_sample = self.load_file(str(self.files[file_index]),
+                                         frames=this_length,
+                                         start=position_in_file)
+            this_conditioning, offset = self.conditioning(file_index, position_in_file, this_length)
+
+            # make sure that file beginnings align with the conditioning period
+            pad_length = self.conditioning_period - (this_length % self.conditioning_period)
+            if pad_length != self.conditioning_period:
+                this_sample = np.pad(this_sample, (0, pad_length), 'constant')
+                remaining_length -= pad_length
+
+            next_sample, next_conditioning, _ = self.load_sample(file_index + 1,
+                                                                 position_in_file=0,
+                                                                 item_length=remaining_length)
+            sample = np.concatenate((this_sample, next_sample))
+            conditioning = np.concatenate((this_conditioning, next_conditioning))
+        return sample, conditioning, offset
+
+    def __getitem__(self, idx):
+        file_index, position_in_file = self.get_position(idx)
+        sample, conditioning, offset = self.load_sample(file_index, position_in_file, self._item_length)
+
+        example = torch.from_numpy(sample[:self._item_length]).type(torch.FloatTensor).unsqueeze(0)
+        conditioning = torch.from_numpy(conditioning).type(torch.FloatTensor).unsqueeze(0)
+        target = torch.from_numpy(sample[-self.target_length:]).type(torch.FloatTensor).unsqueeze(0)
+        return example, conditioning, offset, target
+
+    @staticmethod
+    def process_batch(batch, dtype, ltype):
+        example, conditioning, offset, target = batch
+        example = Variable(example.type(dtype))
+        conditioning = Variable(conditioning.type(dtype), volatile=False)
+        target = Variable(target.type(ltype))
+        return (example, conditioning, offset), target
+
+
 class WavenetDataset(torch.utils.data.Dataset):
     def __init__(self,
                  dataset_file,

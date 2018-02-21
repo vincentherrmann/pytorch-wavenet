@@ -29,3 +29,8 @@ class TestMixLogistic(TestCase):
         parameters = torch.zeros(num_samples, 3*num_mix).uniform_(-1., 1.)
         modes = get_modes_from_discretized_mix_logistic(Variable(parameters))
         pass
+
+    def test_mix_logistic_log_probability(self):
+        targets = torch.zeros(4, 7)
+        parameters = torch.zeros(4, 3).uniform_(-1., 1.)
+        loss = mix_logistic_log_probability(Variable(parameters), Variable(targets), bin_size=1/256.)
