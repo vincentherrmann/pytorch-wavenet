@@ -204,7 +204,7 @@ class DistillationTrainer:
               continue_training_at_step=0,
               sample_count=16):
         self.student_model.train()
-        self.teacher_model.train()
+        self.teacher_model.eval()
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
@@ -231,6 +231,8 @@ class DistillationTrainer:
                 u = Variable(u, requires_grad=False)
                 z = torch.log(u) - torch.log(1. - u)
                 output, mu, s = self.student_model(x, z)
+                mu.requires_grad = False
+                s.requires_grad = False
 
                 teacher_input = torch.cat([x, output], dim=2)
                 target_distribution = self.teacher_model(teacher_input)
