@@ -204,7 +204,7 @@ class DistillationTrainer:
               continue_training_at_step=0,
               sample_count=16):
         self.student_model.train()
-        self.teacher_model.eval()
+        self.teacher_model.train()
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
@@ -234,6 +234,7 @@ class DistillationTrainer:
 
                 teacher_input = torch.cat([x, output], dim=2)
                 target_distribution = self.teacher_model(teacher_input)
+
                 entropy = torch.sum(s.view(-1))
 
                 # sample from student distribution

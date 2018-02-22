@@ -33,7 +33,7 @@ student_model = ParallelWaveNet(stacks=3,
 receptive_field = max(teacher_model.receptive_field, student_model.receptive_field)
 
 data = WavenetMixtureDataset(location='../_train_samples/alla_turca',
-                             item_length=receptive_field - 1,
+                             item_length=receptive_field,
                              target_length=1)
 
 logger = Logger(log_interval=1,

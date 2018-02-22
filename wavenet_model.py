@@ -152,6 +152,8 @@ class WaveNetModel(nn.Module):
 
             # parametrized skip connection
             s = x
+            if x.size(2) != 1:
+                pass
             if x.size(2) != 0:  # 1: TODO: delete this line !? (why is it there?)
                  s = dilate(x, 1, init_dilation=dilation)
             s = self.skip_convs[i](s)
@@ -815,7 +817,7 @@ class ParallelWaveNet(nn.Module):
             w.output_length = value
 
     def forward(self, seed, z):
-        seed = seed[:, :, -self.receptive_field+1:]
+        seed = seed[:, :, -self.receptive_field:]
         mu_tot = torch.zeros_like(z)
         s_tot = torch.zeros_like(z)
 
@@ -831,6 +833,36 @@ class ParallelWaveNet(nn.Module):
             mu_tot = mu_tot * s_exp + mu
             s_tot += s
         return x, mu_tot, s_tot
+
+    def generate(self,
+                 num_samples,
+                 first_samples=None,
+                 progress_callback=None,
+                 progress_interval=100):
+
+        self.eval()
+        if first_samples is None:
+            first_samples = torch.FloatTensor(1, 1, self.receptive_field).zero_()
+        first_samples = Variable(first_samples, volatile=True)
+        # TODO: cuda check
+        if first_samples.size(2) < self.receptive_field:
+            print("to few start samples")
+
+        generated = first_samples
+        generation_steps = math.ceil(num_samples / self.output_length)
+
+        for step in range(generation_steps):
+            print("step " + str(step) + "/" + str(generation_steps))
+            u = torch.FloatTensor(1, 1, self.output_length)
+            u.uniform_(1e-5, 1. - 1e-5)
+            u = Variable(u, requires_grad=False)
+            z = torch.log(u) - torch.log(1. - u)
+            res, mu, s = self(generated, z)
+            generated = torch.cat([generated, res], dim=2)
+        return generated
+
+    def parameter_count(self):
+        return sum([stack.parameter_count() for stack in self.stacks])
 
 
 def load_latest_model_from(location, use_cuda=True):
