@@ -231,11 +231,16 @@ class DistillationTrainer:
                 u = Variable(u, requires_grad=False)
                 z = torch.log(u) - torch.log(1. - u)
                 output, mu, s = self.student_model(x, z)
-                mu.requires_grad = False
-                s.requires_grad = False
+                output = output.detach()
+                output.volatile = True
+                # output.register_hook(zero_gradient)
+                # mu.register_hook(zero_gradient)
+                # s.register_hook(zero_gradient)
 
                 teacher_input = torch.cat([x, output], dim=2)
                 target_distribution = self.teacher_model(teacher_input)
+                target_distribution = target_distribution.detach()
+                target_distribution.volatile = False
 
                 entropy = torch.sum(s.view(-1))
 
@@ -254,6 +259,7 @@ class DistillationTrainer:
                 loss.backward()
                 loss = loss.data[0]
 
+                self.teacher_model.zero_grad()
                 self.optimizer.step()
                 step += 1
 
@@ -279,6 +285,10 @@ class DistillationTrainer:
 
     def validate(self):
         return 0, 0
+
+
+def zero_gradient(grad):
+    return grad * 0
 
 
 def generate_audio(model,
