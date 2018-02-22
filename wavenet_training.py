@@ -246,6 +246,7 @@ class DistillationTrainer:
                 student_samples = mu.view(-1, 1) + torch.exp(s).view(-1, 1) * (torch.log(u) - torch.log(1. - u))  # (n*l, s_c)
                 cross_entropy = discretized_mix_logistic_loss(target_distribution, student_samples)
                 loss = cross_entropy - entropy
+                loss /= (n*l)
                 self.optimizer.zero_grad()
                 loss.backward()
                 loss = loss.data[0]
