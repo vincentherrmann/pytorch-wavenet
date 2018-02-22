@@ -231,16 +231,16 @@ class DistillationTrainer:
                 u = Variable(u, requires_grad=False)
                 z = torch.log(u) - torch.log(1. - u)
                 output, mu, s = self.student_model(x, z)
-                output = output.detach()
-                output.volatile = True
+                output.detach_()
+                #output.volatile = True
                 # output.register_hook(zero_gradient)
                 # mu.register_hook(zero_gradient)
                 # s.register_hook(zero_gradient)
 
                 teacher_input = torch.cat([x, output], dim=2)
                 target_distribution = self.teacher_model(teacher_input)
-                target_distribution = target_distribution.detach()
-                target_distribution.volatile = False
+                target_distribution.detach_()
+                #target_distribution.volatile = False
 
                 entropy = torch.sum(s.view(-1))
 
