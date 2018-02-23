@@ -830,7 +830,7 @@ class ParallelWaveNet(nn.Module):
             mu = result[:, 0, :].unsqueeze(1)
             s = result[:, 1, :].unsqueeze(1)
             s_exp = torch.exp(s)
-            x = x*s_exp + mu
+            x = x * s_exp + mu
             mu_tot = mu_tot * s_exp + mu
             s_tot += s
 

@@ -222,7 +222,7 @@ def discretized_mix_logistic_loss(input, target, bin_count=0, reduce=True):
 
     if bin_count <= 1:
         # if the bin count is 0 or 1, calculate the continuous probability
-        out = log_pdf_mid
+        out = log_pdf_mid + math.log(2) # add factor to get to normalized log probabilities (why??)
     else:
         # calculate the log probability as the delta between two CDFs displaced by bin_size
         pos_in = inv_scales * (distances_to_target + 1/bin_count)

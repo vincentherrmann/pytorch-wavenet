@@ -204,7 +204,7 @@ class DistillationTrainer:
               continue_training_at_step=0,
               sample_count=16):
         self.student_model.train()
-        self.teacher_model.eval()
+        #self.teacher_model.eval()
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=True,
@@ -260,7 +260,7 @@ class DistillationTrainer:
                 loss.backward()
                 loss = loss.data[0]
 
-                self.teacher_model.zero_grad()
+                #self.teacher_model.zero_grad()
                 self.optimizer.step()
                 step += 1
 
