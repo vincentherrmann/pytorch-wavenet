@@ -14,13 +14,13 @@ if use_cuda:
 model = load_latest_model_from('../snapshots', use_cuda=False)
 print("model has " + str(model.parameter_count()) + " parameters")
 
-model.output_length = 64
+model.output_length = 1024
 
-data = WavenetMixtureDataset(location='../_train_samples/alla_turca',
+data = WavenetMixtureDataset(location='../_train_samples/sine',
                              item_length=model.receptive_field,
                              target_length=1)
 
-start_data, _ = data[100000]
+start_data, _ = data[100]
 start_data = start_data.unsqueeze(0)
 generated = model.generate(num_samples=32000,
                            first_samples=start_data)

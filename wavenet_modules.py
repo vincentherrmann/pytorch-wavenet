@@ -16,6 +16,8 @@ def dilate(x, dilation, init_dilation=1, pad_start=True):
     """
 
     [n, c, l] = x.size()
+    if n == 1 and l == 1:
+        return x
     dilation_factor = dilation / init_dilation
     if dilation_factor == 1:
         return x

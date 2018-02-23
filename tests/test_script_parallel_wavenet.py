@@ -9,35 +9,30 @@ if use_cuda:
     print('use gpu')
     dtype = torch.cuda.FloatTensor
 
-teacher_model = WaveNetModel(layers=10,
-                             blocks=3,
-                             dilation_channels=8,
-                             residual_channels=8,
-                             skip_channels=32,
-                             end_channels=[8, 16],
-                             classes=24,
-                             output_length=64,
-                             dtype=dtype,
-                             bias=True)
+teacher_model = load_to_cpu("../snapshots/sine_mix_model")
 
 student_model = ParallelWaveNet(stacks=3,
                                 layers=10,
-                                blocks=1,
-                                dilation_channels=8,
-                                residual_channels=8,
-                                skip_channels=32,
+                                blocks=3,
+                                dilation_channels=16,
+                                residual_channels=16,
+                                skip_channels=64,
                                 end_channels=[16],
                                 output_length=64,
                                 bias=True)
 
+# student_model = load_to_cpu("../snapshots/sine_parallel")
+
+teacher_model.output_length = student_model.output_length
+
 receptive_field = max(teacher_model.receptive_field, student_model.receptive_field)
 
-data = WavenetMixtureDataset(location='../_train_samples/alla_turca',
+data = WavenetMixtureDataset(location='../_train_samples/sine',
                              item_length=receptive_field,
                              target_length=1)
 
 logger = Logger(log_interval=1,
-                validation_interval=100)
+                validation_interval=10)
 
 trainer = DistillationTrainer(student_model=student_model,
                               teacher_model=teacher_model,

@@ -43,6 +43,8 @@ class Logger:
         print("loss at step " + str(current_step) + ": " + str(avg_loss))
 
     def validate(self, current_step):
+        if self.trainer is None:
+            return
         avg_loss, avg_accuracy = self.trainer.validate()
         print("validation loss: " + str(avg_loss))
         print("validation accuracy: " + str(avg_accuracy * 100) + "%")

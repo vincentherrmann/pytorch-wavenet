@@ -5,8 +5,8 @@ from wavenet_training import *
 import scipy.io.wavfile
 import numpy as np
 
-model = load_latest_model_from('snapshots', use_cuda=False)
-#model = load_to_cpu("snapshots/turca_model_4_mixtures_step_57000")
+#model = load_latest_model_from('snapshots', use_cuda=False)
+model = load_to_cpu("snapshots/turca_model_4_mixtures_step_57000")
 model.sampling_function = sample_from_mixture
 
 print('model: ', model)

@@ -818,12 +818,13 @@ class ParallelWaveNet(nn.Module):
 
     def forward(self, seed, z):
         seed = seed[:, :, -self.receptive_field:]
+        z = z[:, :, -self.output_length:]
         mu_tot = torch.zeros_like(z)
         s_tot = torch.zeros_like(z)
 
         x = z
         for stack in self.stacks:
-            input = torch.cat([seed, x], dim=2)
+            input = torch.cat([seed, x[:, :, :-1]], dim=2)
             result = stack.wavenet(input, dilation_func=stack.wavenet_dilate)
             result = result[:, :, -self.output_length:]
             mu = result[:, 0, :].unsqueeze(1)
@@ -832,6 +833,12 @@ class ParallelWaveNet(nn.Module):
             x = x*s_exp + mu
             mu_tot = mu_tot * s_exp + mu
             s_tot += s
+
+        if x.size(2) != self.output_length:
+            x = x[:, :, -self.output_length:]
+            mu_tot = mu_tot[:, :, -self.output_length:]
+            s_tot = s_tot[:, :, -self.output_length:]
+
         return x, mu_tot, s_tot
 
     def generate(self,
