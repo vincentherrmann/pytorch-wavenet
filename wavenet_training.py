@@ -2,11 +2,13 @@ import torch
 import torch.optim as optim
 import torch.utils.data
 import time
+import matplotlib.pyplot as plt
 from datetime import datetime
 import torch.nn.functional as F
 from torch.autograd import Variable
 from model_logging import Logger
 from wavenet_modules import *
+
 
 
 def print_last_loss(opt):
@@ -231,7 +233,7 @@ class DistillationTrainer:
                 u = Variable(u, requires_grad=False)
                 z = torch.log(u) - torch.log(1. - u)
                 output, mu, s = self.student_model(x, z)
-                #output.detach_()
+                output.detach_()
                 #output.volatile = True
                 # output.register_hook(zero_gradient)
                 # mu.register_hook(zero_gradient)
@@ -240,11 +242,11 @@ class DistillationTrainer:
                 teacher_input = torch.cat([x, output], dim=2)
                 teacher_input = teacher_input[:, :, :-1]
                 target_distribution = self.teacher_model(teacher_input)
-                #target_distribution.detach_()
+                target_distribution.detach_()
+                target_modes = get_modes_from_discretized_mix_logistic(target_distribution)
                 #target_distribution.volatile = False
 
                 entropy = torch.sum(s.view(-1))
-
                 # sample from student distribution
                 [n, _, l] = output.size()
                 u = torch.FloatTensor(n*l, sample_count)
@@ -254,13 +256,19 @@ class DistillationTrainer:
                 u = Variable(u, requires_grad=False)
                 student_samples = mu.view(-1, 1) + torch.exp(s).view(-1, 1) * (torch.log(u) - torch.log(1. - u))  # (n*l, s_c)
                 cross_entropy = discretized_mix_logistic_loss(target_distribution, student_samples)
+                entropy += 2 * l
                 loss = cross_entropy - entropy
                 loss /= (n*l)
+
+                # mu.retain_grad()
+                # s.retain_grad()
+                # output.retain_grad()
+
                 self.optimizer.zero_grad()
                 loss.backward()
                 loss = loss.data[0]
 
-                #self.teacher_model.zero_grad()
+                self.teacher_model.zero_grad()
                 self.optimizer.step()
                 step += 1
 
@@ -300,4 +308,5 @@ def generate_audio(model,
         samples.append(model.generate_fast(length, temperature=temp))
     samples = np.stack(samples, axis=0)
     return samples
+
 
