@@ -234,7 +234,7 @@ class DistillationTrainer:
                 z = torch.log(u) - torch.log(1. - u)
                 output, mu, s = self.student_model(x, z)
                 output.detach_()
-                #output.volatile = True
+                output.volatile = True
                 # output.register_hook(zero_gradient)
                 # mu.register_hook(zero_gradient)
                 # s.register_hook(zero_gradient)
@@ -243,7 +243,7 @@ class DistillationTrainer:
                 teacher_input = teacher_input[:, :, :-1]
                 target_distribution = self.teacher_model(teacher_input)
                 target_distribution.detach_()
-                target_modes = get_modes_from_discretized_mix_logistic(target_distribution)
+                #target_modes = get_modes_from_discretized_mix_logistic(target_distribution)
                 #target_distribution.volatile = False
 
                 entropy = torch.sum(s.view(-1))
