@@ -244,7 +244,7 @@ class DistillationTrainer:
                 target_distribution = self.teacher_model(teacher_input)
                 target_distribution.detach_()
                 #target_modes = get_modes_from_discretized_mix_logistic(target_distribution)
-                #target_distribution.volatile = False
+                target_distribution.volatile = False
 
                 entropy = torch.sum(s.view(-1))
                 # sample from student distribution
