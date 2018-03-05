@@ -24,9 +24,9 @@ def dummy_teacher(input):
 teacher_model = load_to_cpu("../snapshots/sine_mix_model")
 teacher_model.output_length = 256
 
-student_model = ParallelWaveNet(stacks=1,
+student_model = ParallelWaveNet(stacks=2,
                                 layers=8,
-                                blocks=3,
+                                blocks=1,
                                 dilation_channels=16,
                                 residual_channels=16,
                                 skip_channels=64,

@@ -231,6 +231,75 @@ class DistillationTrainer:
 
             # calculate output of the student model
             output, mu, s = self.student_model(z)
+            #output.detach_()
+            #output.volatile = True
+            mu = mu[:, :, -self.teacher_model.output_length:].contiguous()
+            s = s[:, :, -self.teacher_model.output_length:].contiguous()
+
+            # calculate output of the teacher model
+            target_distribution = self.teacher_model(output[:, :, :-1])
+            #target_distribution.detach_()
+            #target_distribution.volatile = False
+            # target_modes = get_modes_from_discretized_mix_logistic(target_distribution)
+
+            # calculate sampled cross entropy
+            [n, _, l] = mu.size()
+            u = self.dtype(n * l, sample_count)
+            u.uniform_(1e-5, 1. - 1e-5)
+            z = torch.log(u) - torch.log(1. - u)
+            z = Variable(z, requires_grad=False)
+            student_samples = mu.view(-1, 1) + torch.exp(s).view(-1, 1) * z  # (n*l, s_c)
+            cross_entropy = discretized_mix_logistic_loss(target_distribution, student_samples)
+
+            # calculate KL-divergence loss
+            entropy = torch.sum(s.view(-1))
+            entropy += 2 * l
+            loss = cross_entropy - entropy
+            loss /= (n * l)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            loss = loss.data[0]
+
+            self.optimizer.step()
+
+            self.track_step_times(step, begin_tracking_step=continue_training_at_step)
+
+            step += 1
+
+            if step % self.snapshot_interval == 0:
+                if self.snapshot_path is None:
+                    continue
+                time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())
+                torch.save(self.student_model, self.snapshot_path + '/' + self.snapshot_name + '_' + time_string)
+                if self.snapshot_callback is not None:
+                    self.snapshot_callback()
+
+            self.logger.log(step, loss)
+
+            if training_steps is not None and step >= training_steps:
+                break
+
+    def train_only_xt(self,
+              batch_size=32,
+              training_steps=None,
+              continue_training_at_step=0,
+              sample_count=16):
+
+        self.student_model.train()
+        self.teacher_model.eval()
+
+        step = continue_training_at_step
+
+        while True:
+            # create z, the input of the student network
+            u = self.dtype(batch_size, 1, self.student_model.input_length)
+            u.uniform_(1e-5, 1. - 1e-5)
+            z = torch.log(u) - torch.log(1. - u)  # logistic noise with mean 0 and variance 1
+            z = Variable(z, requires_grad=False)
+
+            # calculate output of the student model
+            output, mu, s = self.student_model(z)
             output.detach_()
             output.volatile = True
             mu = mu[:, :, -self.teacher_model.output_length:].contiguous()
@@ -296,5 +365,9 @@ def generate_audio(model,
         samples.append(model.generate_fast(length, temperature=temp))
     samples = np.stack(samples, axis=0)
     return samples
+
+# from matplotlib import pyplot as plt
+# plot_output = mu[0, 0, :500].data.numpy()
+# plt.plot(plot_output)
 
 
