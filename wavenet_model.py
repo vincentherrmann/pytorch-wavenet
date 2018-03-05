@@ -792,9 +792,11 @@ class ParallelWaveNet(nn.Module):
 
         super().__init__()
 
-        self._output_length = output_length
+        self.dtype = dtype
+        self.receptive_field = 0
         self.stacks = nn.ModuleList()
-        for _ in range(stacks):
+
+        for i in range(stacks):
             self.stacks.append(WaveNetModel(layers=layers,
                                             blocks=blocks,
                                             dilation_channels=dilation_channels,
@@ -802,13 +804,15 @@ class ParallelWaveNet(nn.Module):
                                             skip_channels=skip_channels,
                                             end_channels=end_channels,
                                             classes=classes,
-                                            output_length=self.output_length,
+                                            output_length=1,
                                             kernel_size=kernel_size,
                                             dilation_factor=dilation_factor,
                                             dtype=dtype,
                                             bias=bias))
+            self.receptive_field += self.stacks[i].receptive_field
 
-        self.receptive_field = self.stacks[0].receptive_field
+        self._output_length = 1
+        self.output_length = output_length
 
     @property
     def output_length(self):
@@ -821,25 +825,32 @@ class ParallelWaveNet(nn.Module):
     @output_length.setter
     def output_length(self, value):
         self._output_length = value
-        for w in self.stacks:
-            w.output_length = value
+        total_receptive_field = 0
+        for i, w in enumerate(self.stacks):
+            total_receptive_field += w.receptive_field
+            w.output_length = self.input_length - total_receptive_field
 
     def forward(self, z):
+        '''
+        :param z: (n, c, l), where n is the minibatch size, c is the number of channels (usually 1) and l is self.input_length
+        '''
 
-        # Add one zero at the end of z for easier syntax. This value will be discarded.
-        z = constant_pad_1d(z, target_size=self.input_length+1, dimension=2)
-
-        pre_noise = z[:, :, :self.receptive_field]
-        x = z[:, :, self.receptive_field:]
-        mu_tot = torch.zeros_like(x)
-        s_tot = torch.zeros_like(x)
+        mu_tot = torch.zeros_like(z)
+        s_tot = torch.zeros_like(z)
+        x = z
 
         for stack in self.stacks:
-            input = torch.cat([pre_noise, x[:, :, :-1]], dim=2)
+            input = x[:, :, :-1]
             result = stack.wavenet(input, dilation_func=stack.wavenet_dilate)
-            result = result[:, :, -self.output_length:]
+
+            result = result[:, :, -stack.output_length:]
             mu = result[:, 0, :].unsqueeze(1)
             s = result[:, 1, :].unsqueeze(1)
+
+            x = x[:, :, -stack.output_length:]
+            mu_tot = mu_tot[:, :, -stack.output_length:]
+            s_tot = s_tot[:, :, -stack.output_length:]
+
             s_exp = torch.exp(s)
             x = x * s_exp + mu
             mu_tot = mu_tot * s_exp + mu
@@ -854,29 +865,29 @@ class ParallelWaveNet(nn.Module):
 
     def generate(self,
                  num_samples,
-                 first_samples=None,
                  progress_callback=None,
                  progress_interval=100):
 
         self.eval()
-        if first_samples is None:
-            first_samples = torch.FloatTensor(1, 1, self.receptive_field).zero_()
-        first_samples = Variable(first_samples, volatile=True)
-        # TODO: cuda check
-        if first_samples.size(2) < self.receptive_field:
-            print("to few start samples")
 
-        generated = first_samples
+        u = self.dtype(1, 1, self.receptive_field + num_samples)
+        u.uniform_(1e-5, 1. - 1e-5)
+        z = torch.log(u) - torch.log(1. - u)
+        z = Variable(z, requires_grad=False)
+
+        generated = None
         generation_steps = math.ceil(num_samples / self.output_length)
 
         for step in range(generation_steps):
-            print("step " + str(step) + "/" + str(generation_steps))
-            u = torch.FloatTensor(1, 1, self.output_length)
-            u.uniform_(1e-5, 1. - 1e-5)
-            u = Variable(u, requires_grad=False)
-            z = torch.log(u) - torch.log(1. - u)
-            res, mu, s = self(generated, z)
-            generated = torch.cat([generated, res], dim=2)
+            print("step " + str(step+1) + "/" + str(generation_steps))
+            z_position = step * self.output_length
+            z_input = z[:, :, z_position:z_position + self.input_length]
+            res, mu, s = self(z_input)
+            if generated is None:
+                generated = res
+            else:
+                generated = torch.cat([generated, res], dim=2)
+
         return generated
 
     def parameter_count(self):
