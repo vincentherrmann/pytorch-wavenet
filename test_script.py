@@ -15,8 +15,6 @@ if use_cuda:
     ltype = torch.cuda.LongTensor
 
 
-
-
 model = WaveNetModel(layers=10,
                      blocks=2,
                      dilation_channels=2,

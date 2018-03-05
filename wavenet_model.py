@@ -126,6 +126,10 @@ class WaveNetModel(nn.Module):
         self.receptive_field = receptive_field
         self.activation_unit_init()
 
+    @property
+    def input_length(self):
+        return self.receptive_field + self.output_length - 1
+
     def wavenet(self, input, dilation_func, activation_input={'x': None}):
         x = self.start_conv(input)
         skip = 0
@@ -810,21 +814,28 @@ class ParallelWaveNet(nn.Module):
     def output_length(self):
         return self._output_length
 
+    @property
+    def input_length(self):
+        return self.receptive_field + self._output_length - 1
+
     @output_length.setter
     def output_length(self, value):
         self._output_length = value
         for w in self.stacks:
             w.output_length = value
 
-    def forward(self, seed, z):
-        seed = seed[:, :, -self.receptive_field:]
-        z = z[:, :, -self.output_length:]
-        mu_tot = torch.zeros_like(z)
-        s_tot = torch.zeros_like(z)
+    def forward(self, z):
 
-        x = z
+        # Add one zero at the end of z for easier syntax. This value will be discarded.
+        z = constant_pad_1d(z, target_size=self.input_length+1, dimension=2)
+
+        pre_noise = z[:, :, :self.receptive_field]
+        x = z[:, :, self.receptive_field:]
+        mu_tot = torch.zeros_like(x)
+        s_tot = torch.zeros_like(x)
+
         for stack in self.stacks:
-            input = torch.cat([seed, x[:, :, :-1]], dim=2)
+            input = torch.cat([pre_noise, x[:, :, :-1]], dim=2)
             result = stack.wavenet(input, dilation_func=stack.wavenet_dilate)
             result = result[:, :, -self.output_length:]
             mu = result[:, 0, :].unsqueeze(1)
