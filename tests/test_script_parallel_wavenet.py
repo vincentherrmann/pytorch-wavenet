@@ -24,8 +24,8 @@ def dummy_teacher(input):
 teacher_model = load_to_cpu("../snapshots/sine_mix_model")
 teacher_model.output_length = 256
 
-student_model = ParallelWaveNet(stacks=2,
-                                layers=8,
+student_model = ParallelWaveNet(stacks=3,
+                                layers=10,
                                 blocks=1,
                                 dilation_channels=16,
                                 residual_channels=16,
@@ -33,7 +33,7 @@ student_model = ParallelWaveNet(stacks=2,
                                 end_channels=[16],
                                 output_length=teacher_model.input_length+1,
                                 bias=True)
-
+print("student receptive field: ", student_model.receptive_field)
 #student_model = load_to_cpu("../snapshots/sine_parallel")
 
 # receptive_field = max(teacher_model.receptive_field, student_model.receptive_field)

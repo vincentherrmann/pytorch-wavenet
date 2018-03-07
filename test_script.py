@@ -15,7 +15,7 @@ if use_cuda:
     ltype = torch.cuda.LongTensor
 
 
-model = WaveNetModel(layers=10,
+model = WaveNetModelWithConditioning(layers=10,
                      blocks=2,
                      dilation_channels=2,
                      residual_channels=2,
@@ -23,9 +23,11 @@ model = WaveNetModel(layers=10,
                      end_channels=[2, 2],
                      classes=24,
                      output_length=8,
-                     dtype=dtype)
+                     dtype=dtype,
+                     conditioning_channels=[16, 64, 64, 8],
+                     conditioning_period=128)
 
-data = WavenetMixtureDataset(location='_train_samples/alla_turca',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/alla_turca',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
 

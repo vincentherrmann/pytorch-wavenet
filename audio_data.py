@@ -206,7 +206,7 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         conditioning = np.zeros((self.conditioning_channels, conditioning_count))
 
         for c in range(self.conditioning_channels):
-            conditioning[c, :] = np.cos(x / (2**(c * 0.4)))
+            conditioning[c, :] = np.cos(x / (2**(c * self.conditioning_stretch)))
 
         return conditioning, offset
 
@@ -243,7 +243,7 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         sample, conditioning, offset = self.load_sample(file_index, position_in_file, self._item_length)
 
         example = torch.from_numpy(sample[:self._item_length]).type(torch.FloatTensor).unsqueeze(0)
-        conditioning = torch.from_numpy(conditioning).type(torch.FloatTensor).unsqueeze(0)
+        conditioning = torch.from_numpy(conditioning).type(torch.FloatTensor)  # .unsqueeze(0)
         target = torch.from_numpy(sample[-self.target_length:]).type(torch.FloatTensor).unsqueeze(0)
         return example, conditioning, offset, target
 

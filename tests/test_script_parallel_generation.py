@@ -13,7 +13,7 @@ if use_cuda:
     dtype = torch.cuda.FloatTensor
 
 # model = load_to_cpu("../snapshots/turca_model_student_noise_seed_5000")
-model = load_to_cpu("../snapshots/turca_model_student_one_stack")
+model = load_to_cpu("../snapshots/turca_model_student_fewer_skip_channels")
 print("model has " + str(model.parameter_count()) + " parameters")
 
 model.output_length = 4000
