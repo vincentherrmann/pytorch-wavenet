@@ -894,6 +894,113 @@ class ParallelWaveNet(nn.Module):
         return sum([stack.parameter_count() for stack in self.stacks])
 
 
+class ParallelWaveNetWithConditioning(ParallelWaveNet):
+    def __init__(self, *args, **kwargs):
+        try:
+            conditioning_channels = kwargs.pop('conditioning_channels')
+        except KeyError:
+            conditioning_channels = [16]
+
+        try:
+            conditioning_period = kwargs.pop('conditioning_period')
+        except KeyError:
+            conditioning_period = [128]
+
+        nn.Module.__init(self)
+
+        self.dtype = kwargs['dtype']
+        self.receptive_field = 0
+        self.conditioning_channels = conditioning_channels
+        self.conditioning_period = conditioning_period
+        self.stacks = nn.ModuleList()
+
+        for i in range(kwargs['stacks']):
+            self.stacks.append(WaveNetModelWithConditioning(layers=kwargs['layers'],
+                                                            blocks=kwargs['blocks'],
+                                                            dilation_channels=kwargs['dilation_channels'],
+                                                            residual_channels=kwargs['residual_channels'],
+                                                            skip_channels=kwargs['skip_channels'],
+                                                            end_channels=kwargs['end_channels'],
+                                                            classes=kwargs['classes'],
+                                                            output_length=1,
+                                                            kernel_size=kwargs['kernel_size'],
+                                                            dilation_factor=kwargs['dilation_factor'],
+                                                            dtype=self.dtype,
+                                                            bias=kwargs['bias'],
+                                                            conditioning_channels=self.conditioning_channels,
+                                                            conditioning_period=self.conditioning_period))
+            self.receptive_field += self.stacks[i].receptive_field
+
+        self._output_length = 1
+        self.output_length = kwargs['output_length']
+
+    def forward(self, input):
+        '''
+        :param z: (n, c, l), where n is the minibatch size, c is the number of channels (usually 1) and l is self.input_length
+        '''
+
+        z, conditioning, offset = input
+        activation_input = {'x': None, 'conditioning': conditioning, 'offset': offset}
+
+        mu_tot = torch.zeros_like(z)
+        s_tot = torch.zeros_like(z)
+        x = z
+
+        for stack in self.stacks:
+            input = x[:, :, :-1]
+            result = stack.wavenet(input,
+                                   dilation_func=stack.wavenet_dilate,
+                                   activation_input=activation_input)
+
+            result = result[:, :, -stack.output_length:]
+            mu = result[:, 0, :].unsqueeze(1)
+            s = result[:, 1, :].unsqueeze(1)
+
+            x = x[:, :, -stack.output_length:]
+            mu_tot = mu_tot[:, :, -stack.output_length:]
+            s_tot = s_tot[:, :, -stack.output_length:]
+
+            s_exp = torch.exp(s)
+            x = x * s_exp + mu
+            mu_tot = mu_tot * s_exp + mu
+            s_tot += s
+
+        if x.size(2) != self.output_length:
+            x = x[:, :, -self.output_length:]
+            mu_tot = mu_tot[:, :, -self.output_length:]
+            s_tot = s_tot[:, :, -self.output_length:]
+
+        return x, mu_tot, s_tot
+
+    def generate(self,
+                 num_samples,
+                 conditioning=None,
+                 progress_callback=None,
+                 progress_interval=100):
+
+        self.eval()
+
+        u = self.dtype(1, 1, self.receptive_field + num_samples)
+        u.uniform_(1e-5, 1. - 1e-5)
+        z = torch.log(u) - torch.log(1. - u)
+        z = Variable(z, requires_grad=False)
+
+        generated = None
+        generation_steps = math.ceil(num_samples / self.output_length)
+
+        for step in range(generation_steps):
+            print("step " + str(step+1) + "/" + str(generation_steps))
+            z_position = step * self.output_length
+            z_input = z[:, :, z_position:z_position + self.input_length]
+            res, mu, s = self(z_input)
+            if generated is None:
+                generated = res
+            else:
+                generated = torch.cat([generated, res], dim=2)
+
+        return generated
+
+
 def load_latest_model_from(location, use_cuda=True):
     files = [location + "/" + f for f in os.listdir(location)]
     newest_file = max(files, key=os.path.getctime)

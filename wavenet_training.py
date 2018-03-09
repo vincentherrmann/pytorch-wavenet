@@ -19,8 +19,9 @@ def print_last_validation_result(opt):
     print("validation loss: ", opt.validation_results[-1])
 
 def mixture_loss(input, target, bin_count=256):
+    l = input.size(0)
     loss = discretized_mix_logistic_loss(input, target, bin_count=bin_count, reduce=True)
-    return loss
+    return loss / l
 
 
 def mixture_accuracy(input, target, bin_count=256):
