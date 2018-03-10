@@ -206,7 +206,8 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         conditioning = np.zeros((self.conditioning_channels, conditioning_count))
 
         for c in range(self.conditioning_channels):
-            conditioning[c, :] = np.cos(x / (2**(c * self.conditioning_stretch)))
+            conditioning[c, :] = np.cos(x * ((c + 1) / self.conditioning_channels))
+            #conditioning[c, :] = np.cos(x / (2**(c * self.conditioning_stretch)))
 
         return conditioning, offset
 

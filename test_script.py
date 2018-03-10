@@ -27,7 +27,7 @@ model = WaveNetModelWithConditioning(layers=10,
                      conditioning_channels=[16, 64, 64, 8],
                      conditioning_period=128)
 
-data = WavenetMixtureDatasetWithConditioning(location='_train_samples/alla_turca',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/bohemian',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
 
