@@ -378,22 +378,36 @@ class WaveNetModelWithConditioning(WaveNetModel):
             conditioning_period = [128]
 
         try:
-            conditioning_kernel = kwargs.pop('conditioning_kernel')
+            file_encoding_channels = kwargs.pop('file_encoding_channels')
         except KeyError:
-            conditioning_kernel = 256
+            file_encoding_channels = [16]
 
         super().__init__(*args, **kwargs)
 
         self.conditioning_channels = conditioning_channels
         self.conditioning_period = conditioning_period
-        self.conditioning_kernel = conditioning_kernel
+        self.file_encoding_channels = file_encoding_channels
+
+        self.file_encoding_layers = nn.ModuleList()
+        for i in range(len(self.file_encoding_channels) - 1):
+            self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[i],
+                                                       out_channels=self.file_encoding_channels[i + 1],
+                                                       kernel_size=1,
+                                                       bias=True))
 
         self.conditioning_layers = nn.ModuleList()
+        self.file_conditioning_cross_layers = nn.ModuleList()
         for i in range(len(self.conditioning_channels)-1):
             self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
                                                       bias=True))
+            if i != 0:
+                self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
+                                                                     out_channels=self.conditioning_channels[i],
+                                                                     kernel_size=1,
+                                                                     bias=True))
+
 
         self.filter_conditioning_convs = nn.ModuleList()
         self.gate_conditioning_convs = nn.ModuleList()
@@ -421,8 +435,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
                                                            dtype=self.dtype)
 
     def forward(self, input):
-        input, conditioning, offset = input
-        conditioning = self.conditional_network(conditioning)
+        input, conditioning, file_encoding, offset = input
+        conditioning = self.conditional_network(conditioning, file_encoding)
         # for l in range(len(self.conditioning_layers)):
         #     if l != len(self.conditioning_layers) - 1:
         #         conditioning = F.relu(conditioning)
@@ -590,11 +604,18 @@ class WaveNetModelWithConditioning(WaveNetModel):
         mu_gen = mu_law_expansion(generated, self.classes)
         return mu_gen
 
-    def conditional_network(self, conditioning):
+    def conditional_network(self, conditioning, file_encoding):
+        for l in range(len(self.file_encoding_layers)):
+            if l != 0 and l != len(self.file_encoding_layers) - 1:
+                file_encoding = F.relu(file_encoding)
+            file_encoding = self.file_encoding_layers[l](file_encoding)
+
         for l in range(len(self.conditioning_layers)):
-            if l != len(self.conditioning_layers) - 1:
-                conditioning = F.relu(conditioning)
+            if l != 0 and l != len(self.conditioning_layers) - 1:
+                cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
+                conditioning = F.relu(conditioning + cross_encoding)
             conditioning = self.conditioning_layers[l](conditioning)
+
         return conditioning
 
 
@@ -939,7 +960,7 @@ class ParallelWaveNetWithConditioning(ParallelWaveNet):
         :param z: (n, c, l), where n is the minibatch size, c is the number of channels (usually 1) and l is self.input_length
         '''
 
-        z, conditioning, offset = input
+        z, conditioning, file_encoding, offset = input
         activation_input = {'x': None, 'conditioning': conditioning, 'offset': offset}
 
         mu_tot = torch.zeros_like(z)

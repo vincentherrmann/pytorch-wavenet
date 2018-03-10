@@ -25,9 +25,10 @@ model = WaveNetModelWithConditioning(layers=10,
                      output_length=8,
                      dtype=dtype,
                      conditioning_channels=[16, 64, 64, 8],
-                     conditioning_period=128)
+                     conditioning_period=128,
+                     file_encoding_channels=[17, 8, 32])
 
-data = WavenetMixtureDatasetWithConditioning(location='_train_samples/bohemian',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/queen',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
 
@@ -119,7 +120,7 @@ def generate_and_log_samples(step):
     print("audio clips generated")
 
 logger = Logger(log_interval=1,
-                validation_interval=10)
+                validation_interval=1000)
 
 # dataloader = torch.utils.data.DataLoader(data,
 #                                          batch_size=32,
@@ -157,10 +158,10 @@ trainer = WavenetTrainer(model=model,
                          snapshot_interval=500,
                          process_batch=data.process_batch,
                          loss_fun=lambda i, t: mixture_loss(i, t, bin_count=65536),
-                         accuracy_fun=lambda i, t: mixture_accuracy(i, t, bin_count=65536),
+                         accuracy_fun=lambda i, t: mixture_accuracy(i, t, bin_count=1000),
                          dtype=dtype,
                          ltype=dtype,
-                         num_workers=8)
+                         num_workers=0)
 
 
 #model.generate_fast(1000)
