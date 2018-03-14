@@ -4,6 +4,18 @@ import time
 from wavenet_modules import *
 from audio_data import *
 
+wavenet_default_settings = {"layers": 10,
+                            "blocks": 4,
+                            "dilation_channels": 32,
+                            "residual_channels": 32,
+                            "skip_channels": 512,
+                            "end_channels": [256, 128],
+                            "output_channels": 24,
+                            "output_length": 1024,
+                            "kernel_size": 2,
+                            "dilation_factor": 2,
+                            "bias": True,
+                            "dtype": torch.FloatTensor}
 
 class WaveNetModel(nn.Module):
     """
@@ -27,39 +39,22 @@ class WaveNetModel(nn.Module):
 
     Input should be mu-law encoded and between -1. and 1.
     """
-    def __init__(self,
-                 layers=10,
-                 blocks=4,
-                 dilation_channels=32,
-                 residual_channels=32,
-                 skip_channels=256,
-                 end_channels=[256],
-                 classes=256,
-                 in_classes=None,
-                 output_length=32,
-                 kernel_size=2,
-                 dilation_factor=2,
-                 dtype=torch.FloatTensor,
-                 bias=False,
-                 sampling_function=sample_from_softmax):
+    def __init__(self, args_dict=wavenet_default_settings):
 
         super(WaveNetModel, self).__init__()
 
-        self.layers = layers
-        self.blocks = blocks
-        self.dilation_channels = dilation_channels
-        self.residual_channels = residual_channels
-        self.skip_channels = skip_channels
-        self.classes = classes
-        if in_classes is None:
-            self.in_classes = classes
-        else:
-            self.in_classes = in_classes
-        self.kernel_size = kernel_size
-        self.dilation_factor = dilation_factor
-        self.dtype = dtype
-        self.use_bias = bias
-        self.sampling_function = sampling_function
+        self.layers = args_dict["layers"]
+        self.blocks = args_dict["blocks"]
+        self.dilation_channels = args_dict["dilation_channels"]
+        self.residual_channels = args_dict["residual_channels"]
+        self.skip_channels = args_dict["skip_channels"]
+        self.end_channels = args_dict["end_channels"]
+        self.output_channels = args_dict["output_channels"]
+        self.output_length = args_dict["output_length"]
+        self.kernel_size = args_dict["kernel_size"]
+        self.dilation_factor = args_dict["dilation_factor"]
+        self.dtype = args_dict["dtype"]
+        self.use_bias = args_dict["bias"]
 
         # build model
         receptive_field = 1
@@ -73,43 +68,43 @@ class WaveNetModel(nn.Module):
 
         # 1x1 convolution to create channels
         self.start_conv = nn.Conv1d(in_channels=1, #self.in_classes,
-                                    out_channels=residual_channels,
+                                    out_channels=self.residual_channels,
                                     kernel_size=1,
-                                    bias=bias)
+                                    bias=self.use_bias)
 
-        for b in range(blocks):
-            additional_scope = kernel_size - 1
+        for b in range(self.blocks):
+            additional_scope = self.kernel_size - 1
             new_dilation = 1
-            for i in range(layers):
+            for i in range(self.layers):
                 # dilations of this layer
                 self.dilations.append((new_dilation, init_dilation))
 
                 # dilated queues for fast generation
                 queue_name = 'layer_' + str(len(self.dilated_queues))
-                self.dilated_queues[queue_name] = DilatedQueue(max_length=(kernel_size - 1) * new_dilation + 1,
-                                                               num_channels=residual_channels,
+                self.dilated_queues[queue_name] = DilatedQueue(max_length=(self.kernel_size - 1) * new_dilation + 1,
+                                                               num_channels=self.residual_channels,
                                                                dilation=new_dilation,
-                                                               dtype=dtype)
+                                                               dtype=self.dtype)
 
                 # 1x1 convolution for residual connection
-                self.residual_convs.append(nn.Conv1d(in_channels=dilation_channels,
-                                                     out_channels=residual_channels,
+                self.residual_convs.append(nn.Conv1d(in_channels=self.dilation_channels,
+                                                     out_channels=self.residual_channels,
                                                      kernel_size=1,
-                                                     bias=bias))
+                                                     bias=self.use_bias))
 
                 # 1x1 convolution for skip connection
-                self.skip_convs.append(nn.Conv1d(in_channels=dilation_channels,
-                                                 out_channels=skip_channels,
+                self.skip_convs.append(nn.Conv1d(in_channels=self.dilation_channels,
+                                                 out_channels=self.skip_channels,
                                                  kernel_size=1,
-                                                 bias=bias))
+                                                 bias=self.use_bias))
 
                 receptive_field += additional_scope
                 additional_scope *= self.dilation_factor
                 init_dilation = new_dilation
                 new_dilation *= self.dilation_factor
 
-        in_channels = skip_channels
-        for end_channel in end_channels:
+        in_channels = self.skip_channels
+        for end_channel in self.end_channels:
             self.end_layers.append(nn.Conv1d(in_channels=in_channels,
                                              out_channels=end_channel,
                                              kernel_size=1,
@@ -117,12 +112,11 @@ class WaveNetModel(nn.Module):
             in_channels = end_channel
 
         self.end_layers.append(nn.Conv1d(in_channels=in_channels,
-                                         out_channels=self.classes,
+                                         out_channels=self.output_channels,
                                          kernel_size=1,
                                          bias=True))
 
         # self.output_length = 2 ** (layers - 1)
-        self.output_length = output_length
         self.receptive_field = receptive_field
         self.activation_unit_init()
 
@@ -253,18 +247,18 @@ class WaveNetModel(nn.Module):
                 prob = F.softmax(x, dim=0)
                 prob = prob.cpu()
                 np_prob = prob.data.numpy()
-                x = np.random.choice(self.classes, p=np_prob)
+                x = np.random.choice(self.output_channels, p=np_prob)
                 x = np.array([x])
 
                 soft_o = F.softmax(x)
                 soft_o = soft_o.cpu()
                 np_o = soft_o.data.numpy()
-                s = np.random.choice(self.classes, p=np_o)
+                s = np.random.choice(self.output_channels, p=np_o)
                 s = Variable(torch.FloatTensor([s]))
-                s = (s / self.classes) * 2. - 1
+                s = (s / self.output_channels) * 2. - 1
             else:
                 max = torch.max(x, 0)[1].float()
-                s = (max / self.classes) * 2. - 1  # new sample
+                s = (max / self.output_channels) * 2. - 1  # new sample
 
             generated = torch.cat((generated, s), 0)
         self.train()
@@ -276,7 +270,8 @@ class WaveNetModel(nn.Module):
                       temperature=1.,
                       regularize=0.,
                       progress_callback=None,
-                      progress_interval=100):
+                      progress_interval=100,
+                      sampling_function=sample_from_softmax):
         self.eval()
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
@@ -321,7 +316,7 @@ class WaveNetModel(nn.Module):
             # x -= regularizer
 
             if temperature > 0:
-                o = self.sampling_function(x, temperature, self.classes)
+                o = sampling_function(x, temperature, self.output_channels)
                 o = o.astype(np.float32)
             else:
                 # convert to sample value
@@ -349,7 +344,7 @@ class WaveNetModel(nn.Module):
                     progress_callback(i + num_given_samples, total_samples)
 
         self.train()
-        mu_gen = mu_law_expansion(generated, self.classes)
+        mu_gen = mu_law_expansion(generated, self.output_channels)
         return mu_gen
 
 
@@ -365,28 +360,19 @@ class WaveNetModel(nn.Module):
         super().cpu()
 
 
+conditioning_wavenet_default_settings = wavenet_default_settings
+conditioning_wavenet_default_settings["conditioning_channels"] = [16, 32, 16]
+conditioning_wavenet_default_settings["file_encoding_channels"] = [32, 16]
+conditioning_wavenet_default_settings["conditioning_period"] = 128
+
+
 class WaveNetModelWithConditioning(WaveNetModel):
-    def __init__(self, *args, **kwargs):
-        try:
-            conditioning_channels = kwargs.pop('conditioning_channels')
-        except KeyError:
-            conditioning_channels = [16]
+    def __init__(self, args_dict):
+        self.conditioning_channels = args_dict["conditioning_channels"]
+        self.file_encoding_channels = args_dict["file_encoding_channels"]
+        self.conditioning_period = args_dict["conditioning_period"]
 
-        try:
-            conditioning_period = kwargs.pop('conditioning_period')
-        except KeyError:
-            conditioning_period = [128]
-
-        try:
-            file_encoding_channels = kwargs.pop('file_encoding_channels')
-        except KeyError:
-            file_encoding_channels = [16]
-
-        super().__init__(*args, **kwargs)
-
-        self.conditioning_channels = conditioning_channels
-        self.conditioning_period = conditioning_period
-        self.file_encoding_channels = file_encoding_channels
+        super().__init__(args_dict)
 
         self.file_encoding_layers = nn.ModuleList()
         for i in range(len(self.file_encoding_channels) - 1):
@@ -408,6 +394,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
                                                                      kernel_size=1,
                                                                      bias=True))
 
+    def activation_unit_init(self):
+        super().activation_unit_init()
 
         self.filter_conditioning_convs = nn.ModuleList()
         self.gate_conditioning_convs = nn.ModuleList()
@@ -572,7 +560,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 prob = F.softmax(x, dim=0)
                 prob = prob.cpu()
                 np_prob = prob.data.numpy()
-                x = np.random.choice(self.classes, p=np_prob)
+                x = np.random.choice(self.output_channels, p=np_prob)
                 x = np.array([x])
             else:
                 # convert to sample value
@@ -580,7 +568,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 x = x.cpu()
                 x = x.data.numpy()
 
-            o = (x / self.classes) * 2. - 1
+            o = (x / self.output_channels) * 2. - 1
             generated = np.append(generated, o)
 
             # set new input
@@ -601,7 +589,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
         self.train()
         self.conditioning_period = original_conditioning_period
-        mu_gen = mu_law_expansion(generated, self.classes)
+        mu_gen = mu_law_expansion(generated, self.output_channels)
         return mu_gen
 
     def conditional_network(self, conditioning, file_encoding):
@@ -617,6 +605,56 @@ class WaveNetModelWithConditioning(WaveNetModel):
             conditioning = self.conditioning_layers[l](conditioning)
 
         return conditioning
+
+
+class WaveNetModelReluWithConditioning(WaveNetModelWithConditioning):
+    def activation_unit_init(self):
+        self.activation_convs = nn.ModuleList()
+
+        for _ in range(len(self.skip_convs)):
+            self.activation_convs.append(nn.Conv1d(in_channels=self.residual_channels,
+                                                   out_channels=self.dilation_channels,
+                                                   kernel_size=self.kernel_size,
+                                                   bias=self.use_bias))
+
+        self.activation_conditioning_convs = nn.ModuleList()
+        for l in range(len(self.skip_convs)):
+            self.activation_conditioning_convs.append(nn.Conv1d(in_channels=self.conditioning_channels[-1],
+                                                                out_channels=self.dilation_channels,
+                                                                kernel_size=1,
+                                                                bias=True))
+            this_dilation = self.dilations[l][0]
+            queue_name = 'conditioning_' + str(l)
+            self.dilated_queues[queue_name] = DilatedQueue(max_length=(self.kernel_size - 1) * this_dilation + 1,
+                                                           num_channels=self.residual_channels,
+                                                           dilation=this_dilation,
+                                                           dtype=self.dtype)
+
+    def activation_unit(self, input, layer_index, dilation_func):
+        # relu activation unit with conditioning
+        preactivation = self.activation_convs[layer_index](input['x'])
+
+        conditioning = input['conditioning']
+        offset = input['offset']
+        dilation = input['x'].size(0) // conditioning.size(0)
+
+        preactivation_cond = self.activation_conditioning_convs[layer_index](conditioning)
+
+        # upsample conditioning by repeating the values (could also be done with a transposed convolution)
+        n, c, l = preactivation_cond.shape
+        preactivation_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+        gate_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+
+        l = self.receptive_field + self.output_length - 1
+        preactivation_conditioning = torch.cat([preactivation_cond_rep[i:i + 1, :, o:o + l] for i, o in enumerate(offset)])
+        preactivation_cond_dilated = dilation_func(preactivation_conditioning, dilation, init_dilation=1,
+                                                   queue='conditioning_' + str(layer_index))
+
+        l = preactivation.size(2)
+        preactivation_conditioning = preactivation_cond_dilated[:, :, :l]
+
+        x = F.relu(preactivation + preactivation_conditioning)
+        return x
 
 
 class WaveNetModelWithContext(WaveNetModel):
@@ -759,7 +797,7 @@ class WaveNetModelWithContext(WaveNetModel):
                 prob = F.softmax(x, dim=0)
                 prob = prob.cpu()
                 np_prob = prob.data.numpy()
-                x = np.random.choice(self.classes, p=np_prob)
+                x = np.random.choice(self.output_channels, p=np_prob)
                 x = np.array([x])
             else:
                 # convert to sample value
@@ -767,7 +805,7 @@ class WaveNetModelWithContext(WaveNetModel):
                 x = x.cpu()
                 x = x.data.numpy()
 
-            o = (x / self.classes) * 2. - 1
+            o = (x / self.output_channels) * 2. - 1
             generated = np.append(generated, o)
 
             # set new input
@@ -787,7 +825,7 @@ class WaveNetModelWithContext(WaveNetModel):
                     progress_callback(i + num_given_samples, total_samples)
 
         self.train()
-        mu_gen = mu_law_expansion(generated, self.classes)
+        mu_gen = mu_law_expansion(generated, self.output_channels)
         return mu_gen
 
     def cpu(self, type=torch.FloatTensor):

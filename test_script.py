@@ -14,19 +14,16 @@ if use_cuda:
     dtype = torch.cuda.FloatTensor
     ltype = torch.cuda.LongTensor
 
+settings = wavenet_default_settings
+settings["blocks"] = 2
+settings["dilation_channels"] = 2
+settings["residual_channels"] = 2
+settings["skip_channels"] = 4
+settings["end_channels"] = [2, 2]
+settings["output_length"] = 8
+settings["file_encoding_channels"] = [17, 8, 32]
 
-model = WaveNetModelWithConditioning(layers=10,
-                     blocks=2,
-                     dilation_channels=2,
-                     residual_channels=2,
-                     skip_channels=4,
-                     end_channels=[2, 2],
-                     classes=24,
-                     output_length=8,
-                     dtype=dtype,
-                     conditioning_channels=[16, 64, 64, 8],
-                     conditioning_period=128,
-                     file_encoding_channels=[17, 8, 32])
+model = WaveNetModelReluWithConditioning(settings)
 
 data = WavenetMixtureDatasetWithConditioning(location='_train_samples/queen',
                              item_length=model.receptive_field + model.output_length - 1,

@@ -38,7 +38,7 @@ data = ["../train_samples/piano.wav"]
 
 
 data_loader = AudioFileLoader(data,
-                              classes=model.classes,
+                              classes=model.output_channels,
                               receptive_field=model.receptive_field,
                               target_length=model.output_length,
                               dtype=model.dtype,
