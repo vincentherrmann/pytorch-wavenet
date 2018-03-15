@@ -163,12 +163,16 @@ class WaveNetModel(nn.Module):
                 skip = 0
             skip = s + skip
 
+            del s
+
             x = self.residual_convs[i](x)
             x = x + residual[:, :, (self.kernel_size - 1):]
 
+            del residual
+
         x = skip
         for this_layer in self.end_layers:
-            x = this_layer(F.relu(x))
+            x = this_layer(F.relu(x, inplace=True))
 
         return x
 
@@ -595,13 +599,13 @@ class WaveNetModelWithConditioning(WaveNetModel):
     def conditional_network(self, conditioning, file_encoding):
         for l in range(len(self.file_encoding_layers)):
             if l != 0 and l != len(self.file_encoding_layers) - 1:
-                file_encoding = F.relu(file_encoding)
+                file_encoding = F.relu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
 
         for l in range(len(self.conditioning_layers)):
             if l != 0 and l != len(self.conditioning_layers) - 1:
                 cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
-                conditioning = F.relu(conditioning + cross_encoding)
+                conditioning = F.relu(conditioning + cross_encoding, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
 
         return conditioning
@@ -638,23 +642,48 @@ class WaveNetModelReluWithConditioning(WaveNetModelWithConditioning):
         offset = input['offset']
         dilation = input['x'].size(0) // conditioning.size(0)
 
-        preactivation_cond = self.activation_conditioning_convs[layer_index](conditioning)
+        conditioning = self.activation_conditioning_convs[layer_index](conditioning)
 
         # upsample conditioning by repeating the values (could also be done with a transposed convolution)
-        n, c, l = preactivation_cond.shape
-        preactivation_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
-        gate_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+        n, c, l = conditioning.shape
+        conditioning = conditioning.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
 
         l = self.receptive_field + self.output_length - 1
-        preactivation_conditioning = torch.cat([preactivation_cond_rep[i:i + 1, :, o:o + l] for i, o in enumerate(offset)])
-        preactivation_cond_dilated = dilation_func(preactivation_conditioning, dilation, init_dilation=1,
+        conditioning = torch.cat([conditioning[i:i + 1, :, o:o + l] for i, o in enumerate(offset)])
+        conditioning = dilation_func(conditioning, dilation, init_dilation=1,
                                                    queue='conditioning_' + str(layer_index))
 
         l = preactivation.size(2)
-        preactivation_conditioning = preactivation_cond_dilated[:, :, :l]
+        conditioning = conditioning[:, :, :l]
 
-        x = F.relu(preactivation + preactivation_conditioning)
+        x = F.relu(preactivation + conditioning, inplace=True)
         return x
+
+    # def activation_unit(self, input, layer_index, dilation_func):
+    #     # relu activation unit with conditioning
+    #     preactivation = self.activation_convs[layer_index](input['x'])
+    #
+    #     conditioning = input['conditioning']
+    #     offset = input['offset']
+    #     dilation = input['x'].size(0) // conditioning.size(0)
+    #
+    #     preactivation_cond = self.activation_conditioning_convs[layer_index](conditioning)
+    #
+    #     # upsample conditioning by repeating the values (could also be done with a transposed convolution)
+    #     n, c, l = preactivation_cond.shape
+    #     preactivation_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+    #     gate_cond_rep = preactivation_cond.repeat(1, 1, 1, self.conditioning_period).view(n, c, -1)
+    #
+    #     l = self.receptive_field + self.output_length - 1
+    #     preactivation_conditioning = torch.cat([preactivation_cond_rep[i:i + 1, :, o:o + l] for i, o in enumerate(offset)])
+    #     preactivation_cond_dilated = dilation_func(preactivation_conditioning, dilation, init_dilation=1,
+    #                                                queue='conditioning_' + str(layer_index))
+    #
+    #     l = preactivation.size(2)
+    #     preactivation_conditioning = preactivation_cond_dilated[:, :, :l]
+    #
+    #     x = F.relu(preactivation + preactivation_conditioning, inplace=True)
+    #     return x
 
 
 class WaveNetModelWithContext(WaveNetModel):
