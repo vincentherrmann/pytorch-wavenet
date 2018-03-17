@@ -490,12 +490,13 @@ class WaveNetModelWithConditioning(WaveNetModel):
                       progress_callback=None,
                       progress_interval=100,
                       conditioning=None,
-                      offset=0):
+                      file_encoding=None,
+                      offset=0,
+                      sampling_function=sample_from_softmax):
         self.eval()
+
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
-            #ONE HOT: first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
-
         first_samples = Variable(first_samples, volatile=True)
 
         # reset queues
@@ -507,17 +508,22 @@ class WaveNetModelWithConditioning(WaveNetModel):
         conditioning_length = total_samples // self.conditioning_period + 2
 
         if conditioning is None:
-            conditioning = Variable(self.dtype(self.conditioning_channels, conditioning_length).zero_())
+            conditioning = Variable(self.dtype(self.conditioning_channels[0], conditioning_length).zero_())
         elif conditioning.size(1) < conditioning_length:
+            # repeat the last conditioning
             remaining_length = conditioning_length - conditioning.size(1)
             end = conditioning[:, -1].contiguous().view(-1, 1).repeat(1, remaining_length)
             conditioning = torch.cat((conditioning, end), dim=1)
 
+        if file_encoding is None:
+            file_encoding = Variable(self.dtype(self.file_encoding_channels[0], conditioning_length).zero_())
+        elif file_encoding.size(1) < conditioning_length:
+            # repeat the last file encoding
+            remaining_length = conditioning_length - file_encoding.size(1)
+            end = file_encoding[:, -1].contiguous().view(-1, 1).repeat(1, remaining_length)
+            file_encoding = torch.cat((file_encoding, end), dim=1)
 
         input = first_samples[0:1].view(1, 1, 1)
-        # ONE HOT
-        # input = Variable(torch.FloatTensor(1, self.classes, 1).zero_(), volatile=True)
-        # input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
 
         original_conditioning_period = self.conditioning_period
         # set conditional period to 1 for fast generation, because the values are created sample for sample
@@ -527,9 +533,10 @@ class WaveNetModelWithConditioning(WaveNetModel):
         for i in range(num_given_samples - 1):
             cond_index = (i + offset) // original_conditioning_period
             cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
-            cond = self.conditional_network(cond)
+            enc = file_encoding[:, cond_index].contiguous().view(1, -1, 1)
+            cond = self.conditional_network(cond, enc)
             activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
-            x = self.wavenet(input,
+            _ = self.wavenet(input,
                              dilation_func=self.queue_dilate,
                              activation_input=activation_input)
             input = first_samples[i+1:i+2].view(1, 1, 1)
@@ -550,7 +557,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
         for i in range(num_samples):
             cond_index = (num_given_samples + i + offset) // original_conditioning_period
             cond = conditioning[:, cond_index].contiguous().view(1, -1, 1)
-            cond = self.conditional_network(cond)
+            enc = file_encoding[:, cond_index].contiguous().view(1, -1, 1)
+            cond = self.conditional_network(cond, enc)
             activation_input = {'x': None, 'conditioning': cond, 'offset': [0]}
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
@@ -559,24 +567,18 @@ class WaveNetModelWithConditioning(WaveNetModel):
             # x -= regularizer
 
             if temperature > 0:
-                # sample from softmax distribution
-                x /= temperature
-                prob = F.softmax(x, dim=0)
-                prob = prob.cpu()
-                np_prob = prob.data.numpy()
-                x = np.random.choice(self.output_channels, p=np_prob)
-                x = np.array([x])
+                o = sampling_function(x, temperature, self.output_channels)
+                o = o.astype(np.float32)
             else:
                 # convert to sample value
                 x = torch.max(x, 0)[1][0]
                 x = x.cpu()
                 x = x.data.numpy()
 
-            o = (x / self.output_channels) * 2. - 1
             generated = np.append(generated, o)
 
             # set new input
-            input = Variable(self.dtype([[o]]), volatile=True)
+            input = Variable(torch.from_numpy(o), volatile=True).view(1, 1, 1)
             # ONE HOT
             # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
             # input.zero_()
@@ -861,46 +863,28 @@ class WaveNetModelWithContext(WaveNetModel):
         self.context_stack.cpu()
         super().cpu()
 
+parallel_wavenet_default_settings = wavenet_default_settings
+parallel_wavenet_default_settings["stacks"] = 3
+
 
 class ParallelWaveNet(nn.Module):
-    def __init__(self,
-                 stacks=3,
-                 layers=10,
-                 blocks=1,
-                 dilation_channels=32,
-                 residual_channels=32,
-                 skip_channels=256,
-                 end_channels=[256],
-                 classes=2,
-                 output_length=32,
-                 kernel_size=2,
-                 dilation_factor=2,
-                 dtype=torch.FloatTensor,
-                 bias=False):
+    def __init__(self, args_dict=parallel_wavenet_default_settings):
 
         super().__init__()
 
-        self.dtype = dtype
+        self.dtype = args_dict["dtype"]
         self.receptive_field = 0
         self.stacks = nn.ModuleList()
 
-        for i in range(stacks):
-            self.stacks.append(WaveNetModel(layers=layers,
-                                            blocks=blocks,
-                                            dilation_channels=dilation_channels,
-                                            residual_channels=residual_channels,
-                                            skip_channels=skip_channels,
-                                            end_channels=end_channels,
-                                            classes=classes,
-                                            output_length=1,
-                                            kernel_size=kernel_size,
-                                            dilation_factor=dilation_factor,
-                                            dtype=dtype,
-                                            bias=bias))
+        stack_dict = args_dict.copy()
+        stack_dict["output_length"] = 1
+
+        for i in range(args_dict["stacks"]):
+            self.stacks.append(WaveNetModel(stack_dict))
             self.receptive_field += self.stacks[i].receptive_field
 
         self._output_length = 1
-        self.output_length = output_length
+        self.output_length = args_dict["output_length"]
 
     @property
     def output_length(self):
@@ -982,45 +966,32 @@ class ParallelWaveNet(nn.Module):
         return sum([stack.parameter_count() for stack in self.stacks])
 
 
+conditioned_parallel_wavenet_default_settings = wavenet_default_settings
+conditioned_parallel_wavenet_default_settings["blocks"] = 1
+conditioned_parallel_wavenet_default_settings["conditioning_channels"] = [16, 32, 16]
+conditioned_parallel_wavenet_default_settings["file_encoding_channels"] = [32, 16]
+conditioned_parallel_wavenet_default_settings["conditioning_period"] = 128
+
+
 class ParallelWaveNetWithConditioning(ParallelWaveNet):
-    def __init__(self, *args, **kwargs):
-        try:
-            conditioning_channels = kwargs.pop('conditioning_channels')
-        except KeyError:
-            conditioning_channels = [16]
-
-        try:
-            conditioning_period = kwargs.pop('conditioning_period')
-        except KeyError:
-            conditioning_period = [128]
-
+    def __init__(self, args_dict=conditioned_parallel_wavenet_default_settings):
         nn.Module.__init(self)
 
-        self.dtype = kwargs['dtype']
+        self.dtype = args_dict["dtype"]
         self.receptive_field = 0
-        self.conditioning_channels = conditioning_channels
-        self.conditioning_period = conditioning_period
+        self.conditioning_channels = args_dict["conditioning_channels"]
+        self.conditioning_period = args_dict["conditioning_period"]
         self.stacks = nn.ModuleList()
 
-        for i in range(kwargs['stacks']):
-            self.stacks.append(WaveNetModelWithConditioning(layers=kwargs['layers'],
-                                                            blocks=kwargs['blocks'],
-                                                            dilation_channels=kwargs['dilation_channels'],
-                                                            residual_channels=kwargs['residual_channels'],
-                                                            skip_channels=kwargs['skip_channels'],
-                                                            end_channels=kwargs['end_channels'],
-                                                            classes=kwargs['classes'],
-                                                            output_length=1,
-                                                            kernel_size=kwargs['kernel_size'],
-                                                            dilation_factor=kwargs['dilation_factor'],
-                                                            dtype=self.dtype,
-                                                            bias=kwargs['bias'],
-                                                            conditioning_channels=self.conditioning_channels,
-                                                            conditioning_period=self.conditioning_period))
+        stack_dict = args_dict.copy
+        stack_dict["output_length"] = 1
+
+        for i in range(args_dict['stacks']):
+            self.stacks.append(WaveNetModelWithConditioning(stack_dict))
             self.receptive_field += self.stacks[i].receptive_field
 
         self._output_length = 1
-        self.output_length = kwargs['output_length']
+        self.output_length = args_dict['output_length']
 
     def forward(self, input):
         '''

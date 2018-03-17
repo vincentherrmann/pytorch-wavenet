@@ -82,6 +82,8 @@ class SGDNormalized(Optimizer):
                     continue
                 lr = group['lr']
                 norm = p.grad.data.norm(p=2)
+                if norm < 0.0000001:
+                    norm = 1.
                 d_p = (lr / norm) * p.grad.data
                 if weight_decay != 0:
                     d_p.add_(weight_decay, p.data)

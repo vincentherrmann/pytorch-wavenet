@@ -6,17 +6,18 @@ import scipy.io.wavfile
 import numpy as np
 
 #model = load_latest_model_from('snapshots', use_cuda=False)
-model = load_to_cpu("snapshots/turca_model_4_mixtures_step_57000")
+model = load_to_cpu("snapshots/queen_model_relu_1")
 model.sampling_function = sample_from_mixture
+#model.output_channels = model.classes
 
 print('model: ', model)
 print('receptive field: ', model.receptive_field)
 print('parameter count: ', model.parameter_count())
 
-data = WavenetMixtureDataset(location='_train_samples/alla_turca',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/queen',
                              item_length=model.receptive_field + model.output_length - 1,
-                             target_length=model.output_length)
-
+                             target_length=model.output_length,
+                             conditioning_channels=64)
 
 # data = WavenetDatasetWithRandomConditioning(dataset_file='_train_samples/alla_turca/conditioning_dataset.npz',
 #                                             item_length=model.receptive_field + model.output_length - 1,
@@ -40,10 +41,12 @@ print('the dataset has ' + str(len(data)) + ' items')
 # start_data = torch.max(start_data.data, 0)[1].type(torch.FloatTensor)
 #
 
-start_data = data[500]
+start_data = data[5000]
 #start_data = omit_conditioning(start_data, torch.FloatTensor, torch.LongTensor)
 start_data = data.process_batch(start_data, torch.FloatTensor, torch.LongTensor)
-start_data = start_data[0].data[0,:]
+conditioning = start_data[0][1]
+file_encoding = start_data[0][2]
+start_data = start_data[0][0].data[0,:]
 
 
 def prog_callback(step, total_steps):
@@ -55,9 +58,10 @@ generated = model.generate_fast(num_samples=64000,
                                  progress_callback=prog_callback,
                                  progress_interval=100,
                                  temperature=1.0,
-                                 regularize=0.)
-                                 #conditioning=conditioning,
-                                 #offset=offset)
+                                 regularize=0.,
+                                 conditioning=conditioning,
+                                 file_encoding=file_encoding,
+                                 sampling_function=sample_from_mixture)
 
 print(generated)
 scipy.io.wavfile.write('latest_generated_clip.wav', rate=16000, data=generated.astype(np.float32))
