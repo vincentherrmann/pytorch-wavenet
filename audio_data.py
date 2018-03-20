@@ -592,7 +592,7 @@ def omit_conditioning(batch, dtype, ltype):
 
 
 def list_all_audio_files(location):
-    types = [".mp3", ".wav", ".aif", "aiff"]
+    types = [".mp3", ".wav", ".aif", "aiff", ".flac"]
     audio_files = []
     for type in types:
         audio_files.extend(sorted(location.glob('**/*' + type)))

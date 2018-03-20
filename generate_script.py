@@ -6,7 +6,7 @@ import scipy.io.wavfile
 import numpy as np
 
 #model = load_latest_model_from('snapshots', use_cuda=False)
-model = load_to_cpu("snapshots/queen_model_relu_1")
+model = load_to_cpu("snapshots/bach_model_relu_1_62k")
 model.sampling_function = sample_from_mixture
 #model.output_channels = model.classes
 
@@ -14,10 +14,10 @@ print('model: ', model)
 print('receptive field: ', model.receptive_field)
 print('parameter count: ', model.parameter_count())
 
-data = WavenetMixtureDatasetWithConditioning(location='_train_samples/queen',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/bach_violin',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length,
-                             conditioning_channels=64)
+                             conditioning_channels=model.conditioning_channels[0])
 
 # data = WavenetDatasetWithRandomConditioning(dataset_file='_train_samples/alla_turca/conditioning_dataset.npz',
 #                                             item_length=model.receptive_field + model.output_length - 1,
@@ -53,7 +53,7 @@ def prog_callback(step, total_steps):
     print(str(100 * step // total_steps) + "% generated")
 
 
-generated = model.generate_fast(num_samples=64000,
+generated = model.generate_fast(num_samples=16000,
                                  first_samples=start_data,
                                  progress_callback=prog_callback,
                                  progress_interval=100,

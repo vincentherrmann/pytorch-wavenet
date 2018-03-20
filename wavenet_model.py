@@ -383,7 +383,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[i],
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
-                                                       bias=True))
+                                                       bias=False))
 
         self.conditioning_layers = nn.ModuleList()
         self.file_conditioning_cross_layers = nn.ModuleList()
@@ -391,12 +391,12 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
-                                                      bias=True))
+                                                      bias=False))
             if i != 0:
                 self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
                                                                      out_channels=self.conditioning_channels[i],
                                                                      kernel_size=1,
-                                                                     bias=True))
+                                                                     bias=False))
 
     def activation_unit_init(self):
         super().activation_unit_init()
@@ -407,12 +407,12 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.filter_conditioning_convs.append(nn.Conv1d(in_channels=self.conditioning_channels[-1],
                                                             out_channels=self.dilation_channels,
                                                             kernel_size=1,
-                                                            bias=True))
+                                                            bias=self.use_bias))
 
             self.gate_conditioning_convs.append(nn.Conv1d(in_channels=self.conditioning_channels[-1],
                                                           out_channels=self.dilation_channels,
                                                           kernel_size=1,
-                                                          bias=True))
+                                                          bias=self.use_bias))
 
             this_dilation = self.dilations[l][0]
             queue_name = 'filter_conditioning_' + str(l)
