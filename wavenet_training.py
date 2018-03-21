@@ -81,6 +81,24 @@ class WavenetTrainer:
         self.loss_fun = loss_fun
         self.accuracy_fun = accuracy_fun
 
+        self.num_step_track = 10
+        self._tic = 0
+        self._toc = 0
+        self._step_times = np.zeros(self.num_step_track)
+
+    def track_step_times(self, step, begin_tracking_step=0):
+        if step - begin_tracking_step == 0:
+            self._tic = time.time()
+        elif step - begin_tracking_step <= self.num_step_track:
+            self._toc = time.time()
+            self._step_times[step - begin_tracking_step - 1] = self._toc - self._tic
+            self._tic = time.time()
+            if step - begin_tracking_step == self.num_step_track:
+                mean = np.mean(self._step_times)
+                std = np.std(self._step_times)
+                print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
+                self._step_times = np.zeros(self.num_step_track)
+
     def train(self,
               batch_size=32,
               epochs=10,
@@ -92,11 +110,8 @@ class WavenetTrainer:
                                                       num_workers=self.num_workers,
                                                       pin_memory=self.pin_memory)
         step = continue_training_at_step
-        num_step_track = 10
-        step_times = np.zeros(num_step_track)
         for current_epoch in range(epochs):
             print("epoch", current_epoch)
-            tic = time.time()
             for batch in iter(self.dataloader):
                 if self.process_batch is None:
                     x, target = batch
@@ -111,20 +126,11 @@ class WavenetTrainer:
                 loss.backward()
                 loss = loss.data[0]
 
-                if self.clip is not None:
-                    torch.nn.utils.clip_grad_norm(self.model.parameters(), self.clip)
                 self.optimizer.step()
-                step += 1
 
-                # time step duration:
-                if step <= num_step_track:
-                    toc = time.time()
-                    step_times[step-1] = toc - tic
-                    tic = time.time()
-                    if step == num_step_track:
-                        mean = np.mean(step_times)
-                        std = np.std(step_times)
-                        print("one training step does take " + str(mean) + " +/- " + str(std) + " seconds")
+                self.track_step_times(step, begin_tracking_step=continue_training_at_step)
+
+                step += 1
 
                 if step % self.snapshot_interval == 0:
                     if self.snapshot_path is None:
