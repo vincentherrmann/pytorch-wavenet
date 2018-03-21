@@ -601,13 +601,13 @@ class WaveNetModelWithConditioning(WaveNetModel):
     def conditional_network(self, conditioning, file_encoding):
         for l in range(len(self.file_encoding_layers)):
             if l != 0 and l != len(self.file_encoding_layers) - 1:
-                file_encoding = F.relu(file_encoding, inplace=True)
+                file_encoding = F.leaky_relu(file_encoding, negative_slope=0.1, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
 
         for l in range(len(self.conditioning_layers)):
             if l != 0 and l != len(self.conditioning_layers) - 1:
                 cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
-                conditioning = F.relu(conditioning + cross_encoding, inplace=True)
+                conditioning = F.relu(conditioning + cross_encoding, negative_slope=0.1, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
 
         return conditioning
