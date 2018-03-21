@@ -607,7 +607,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
         for l in range(len(self.conditioning_layers)):
             if l != 0 and l != len(self.conditioning_layers) - 1:
                 cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
-                conditioning = F.relu(conditioning + cross_encoding, negative_slope=0.1, inplace=True)
+                conditioning = F.leaky_relu(conditioning + cross_encoding, negative_slope=0.1, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
 
         return conditioning
