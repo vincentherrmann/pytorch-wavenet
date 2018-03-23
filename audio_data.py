@@ -193,7 +193,7 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         offset = position_in_file % self.conditioning_period
         conditioning_count = math.ceil(item_length / self.conditioning_period) + 1
 
-        sample_to_phase = (2*math.pi) / (self.sampling_rate * self.min_conditioning_breadth)
+        sample_to_phase = (math.pi) / (self.sampling_rate * self.min_conditioning_breadth)
         phase_start = (position_in_file - offset) * sample_to_phase
         phase_length = conditioning_count * self.conditioning_period * sample_to_phase
         x = np.linspace(phase_start, phase_start + phase_length, num=conditioning_count)
