@@ -185,7 +185,7 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         self.conditioning_channels = conditioning_channels
 
         print("Conditioning captures time scales ranging from " + str(self.min_conditioning_breadth) + " to " \
-              + str(self.min_conditioning_breadth * self.conditioning_channels) + " seconds")
+              + str(self.min_conditioning_breadth * self.conditioning_channels // 2) + " seconds")
 
         super().__init__(*args, **kwargs)
 
@@ -199,8 +199,10 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
         x = np.linspace(phase_start, phase_start + phase_length, num=conditioning_count)
         conditioning = np.zeros((self.conditioning_channels, conditioning_count))
 
-        for c in range(self.conditioning_channels):
-            conditioning[c, :] = np.cos(x * ((c + 1) / self.conditioning_channels))
+        frequency_count = self.conditioning_channels // 2
+        for c in range(frequency_count):
+            conditioning[2 * c, :] = np.cos(x * ((c + 1) / frequency_count))
+            conditioning[2 * c + 1, :] = np.sin(x * ((c + 1) / frequency_count))
 
         file_encoding = np.zeros((len(self.files), conditioning_count))
         file_encoding[file_index, :] = 1.
