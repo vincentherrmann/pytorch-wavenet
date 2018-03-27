@@ -383,7 +383,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[i],
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
-                                                       bias=self.use_bias))
+                                                       bias=True))
 
         self.conditioning_layers = nn.ModuleList()
         self.file_conditioning_cross_layers = nn.ModuleList()
