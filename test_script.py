@@ -25,7 +25,7 @@ settings["file_encoding_channels"] = [1, 8, 32]
 
 model = WaveNetModelReluWithConditioning(settings)
 
-data = WavenetMixtureDatasetWithConditioning(location='_train_samples/atmospheres',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/KV_311',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
 

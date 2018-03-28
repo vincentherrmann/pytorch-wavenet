@@ -280,6 +280,8 @@ class WaveNetModel(nn.Module):
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
             #ONE HOT: first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
+        elif first_samples.size[0] > self.receptive_field:
+            first_samples = first_samples[-self.receptive_field:]
         first_samples = Variable(first_samples, volatile=True)
 
         # reset queues
@@ -309,7 +311,7 @@ class WaveNetModel(nn.Module):
                     progress_callback(i, total_samples)
 
         # generate new samples
-        generated = np.array([])
+        generated = first_samples.data.squeeze().numpy()  #np.array([])
         # regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
         # regularizer = regularizer.squeeze() * regularize
         tic = time.time()
@@ -383,7 +385,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[i],
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
-                                                       bias=True))
+                                                       bias=self.use_bias))
 
         self.conditioning_layers = nn.ModuleList()
         self.file_conditioning_cross_layers = nn.ModuleList()
@@ -497,6 +499,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
         if first_samples is None:
             first_samples = self.dtype(1).zero_()
+        if first_samples.size(0) > self.receptive_field:
+            first_samples = first_samples[:self.receptive_field]
         first_samples = Variable(first_samples, volatile=True)
 
         # reset queues
@@ -550,9 +554,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                     progress_callback(i, total_samples)
 
         # generate new samples
-        generated = np.array([])
-        # regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
-        # regularizer = regularizer.squeeze() * regularize
+        generated = first_samples.data.numpy() #np.array([])
         tic = time.time()
         for i in range(num_samples):
             cond_index = (num_given_samples + i + offset) // original_conditioning_period
@@ -563,8 +565,6 @@ class WaveNetModelWithConditioning(WaveNetModel):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate,
                              activation_input=activation_input).squeeze()
-
-            # x -= regularizer
 
             if temperature > 0:
                 o = sampling_function(x, temperature, self.output_channels)
@@ -579,10 +579,6 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
             # set new input
             input = Variable(torch.from_numpy(o), volatile=True).view(1, 1, 1)
-            # ONE HOT
-            # x = Variable(torch.from_numpy(x).type(torch.LongTensor))
-            # input.zero_()
-            # input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
 
             if (i+1) == 100:
                 toc = time.time()
@@ -595,8 +591,9 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
         self.train()
         self.conditioning_period = original_conditioning_period
-        mu_gen = mu_law_expansion(generated, self.output_channels)
-        return mu_gen
+        #mu_gen = mu_law_expansion(generated, self.output_channels)
+        #return mu_gen
+        return generated
 
     def conditional_network(self, conditioning, file_encoding):
         for l in range(len(self.file_encoding_layers)):
