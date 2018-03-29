@@ -393,12 +393,12 @@ class WaveNetModelWithConditioning(WaveNetModel):
             self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
-                                                      bias=False))
-            if i != 0:
-                self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
-                                                                     out_channels=self.conditioning_channels[i],
-                                                                     kernel_size=1,
-                                                                     bias=self.use_bias))
+                                                      bias=False if i == 0 else self.use_bias))
+
+            self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
+                                                                 out_channels=self.conditioning_channels[i+1],
+                                                                 kernel_size=1,
+                                                                 bias=self.use_bias))
 
     def activation_unit_init(self):
         super().activation_unit_init()
@@ -606,6 +606,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
                 conditioning = F.leaky_relu(conditioning + cross_encoding, negative_slope=0.0, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
+        conditioning += self.file_conditioning_cross_layers[-1](file_encoding)
 
         return conditioning
 

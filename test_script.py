@@ -21,6 +21,7 @@ settings["residual_channels"] = 2
 settings["skip_channels"] = 4
 settings["end_channels"] = [2, 2]
 settings["output_length"] = 8
+settings["conditioning_channels"] = [16, 48, 64, 32, 12]
 settings["file_encoding_channels"] = [3, 8, 32]
 
 model = WaveNetModelReluWithConditioning(settings)
