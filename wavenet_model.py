@@ -149,7 +149,7 @@ class WaveNetModel(nn.Module):
             x = self.activation_unit(activation_input, i, dilation_func)
 
             # parametrized skip connection
-            s = x
+            s = x.clone()
             if x.size(2) != 1:
                 pass
             if x.size(2) != 0:  # 1: TODO: delete this line !? (why is it there?)
