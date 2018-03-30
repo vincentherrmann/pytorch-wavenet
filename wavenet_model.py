@@ -390,15 +390,16 @@ class WaveNetModelWithConditioning(WaveNetModel):
         self.conditioning_layers = nn.ModuleList()
         self.file_conditioning_cross_layers = nn.ModuleList()
         for i in range(len(self.conditioning_channels)-1):
-            self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
+            additional_channels = self.file_encoding_channels[-1] if i == 0 else 0
+            self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i] + additional_channels,
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
                                                       bias=False if i == 0 else self.use_bias))
 
-            self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
-                                                                 out_channels=self.conditioning_channels[i+1],
-                                                                 kernel_size=1,
-                                                                 bias=self.use_bias))
+            # self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
+            #                                                      out_channels=self.conditioning_channels[i+1],
+            #                                                      kernel_size=1,
+            #                                                      bias=self.use_bias))
 
     def activation_unit_init(self):
         super().activation_unit_init()
@@ -597,18 +598,18 @@ class WaveNetModelWithConditioning(WaveNetModel):
 
     def conditional_network(self, conditioning, file_encoding):
         for l in range(len(self.file_encoding_layers)):
-            if l != 0 and l != len(self.file_encoding_layers) - 1:
-                file_encoding = F.leaky_relu(file_encoding, negative_slope=0.0, inplace=True)
+            if l != 0:
+                file_encoding = F.relu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
 
-        for l in range(len(self.conditioning_layers)):
-            if l != 0 and l != len(self.conditioning_layers) - 1:
-                cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
-                conditioning = F.leaky_relu(conditioning + cross_encoding, negative_slope=0.0, inplace=True)
-            conditioning = self.conditioning_layers[l](conditioning)
-        conditioning += self.file_conditioning_cross_layers[-1](file_encoding)
+        conditioning = torch.cat([conditioning, F.relu(file_encoding, inplace=True)], dim=1)
 
-        return conditioning
+        for l in range(len(self.conditioning_layers)):
+            if l != 0:
+                conditioning = F.relu(conditioning, inplace=True)
+            conditioning = self.conditioning_layers[l](conditioning)
+
+        return F.relu(conditioning, inplace=True)
 
 
 class WaveNetModelReluWithConditioning(WaveNetModelWithConditioning):
