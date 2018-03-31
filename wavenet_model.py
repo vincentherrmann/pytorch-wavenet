@@ -599,17 +599,17 @@ class WaveNetModelWithConditioning(WaveNetModel):
     def conditional_network(self, conditioning, file_encoding):
         for l in range(len(self.file_encoding_layers)):
             if l != 0:
-                file_encoding = F.relu(file_encoding, inplace=True)
+                file_encoding = F.elu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
 
-        conditioning = torch.cat([conditioning, F.relu(file_encoding, inplace=True)], dim=1)
+        conditioning = torch.cat([conditioning, F.elu(file_encoding, inplace=True)], dim=1)
 
         for l in range(len(self.conditioning_layers)):
             if l != 0:
-                conditioning = F.relu(conditioning, inplace=True)
+                conditioning = F.elu(conditioning, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
 
-        return F.relu(conditioning, inplace=True)
+        return F.elu(conditioning, inplace=True)
 
 
 class WaveNetModelReluWithConditioning(WaveNetModelWithConditioning):
