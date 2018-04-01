@@ -370,6 +370,7 @@ conditioning_wavenet_default_settings = wavenet_default_settings
 conditioning_wavenet_default_settings["conditioning_channels"] = [16, 32, 16]
 conditioning_wavenet_default_settings["file_encoding_channels"] = [32, 16]
 conditioning_wavenet_default_settings["conditioning_period"] = 128
+conditioning_wavenet_default_settings["conditioning_noise"] = 0.05
 
 
 class WaveNetModelWithConditioning(WaveNetModel):
@@ -377,6 +378,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
         self.conditioning_channels = args_dict["conditioning_channels"]
         self.file_encoding_channels = args_dict["file_encoding_channels"]
         self.conditioning_period = args_dict["conditioning_period"]
+        self.conditioning_noise = args_dict["conditioning_noise"]
 
         super().__init__(args_dict)
 
@@ -599,6 +601,8 @@ class WaveNetModelWithConditioning(WaveNetModel):
         return generated
 
     def conditional_network(self, conditioning, file_encoding):
+        if self.training:
+            conditioning += Variable(torch.randn(conditioning.size()).type(self.dtype) * self.conditioning_noise)
         # TODO: This implementation is a bit clumsy..., reorder activation, dropout etc.
         for l in range(len(self.file_encoding_layers)):
             if l != 0:
