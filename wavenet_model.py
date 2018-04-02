@@ -389,23 +389,19 @@ class WaveNetModelWithConditioning(WaveNetModel):
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
                                                        bias=self.use_bias))
-        self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
-                                                   out_channels=self.conditioning_channels[0],
-                                                   kernel_size=1,
-                                                   bias=self.use_bias))
         self.conditioning_layers = nn.ModuleList()
         self.conditioning_dropout = nn.Dropout(p=0.5)
-        # self.file_conditioning_cross_layers = nn.ModuleList()
+        self.file_conditioning_cross_layers = nn.ModuleList()
         for i in range(len(self.conditioning_channels)-1):
             self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
                                                       bias=False if i == 0 else self.use_bias))
 
-            # self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
-            #                                                      out_channels=self.conditioning_channels[i+1],
-            #                                                      kernel_size=1,
-            #                                                      bias=self.use_bias))
+            self.file_conditioning_cross_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
+                                                                 out_channels=self.conditioning_channels[i+1],
+                                                                 kernel_size=1,
+                                                                 bias=self.use_bias))
 
     def activation_unit_init(self):
         super().activation_unit_init()
@@ -610,13 +606,16 @@ class WaveNetModelWithConditioning(WaveNetModel):
             if l != 0:
                 file_encoding = F.elu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
+        file_encoding = F.elu(file_encoding, inplace=True)
         file_encoding = self.file_encoding_dropout(file_encoding)
-        conditioning = file_encoding * conditioning
 
         for l in range(len(self.conditioning_layers)):
             if l != 0:
-                conditioning = F.elu(conditioning, inplace=True)
+                cross_encoding = self.file_conditioning_cross_layers[l-1](file_encoding)
+                conditioning = F.elu(conditioning + cross_encoding, inplace=True)
             conditioning = self.conditioning_layers[l](conditioning)
+        cross_encoding = self.file_conditioning_cross_layers[-1](file_encoding)
+        conditioning = F.elu(conditioning + cross_encoding, inplace=True)
         conditioning = self.conditioning_dropout(conditioning)
         return F.elu(conditioning, inplace=True)
 
