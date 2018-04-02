@@ -389,13 +389,15 @@ class WaveNetModelWithConditioning(WaveNetModel):
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
                                                        bias=self.use_bias))
-
+        self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[-1],
+                                                   out_channels=self.conditioning_channels[0],
+                                                   kernel_size=1,
+                                                   bias=self.use_bias))
         self.conditioning_layers = nn.ModuleList()
         self.conditioning_dropout = nn.Dropout(p=0.5)
         # self.file_conditioning_cross_layers = nn.ModuleList()
         for i in range(len(self.conditioning_channels)-1):
-            additional_channels = self.file_encoding_channels[-1] if i == 0 else 0
-            self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i] + additional_channels,
+            self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
                                                       out_channels=self.conditioning_channels[i+1],
                                                       kernel_size=1,
                                                       bias=False if i == 0 else self.use_bias))
@@ -609,7 +611,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 file_encoding = F.elu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
         file_encoding = self.file_encoding_dropout(file_encoding)
-        conditioning = torch.cat([conditioning, F.elu(file_encoding, inplace=True)], dim=1)
+        conditioning = file_encoding * conditioning
 
         for l in range(len(self.conditioning_layers)):
             if l != 0:

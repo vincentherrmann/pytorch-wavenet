@@ -22,11 +22,11 @@ settings["skip_channels"] = 4
 settings["end_channels"] = [2, 2]
 settings["output_length"] = 8
 settings["conditioning_channels"] = [16, 48, 64, 32, 12]
-settings["file_encoding_channels"] = [3, 8, 32]
+settings["file_encoding_channels"] = [4]
 
 model = WaveNetModelReluWithConditioning(settings)
 
-data = WavenetMixtureDatasetWithConditioning(location='_train_samples/toy_oboe',
+data = WavenetMixtureDatasetWithConditioning(location='_train_samples/Schubert_op90',
                              item_length=model.receptive_field + model.output_length - 1,
                              target_length=model.output_length)
 
