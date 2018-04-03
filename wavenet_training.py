@@ -44,6 +44,7 @@ class WavenetTrainer:
                  model,
                  dataset,
                  optimizer=optim.Adam,
+                 parameters=None,
                  lr=0.001,
                  weight_decay=0,
                  gradient_clipping=None,
@@ -66,7 +67,10 @@ class WavenetTrainer:
         self.weight_decay = weight_decay
         self.clip = gradient_clipping
         self.optimizer_type = optimizer
-        self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if parameters is None:
+            self.optimizer = self.optimizer_type(params=self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        else:
+            self.optimizer = self.optimizer_type(params=parameters, lr=self.lr, weight_decay=self.weight_decay)
         self.logger = logger
         self.logger.trainer = self
         self.snapshot_path = snapshot_path

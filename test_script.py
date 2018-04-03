@@ -148,6 +148,7 @@ logger = Logger(log_interval=1,
 
 trainer = WavenetTrainer(model=model,
                          dataset=data,
+                         parameters=model.conditional_parameters(),
                          lr=0.003,
                          weight_decay=0,
                          logger=logger,

@@ -619,6 +619,12 @@ class WaveNetModelWithConditioning(WaveNetModel):
         conditioning = self.conditioning_dropout(conditioning)
         return F.elu(conditioning, inplace=True)
 
+    def conditional_parameters(self):
+        conditional_modules = [self.conditioning_layers, self.file_encoding_layers, self.file_conditioning_cross_layers]
+        parameters = []
+        for m in conditional_modules:
+            parameters.extend(m.parameters())
+        return parameters
 
 class WaveNetModelReluWithConditioning(WaveNetModelWithConditioning):
     def activation_unit_init(self):
