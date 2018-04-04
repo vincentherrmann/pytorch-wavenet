@@ -201,8 +201,9 @@ class WavenetMixtureDatasetWithConditioning(WavenetMixtureDataset):
 
         frequency_count = self.conditioning_channels // 2
         for c in range(frequency_count):
-            conditioning[2 * c, :] = np.cos(x * ((c + 1) / frequency_count))
-            conditioning[2 * c + 1, :] = np.sin(x * ((c + 1) / frequency_count))
+            factor = 1 / (c+1)
+            conditioning[2 * c, :] = np.cos(x * ((c + 1) / frequency_count)) * factor
+            conditioning[2 * c + 1, :] = np.sin(x * ((c + 1) / frequency_count)) * factor
 
         file_encoding = np.zeros((len(self.files), conditioning_count))
         file_encoding[file_index, :] = 1.

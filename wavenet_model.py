@@ -371,6 +371,8 @@ conditioning_wavenet_default_settings["conditioning_channels"] = [16, 32, 16]
 conditioning_wavenet_default_settings["file_encoding_channels"] = [32, 16]
 conditioning_wavenet_default_settings["conditioning_period"] = 128
 conditioning_wavenet_default_settings["conditioning_noise"] = 0.05
+conditioning_wavenet_default_settings["dropout_rate"] = 0.5
+
 
 
 class WaveNetModelWithConditioning(WaveNetModel):
@@ -379,18 +381,19 @@ class WaveNetModelWithConditioning(WaveNetModel):
         self.file_encoding_channels = args_dict["file_encoding_channels"]
         self.conditioning_period = args_dict["conditioning_period"]
         self.conditioning_noise = args_dict["conditioning_noise"]
+        self.dropout_rate = args_dict["dropout_rate"]
 
         super().__init__(args_dict)
 
         self.file_encoding_layers = nn.ModuleList()
-        self.file_encoding_dropout = nn.Dropout(p=0.5)
+        self.file_encoding_dropout = nn.Dropout(p=self.dropout_rate)
         for i in range(len(self.file_encoding_channels) - 1):
             self.file_encoding_layers.append(nn.Conv1d(in_channels=self.file_encoding_channels[i],
                                                        out_channels=self.file_encoding_channels[i + 1],
                                                        kernel_size=1,
                                                        bias=self.use_bias))
         self.conditioning_layers = nn.ModuleList()
-        self.conditioning_dropout = nn.Dropout(p=0.5)
+        self.conditioning_dropout = nn.Dropout(p=self.dropout_rate)
         self.file_conditioning_cross_layers = nn.ModuleList()
         for i in range(len(self.conditioning_channels)-1):
             self.conditioning_layers.append(nn.Conv1d(in_channels=self.conditioning_channels[i],
