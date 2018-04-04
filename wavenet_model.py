@@ -610,7 +610,7 @@ class WaveNetModelWithConditioning(WaveNetModel):
                 file_encoding = F.elu(file_encoding, inplace=True)
             file_encoding = self.file_encoding_layers[l](file_encoding)
         file_encoding = F.elu(file_encoding, inplace=True)
-        file_encoding = self.file_encoding_dropout(file_encoding)
+        # file_encoding = self.file_encoding_dropout(file_encoding)
 
         for l in range(len(self.conditioning_layers)):
             if l != 0:
