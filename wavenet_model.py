@@ -130,13 +130,13 @@ class WaveNetModel(nn.Module):
         # WaveNet layers
         for i in range(self.blocks * self.layers):
 
-            #			 |----------------------------------------|     *residual*
+            #            |----------------------------------------|     *residual*
             #            |                                        |
-            # 			 |	  |-- conv -- tanh --|			      |
+            #            |    |-- conv -- tanh --|                |
             # -> dilate -|----|                  * ----|-- 1x1 -- + -->	*input*
-            #				  |-- conv -- sigm --|     |
-            #							              1x1
-            #							               |
+            #                 |-- conv -- sigm --|     |
+            #                                         1x1
+            #                                          |
             # ---------------------------------------> + ------------->	*skip*
 
             (dilation, init_dilation) = self.dilations[i]
