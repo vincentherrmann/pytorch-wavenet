@@ -53,7 +53,7 @@ class DilatedQueue:
             self.data = Variable(dtype(num_channels, max_length).zero_())
 
     def enqueue(self, input):
-        self.data[:, self.in_pos] = input
+        self.data[:, self.in_pos] = input[:, 0]
         self.in_pos = (self.in_pos + 1) % self.max_length
 
     def dequeue(self, num_deq=1, dilation=1):
