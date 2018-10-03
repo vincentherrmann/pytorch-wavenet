@@ -3,7 +3,7 @@ import os.path
 import time
 from wavenet_modules import *
 from audio_data import *
-
+from torch import tanh, sigmoid
 
 class WaveNetModel(nn.Module):
     """
@@ -145,9 +145,9 @@ class WaveNetModel(nn.Module):
 
             # dilated convolution
             filter = self.filter_convs[i](residual)
-            filter = F.tanh(filter)
+            filter = tanh(filter)
             gate = self.gate_convs[i](residual)
-            gate = F.sigmoid(gate)
+            gate = sigmoid(gate)
             x = filter * gate
 
             # parametrized skip connection
@@ -243,8 +243,8 @@ class WaveNetModel(nn.Module):
                       progress_interval=100):
         self.eval()
         if first_samples is None:
-            first_samples = torch.LongTensor(1).zero_() + (self.classes // 2)
-        first_samples = Variable(first_samples)
+            first_samples = torch.zeros(1, dtype=torch.long) + (self.classes // 2)
+        # first_samples = first_samples.requires_grad_()
 
         # reset queues
         for queue in self.dilated_queues:
@@ -253,7 +253,7 @@ class WaveNetModel(nn.Module):
         num_given_samples = first_samples.size(0)
         total_samples = num_given_samples + num_samples
 
-        input = Variable(torch.FloatTensor(1, self.classes, 1).zero_())
+        input = torch.zeros(1, self.classes, 1) #, requires_grad=True)
         input = input.scatter_(1, first_samples[0:1].view(1, -1, 1), 1.)
 
         # fill queues with given samples
@@ -270,13 +270,13 @@ class WaveNetModel(nn.Module):
 
         # generate new samples
         generated = np.array([])
-        regularizer = torch.pow(Variable(torch.arange(self.classes)) - self.classes / 2., 2)
+        regularizer = torch.pow(torch.arange(float(self.classes), requires_grad=True) - self.classes / 2., 2)
         regularizer = regularizer.squeeze() * regularize
         tic = time.time()
         for i in range(num_samples):
             x = self.wavenet(input,
                              dilation_func=self.queue_dilate).squeeze()
-
+            
             x -= regularizer
 
             if temperature > 0:
