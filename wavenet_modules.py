@@ -1,10 +1,10 @@
 import math
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Parameter
 from torch.autograd import Variable, Function
-import numpy as np
+from torch.nn import Parameter
 
 
 def dilate(x, dilation, init_dilation=1, pad_start=True):
@@ -24,7 +24,7 @@ def dilate(x, dilation, init_dilation=1, pad_start=True):
     new_l = int(np.ceil(l / dilation_factor) * dilation_factor)
     if new_l != l:
         l = new_l
-        x = constant_pad_1d(x, new_l, dimension=2, pad_start=pad_start)
+        x = constant_pad_1d(x, new_l, pad_start=pad_start)
 
     l_old = int(round(l / dilation_factor))
     n_old = int(round(n * dilation_factor))
@@ -77,51 +77,21 @@ class DilatedQueue:
         self.out_pos = 0
 
 
-class ConstantPad1d(Function):
-    def __init__(self, target_size, dimension=0, value=0, pad_start=False):
-        super(ConstantPad1d, self).__init__()
-        self.target_size = target_size
-        self.dimension = dimension
-        self.value = value
-        self.pad_start = pad_start
-
-    def forward(self, input):
-        self.num_pad = self.target_size - input.size(self.dimension)
-        assert self.num_pad >= 0, 'target size has to be greater than input size'
-
-        self.input_size = input.size()
-
-        size = list(input.size())
-        size[self.dimension] = self.target_size
-        output = input.new(*tuple(size)).fill_(self.value)
-        c_output = output
-
-        # crop output
-        if self.pad_start:
-            c_output = c_output.narrow(self.dimension, self.num_pad, c_output.size(self.dimension) - self.num_pad)
-        else:
-            c_output = c_output.narrow(self.dimension, 0, c_output.size(self.dimension) - self.num_pad)
-
-        c_output.copy_(input)
-        return output
-
-    def backward(self, grad_output):
-        grad_input = grad_output.new(*self.input_size).zero_()
-        cg_output = grad_output
-
-        # crop grad_output
-        if self.pad_start:
-            cg_output = cg_output.narrow(self.dimension, self.num_pad, cg_output.size(self.dimension) - self.num_pad)
-        else:
-            cg_output = cg_output.narrow(self.dimension, 0, cg_output.size(self.dimension) - self.num_pad)
-
-        grad_input.copy_(cg_output)
-        return grad_input
-
-
 def constant_pad_1d(input,
                     target_size,
-                    dimension=0,
                     value=0,
                     pad_start=False):
-    return ConstantPad1d(target_size, dimension, value, pad_start)(input)
+    """
+         Assumes that padded dim is the 2, based on pytorch specification.
+         Input: (N,C,Win)(N, C, W_{in})(N,C,Win​)
+         Output: (N,C,Wout)(N, C, W_{out})(N,C,Wout​) where
+     :param input:
+     :param target_size:
+     :param value:
+     :param pad_start:
+     :return:
+     """
+    num_pad = target_size - input.size(2)
+    assert num_pad >= 0, 'target size has to be greater than input size'
+    padding = (num_pad, 0) if pad_start else (0, num_pad)
+    return torch.nn.ConstantPad1d(padding, value)(input)
