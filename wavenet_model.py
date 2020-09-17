@@ -1,8 +1,10 @@
 import os
 import os.path
 import time
-from wavenet_modules import *
+import torch.nn.functional as F
 from audio_data import *
+from torch import nn
+from wavenet_modules import *
 
 
 class WaveNetModel(nn.Module):
@@ -25,6 +27,7 @@ class WaveNetModel(nn.Module):
         - Output: :math:`()`
         L should be the length of the receptive field
     """
+
     def __init__(self,
                  layers=10,
                  blocks=4,
@@ -109,9 +112,9 @@ class WaveNetModel(nn.Module):
                 new_dilation *= 2
 
         self.end_conv_1 = nn.Conv1d(in_channels=skip_channels,
-                                  out_channels=end_channels,
-                                  kernel_size=1,
-                                  bias=True)
+                                    out_channels=end_channels,
+                                    kernel_size=1,
+                                    bias=True)
 
         self.end_conv_2 = nn.Conv1d(in_channels=end_channels,
                                     out_channels=classes,
@@ -153,7 +156,7 @@ class WaveNetModel(nn.Module):
             # parametrized skip connection
             s = x
             if x.size(2) != 1:
-                 s = dilate(x, 1, init_dilation=dilation)
+                s = dilate(x, 1, init_dilation=dilation)
             s = self.skip_convs[i](s)
             try:
                 skip = skip[:, :, -s.size(2):]
@@ -222,7 +225,7 @@ class WaveNetModel(nn.Module):
                 prob = prob.cpu()
                 np_prob = prob.data.numpy()
                 x = np.random.choice(self.classes, p=np_prob)
-                x = Variable(torch.LongTensor([x]))#np.array([x])
+                x = Variable(torch.LongTensor([x]))  # np.array([x])
             else:
                 x = torch.max(x, 0)[1].float()
 
@@ -301,7 +304,7 @@ class WaveNetModel(nn.Module):
             input.zero_()
             input = input.scatter_(1, x.view(1, -1, 1), 1.).view(1, self.classes, 1)
 
-            if (i+1) == 100:
+            if (i + 1) == 100:
                 toc = time.time()
                 print("one generating step does take approximately " + str((toc - tic) * 0.01) + " seconds)")
 
@@ -313,7 +316,6 @@ class WaveNetModel(nn.Module):
         self.train()
         mu_gen = mu_law_expansion(generated, self.classes)
         return mu_gen
-
 
     def parameter_count(self):
         par = list(self.parameters())

@@ -1,5 +1,6 @@
 # pytorch-wavenet
 This is an implementation of the WaveNet architecture, as described in the [original paper](https://arxiv.org/abs/1609.03499).
+Updated to work on PyTorch 1.6.
 
 ## Features
 - Automatic creation of a dataset (training and validation/test set) from all sound files (.wav, .aiff, .mp3) in a directory
@@ -9,7 +10,7 @@ This is an implementation of the WaveNet architecture, as described in the [orig
 
 ## Requirements
 - python 3
-- pytorch 0.3
+- pytorch 1.6
 - numpy
 - librosa
 - jupyter
